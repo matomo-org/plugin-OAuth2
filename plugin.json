@@ -1,0 +1,21 @@
+{
+  "name": "Oauth2",
+  "description": "First-party OAuth2 server for Matomo (authorization code with PKCE, client credentials, refresh tokens).",
+  "version": "0.1.0",
+  "theme": false,
+  "require": {
+    "matomo": ">=5.0.0-b1,<6.0.0-b1"
+  },
+  "authors": [
+    {
+      "name": "Matomo",
+      "email": "hello@matomo.org",
+      "homepage": "https://matomo.org"
+    }
+  ],
+  "license": "GPL-3.0+",
+  "keywords": [
+    "oauth2",
+    "authorization"
+  ]
+}

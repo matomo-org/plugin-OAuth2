@@ -1,0 +1,328 @@
+<template>
+  <div class="oauth2-admin" v-cloak>
+    <div v-if="secret" class="alert alert-warning">
+      <strong>Client secret:</strong> <code>{{ secret }}</code>
+      <div class="form-help">Copy now; it will not be shown again.</div>
+    </div>
+    <div
+      class="ui-confirm"
+      ref="confirmDeleteClient"
+    >
+      <h2>{{ confirmDeleteLabel }} </h2>
+      <input
+        role="yes"
+        type="button"
+        :value="translate('General_Yes')"
+      />
+      <input
+        role="no"
+        type="button"
+        :value="translate('General_No')"
+      />
+    </div>    <div
+      class="ui-confirm"
+      ref="confirmRotateClient"
+    >
+      <h2>{{ confirmRotateLabel }} </h2>
+      <input
+        role="yes"
+        type="button"
+        :value="translate('General_Yes')"
+      />
+      <input
+        role="no"
+        type="button"
+        :value="translate('General_No')"
+      />
+    </div>
+    <ContentBlock
+      :content-title="translate('Oauth2_AdminHeading')"
+      :feature="translate('Oauth2_AdminHeading')"
+    >
+      <p>{{ translate('Oauth2_AdminClientsDescriptions') }}</p>
+      <table class="card card-table entityTable" v-if="clients && clients.length">
+        <thead>
+        <tr>
+          <th>{{ translate('Oauth2_AdminName') }}</th>
+          <th>{{ translate('Oauth2_AdminClientId') }}</th>
+          <th>{{ translate('Oauth2_AdminClientCreatedAt') }}</th>
+          <th>{{ translate('Oauth2_AdminClientType') }}</th>
+          <th>{{ translate('Oauth2_AdminClientGrants') }}</th>
+          <th>{{ translate('Oauth2_AdminClientRedirects') }}</th>
+          <th>{{ translate('Oauth2_AdminClientStatus') }}</th>
+          <th>{{ translate('Oauth2_AdminClientActions') }}</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="client in clients" :key="client.client_id">
+          <td :title="client.description">
+            <strong>{{ client.name }}</strong>
+          </td>
+          <td><code>{{ client.client_id }}</code></td>
+          <td >{{ client.created_at }}</td>
+          <td>{{ type_options[client.type] }}</td>
+          <td>{{ (client.grant_types || []).join(', ') }}</td>
+          <td>
+            <div v-for="uri in (client.redirect_uris || [])" :key="uri"><code>{{ uri }}</code></div>
+          </td>
+          <td>{{ client.active ? translate('Oauth2_AdminActive') : translate('Oauth2_AdminDisabled') }}</td>
+          <td>
+            <button class="table-action icon-refresh" @click.prevent="rotateSecret(client)" title="{{ translate('Oauth2_AdminRotateSecret') }}"></button>
+            <button class="table-action icon-delete" @click.prevent="deleteClient(client)" title="{{ translate('Oauth2_AdminDelete') }}"></button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+      <div v-else>{{ translate('Oauth2_AdminNoClients') }}</div>
+    </ContentBlock>
+    <ContentBlock
+      :content-title="translate('Oauth2_AdminCreateTitle')"
+    >
+      <form @submit.prevent="createClient">
+          <div class="row">
+            <Field
+              uicontrol="text" name="name" v-model="form.name"
+              :inline-help="translate('Oauth2_AdminNameHelp')"
+              :title="translate('Oauth2_AdminName')"/>
+          </div>
+          <div class="row">
+            <Field
+              uicontrol="textarea" name="description" v-model="form.description"
+              :inline-help="translate('Oauth2_AdminDescriptionHelp')"
+              :title="translate('Oauth2_AdminDescription')"/>
+          </div>
+          <div class="row">
+            <Field
+              uicontrol="select"
+              name="type"
+              v-model="form.type"
+              :title="translate('Oauth2_AdminType')"
+              :inline-help="translate('Oauth2_AdminTypeHelp')"
+              :options="{confidential: translate('Oauth2_AdminConfidential'), public:translate('Oauth2_AdminPublic')}"
+            />
+          </div>
+          <div class="row">
+            <Field
+              uicontrol="checkbox" :options="grant_options" var-type="array" name="grant_types" v-model="form.grant_types"
+              :inline-help="translate('Oauth2_AdminGrantTypesHelp')"
+              :title="translate('Oauth2_AdminClientGrants')"/>
+          </div>
+          <div class="row">
+            <Field
+              uicontrol="checkbox" :options="scopes" var-type="array" name="scopes" v-model="form.scopes"
+              :inline-help="translate('Oauth2_AdminScopesHelp')"
+              :title="translate('Oauth2_AdminScopes')"/>
+          </div>
+          <div class="row">
+            <Field
+              uicontrol="textarea" name="redirect_uris" v-model="form.redirect_uris"  placeholder="https://example.com/callback"
+              :inline-help="translate('Oauth2_AdminRedirectUrisHelp')"
+              :title="translate('Oauth2_AdminRedirectUris')"/>
+          </div>
+          <div class="row">
+            <Field
+              uicontrol="checkbox" name="active" v-model="form.active" :full-width="false"
+              :inline-help="translate('Oauth2_AdminActiveHelp')"
+              :title="translate('Oauth2_AdminActiveLabel')"/>
+          </div>
+          <div class="row">
+            <button type="submit" class="btn" :disabled="loading">{{ translate('Oauth2_AdminSave') }}</button>
+          </div>
+        </form>
+
+    </ContentBlock>
+  </div>
+</template>
+
+<script lang="ts">
+import { defineComponent } from 'vue';
+import { Field } from 'CorePluginsAdmin';
+import {
+  Matomo,
+  ContentBlock,
+  AjaxHelper,
+  NotificationsStore,
+} from 'CoreHome';
+
+type Client = {
+  client_id: string;
+  name: string;
+  description?: string;
+  type: string;
+  grant_types: string[];
+  redirect_uris: string[];
+  active: boolean;
+};
+
+type ScopeMap = Record<string, string>;
+
+export default defineComponent({
+  name: 'Oauth2AdminApp',
+  props: {
+    initialClients: {
+      type: Array,
+      required: true,
+    },
+    scopes: {
+      type: Object,
+      required: true,
+    },
+  },
+  components: {
+    Field,
+    ContentBlock,
+  },
+  data() {
+    const scopes = (this.scopes as ScopeMap) || {};
+    const typeOptions = {
+      confidential: this.translate('Oauth2_AdminConfidential'),
+      public: this.translate('Oauth2_AdminPublic'),
+    };
+    const grantOptions = {
+      authorization_code: this.translate('Oauth2_AdminGrantAuthorizationCode'),
+      client_credentials: this.translate('Oauth2_AdminGrantClientCredentials'),
+      refresh_token: this.translate('Oauth2_AdminGrantRefreshToken'),
+    };
+
+    return {
+      clients: (this.initialClients as Client[]) || [],
+      loading: false,
+      secret: '',
+      confirmDeleteLabel: '',
+      confirmRotateLabel: '',
+      grant_options: grantOptions,
+      type_options: typeOptions,
+      form: {
+        name: '',
+        description: '',
+        type: 'confidential',
+        grant_types: ['authorization_code', 'client_credentials', 'refresh_token'],
+        scopes: Object.keys(scopes),
+        redirect_uris: '',
+        active: true,
+      },
+    };
+  },
+  methods: {
+    showSuccessNotification(method: string, message: string) {
+      const instanceId = NotificationsStore.show({
+        id: `Oauth2_${method}`,
+        type: 'transient',
+        context: 'success',
+        message,
+      });
+
+      setTimeout(() => {
+        NotificationsStore.scrollToNotification(instanceId);
+      });
+    },
+    async fetchClients() {
+      this.loading = true;
+      try {
+        AjaxHelper.fetch({
+          method: 'Oauth2.getClients',
+          filter_limit: '-1',
+        }).then((clients) => {
+          this.clients = clients;
+        });
+      } finally {
+        this.loading = false;
+      }
+    },
+    async createClient() {
+      this.loading = true;
+      this.secret = '';
+      const params = {
+        method: 'Oauth2.createClient',
+        name: this.form.name,
+        description: this.form.description,
+        type: this.form.type,
+        grantTypes: this.form.grant_types,
+        scopes: this.form.scopes,
+        redirectUris: this.form.redirect_uris,
+        active: this.form.active ? 1 : 0,
+      };
+      try {
+        AjaxHelper.fetch(params).then((response) => {
+          this.clients.push(response.client);
+
+          const message = this.translate('Oauth2_AdminCreated', response.client.client_id);
+          this.showSuccessNotification('createClient', message);
+
+          if (response.secret) {
+            this.secret = response.secret;
+          }
+          this.resetForm();
+        });
+      } finally {
+        this.loading = false;
+      }
+    },
+    async rotateSecret(client: Client) {
+      if (!client) {
+        return;
+      }
+
+      this.confirmRotateLabel = this.translate('Oauth2_AdminRotateConfirm', client?.name || client?.client_id);
+
+      Matomo.helper.modalConfirm(this.$refs.confirmRotateClient as HTMLElement, {
+        yes: () => {
+          this.loading = true;
+          try {
+            AjaxHelper.fetch({
+              method: 'Oauth2.rotateSecret',
+              clientId: client.client_id,
+            }).then((response) => {
+              if (response && response.secret) {
+                this.secret = response.secret;
+
+                const message = this.translate('Oauth2_AdminRotated', client.client_id);
+                this.showSuccessNotification('rotateSecret', message);
+              }
+            });
+          } finally {
+            this.loading = false;
+          }
+        },
+      });
+    },
+    async deleteClient(client: Client) {
+      if (!client) {
+        return;
+      }
+
+      this.confirmDeleteLabel = this.translate('Oauth2_AdminDeleteConfirm', client?.name || client?.client_id);
+
+      Matomo.helper.modalConfirm(this.$refs.confirmDeleteClient as HTMLElement, {
+        yes: () => {
+          this.loading = true;
+          try {
+            AjaxHelper.fetch({
+              method: 'Oauth2.deleteClient',
+              clientId: client.client_id,
+            }).then((response) => {
+              if (response.deleted) {
+                this.clients = this.clients.filter((c) => c.client_id !== client.client_id);
+
+                const message = this.translate('Oauth2_AdminDeleted', client.client_id);
+                this.showSuccessNotification('deleteClient', message);
+              }
+            });
+          } finally {
+            this.loading = false;
+          }
+        },
+      });
+    },
+    resetForm() {
+      this.form.name = '';
+      this.form.description = '';
+      this.form.type = 'confidential';
+      this.form.grant_types = ['authorization_code', 'client_credentials', 'refresh_token'];
+      this.form.scopes = Object.keys(this.scopes as ScopeMap);
+      this.form.redirect_uris = '';
+      this.form.active = true;
+    },
+  },
+});
+</script>

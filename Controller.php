@@ -1,0 +1,155 @@
+<?php
+
+/**
+ * Matomo - free/libre analytics platform
+ *
+ * @link    https://matomo.org
+ * @license https://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
+ */
+
+namespace Piwik\Plugins\Oauth2;
+
+use Nyholm\Psr7\Factory\Psr17Factory;
+use Nyholm\Psr7\Response;
+use Nyholm\Psr7Server\ServerRequestCreator;
+use Piwik\Common;
+use Piwik\Piwik;
+use Piwik\Plugin\ControllerAdmin;
+use Piwik\Plugins\Oauth2\Entities\UserEntity;
+use Piwik\Plugins\Oauth2\Model\ClientModel;
+use Piwik\Plugins\Oauth2\Repositories\ScopeRepository;
+use Piwik\Plugins\Oauth2\Service\ServerFactory;
+use Piwik\Plugins\UsersManager\Model as UserModel;
+use Piwik\Request;
+use Psr\Http\Message\ResponseInterface;
+use League\OAuth2\Server\Exception\OAuthServerException;
+
+class Controller extends ControllerAdmin
+{
+    public function __construct(
+        private ClientModel $clientModel,
+        private ScopeRepository $scopeRepository,
+        private ServerFactory $serverFactory,
+        private SystemSettings $settings,
+        private UserModel $userModel
+    ) {
+        parent::__construct();
+    }
+
+    public function index()
+    {
+        Piwik::checkUserHasSuperUserAccess();
+
+        $viewData = [
+            'clients' => $this->clientModel->all(),
+            'scopes' => $this->scopeRepository->describeScopes(),
+        ];
+
+        return $this->renderTemplate('index', $viewData);
+    }
+
+    public function authorize()
+    {
+        if (!$this->settings->enableAuthorizationCode->getValue()) {
+            return $this->renderUnauthorized('Authorization code grant is disabled.');
+        }
+
+        if (Piwik::isUserIsAnonymous()) {
+            Piwik::checkUserIsNotAnonymous();
+        }
+
+        $psrRequest = $this->createServerRequest();
+        $authServer = $this->serverFactory->makeAuthorizationServer();
+
+        try {
+            $authRequest = $authServer->validateAuthorizationRequest($psrRequest);
+        } catch (OAuthServerException $e) {
+            return $this->emitResponse($e->generateHttpResponse(new Response()));
+        } catch (\Throwable $e) {
+            return $this->renderUnauthorized('Invalid authorization request.');
+        }
+
+        $login = Piwik::getCurrentUserLogin();
+        $userEntity = new UserEntity();
+        $userEntity->setIdentifier($login);
+        $authRequest->setUser($userEntity);
+
+        $scopes = $authRequest->getScopes();
+
+        if ($this->isPostRequest()) {
+            $decision = Request::fromRequest()->getStringParameter('decision', '');
+            $authRequest->setAuthorizationApproved($decision === 'allow');
+
+            try {
+                $response = $authServer->completeAuthorizationRequest($authRequest, new Response());
+            } catch (OAuthServerException $e) {
+                $response = $e->generateHttpResponse(new Response());
+            } catch (\Throwable $e) {
+                $response = (new Response())->withStatus(500)->withBody((new Psr17Factory())->createStream('Server error'));
+            }
+
+            return $this->emitResponse($response);
+        }
+
+        $client = $authRequest->getClient();
+        $user = $this->userModel->getUser($login);
+
+        return $this->renderTemplate('authorize', [
+            'clientName' => $client->getName(),
+            'clientId' => $client->getIdentifier(),
+            'userLogin' => $login,
+            'userEmail' => $user['email'] ?? '',
+            'scopes' => array_map(function ($scope) {
+                return $scope->getIdentifier();
+            }, $scopes),
+            'scopeDescriptions' => $this->scopeRepository->describeScopes(),
+        ]);
+    }
+
+    public function token()
+    {
+        $psrRequest = $this->createServerRequest();
+        $authServer = $this->serverFactory->makeAuthorizationServer();
+        $response = new Response();
+
+        try {
+            $response = $authServer->respondToAccessTokenRequest($psrRequest, $response);
+        } catch (OAuthServerException $e) {
+            $response = $e->generateHttpResponse($response);
+        } catch (\Throwable $e) {
+            $response = $response->withStatus(500)->withBody((new Psr17Factory())->createStream('Server error'));
+        }
+
+        return $this->emitResponse($response);
+    }
+
+    private function createServerRequest()
+    {
+        $psr17Factory = new Psr17Factory();
+        $creator = new ServerRequestCreator($psr17Factory, $psr17Factory, $psr17Factory, $psr17Factory);
+        return $creator->fromGlobals();
+    }
+
+    private function emitResponse(ResponseInterface $response)
+    {
+        http_response_code($response->getStatusCode());
+        foreach ($response->getHeaders() as $name => $values) {
+            foreach ($values as $value) {
+                Common::sendHeader($name . ': ' . $value);
+            }
+        }
+        echo (string) $response->getBody();
+        return null;
+    }
+
+    private function isPostRequest(): bool
+    {
+        return !empty($_SERVER['REQUEST_METHOD']) && strtoupper($_SERVER['REQUEST_METHOD']) === 'POST';
+    }
+
+    private function renderUnauthorized(string $message)
+    {
+        http_response_code(400);
+        return $message;
+    }
+}
