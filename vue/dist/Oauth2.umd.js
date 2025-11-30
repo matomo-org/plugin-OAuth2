@@ -146,7 +146,7 @@ if (typeof window !== 'undefined') {
 // EXTERNAL MODULE: external {"commonjs":"vue","commonjs2":"vue","root":"Vue"}
 var external_commonjs_vue_commonjs2_vue_root_Vue_ = __webpack_require__("8bbf");
 
-// CONCATENATED MODULE: ./node_modules/@vue/cli-plugin-babel/node_modules/cache-loader/dist/cjs.js??ref--13-0!./node_modules/@vue/cli-plugin-babel/node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist/templateLoader.js??ref--6!./node_modules/@vue/cli-service/node_modules/cache-loader/dist/cjs.js??ref--1-0!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist??ref--1-1!./plugins/Oauth2/vue/src/AdminApp.vue?vue&type=template&id=2689f826
+// CONCATENATED MODULE: ./node_modules/@vue/cli-plugin-babel/node_modules/cache-loader/dist/cjs.js??ref--13-0!./node_modules/@vue/cli-plugin-babel/node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist/templateLoader.js??ref--6!./node_modules/@vue/cli-service/node_modules/cache-loader/dist/cjs.js??ref--1-0!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist??ref--1-1!./plugins/Oauth2/vue/src/AdminApp.vue?vue&type=template&id=0625534b
 
 const _hoisted_1 = {
   class: "oauth2-admin"
@@ -321,7 +321,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1
   }, 8, ["content-title"])]);
 }
-// CONCATENATED MODULE: ./plugins/Oauth2/vue/src/AdminApp.vue?vue&type=template&id=2689f826
+// CONCATENATED MODULE: ./plugins/Oauth2/vue/src/AdminApp.vue?vue&type=template&id=0625534b
 
 // EXTERNAL MODULE: external "CorePluginsAdmin"
 var external_CorePluginsAdmin_ = __webpack_require__("a5a2");
@@ -407,18 +407,18 @@ var external_CoreHome_ = __webpack_require__("19dc");
     async createClient() {
       this.loading = true;
       this.secret = '';
-      const body = {
+      const params = {
         method: 'Oauth2.createClient',
         name: this.form.name,
         description: this.form.description,
         type: this.form.type,
-        grant_types: this.form.grant_types,
+        grantTypes: this.form.grant_types,
         scopes: this.form.scopes,
-        redirect_uris: this.form.redirect_uris,
+        redirectUris: this.form.redirect_uris,
         active: this.form.active ? 1 : 0
       };
       try {
-        external_CoreHome_["AjaxHelper"].fetch(body).then(response => {
+        external_CoreHome_["AjaxHelper"].fetch(params).then(response => {
           this.clients.push(response.client);
           const message = this.translate('Oauth2_AdminCreated', response.client.client_id);
           this.showSuccessNotification('createClient', message);
