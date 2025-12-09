@@ -103,7 +103,7 @@
           </div>
           <div class="row">
             <Field
-              uicontrol="checkbox" :options="grant_options" var-type="array" name="grant_types" v-model="form.grant_types"
+              uicontrol="checkbox" :options="visibleGrantOptions" var-type="array" name="grant_types" v-model="form.grant_types"
               :inline-help="translate('Oauth2_AdminGrantTypesHelp')"
               :title="translate('Oauth2_AdminClientGrants')"/>
           </div>
@@ -202,6 +202,29 @@ export default defineComponent({
         active: true,
       },
     };
+  },
+  computed: {
+    visibleGrantOptions(): Record<string, string> {
+      if (this.form.type === 'public') {
+        const filtered: Record<string, string> = {};
+        if (this.grant_options.authorization_code) {
+          filtered.authorization_code = this.grant_options.authorization_code;
+        }
+        if (this.grant_options.refresh_token) {
+          filtered.refresh_token = this.grant_options.refresh_token;
+        }
+        return filtered;
+      }
+
+      return this.grant_options;
+    },
+  },
+  watch: {
+    'form.type'(newType: string) {
+      if (newType === 'public' && this.form.grant_types.includes('client_credentials')) {
+        this.form.grant_types = this.form.grant_types.filter((value: string) => value !== 'client_credentials');
+      }
+    },
   },
   methods: {
     showSuccessNotification(method: string, message: string) {

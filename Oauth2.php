@@ -9,11 +9,14 @@
 
 namespace Piwik\Plugins\Oauth2;
 
+use Piwik\Access;
 use Piwik\Container\StaticContainer;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\DbHelper;
+use Piwik\Exception\NoPrivilegesException;
 use Piwik\Plugin;
+use Piwik\Plugins\Oauth2\Auth\Oauth2Auth;
 use Piwik\Plugins\Oauth2\Auth\ResourceServerAuthenticator;
 use Piwik\Request\AuthenticationToken;
 
@@ -23,6 +26,7 @@ class Oauth2 extends Plugin
     {
         return [
             'API.Request.authenticate' => 'onApiAuthenticate',
+            'API.Request.dispatch' => 'onApiRequestDispatch',
             'Db.getTablesInstalled' => 'getTablesInstalled',
             'Vue.getComponents' => 'registerVueComponents',
             'Translate.getClientSideTranslationKeys' => 'getClientSideTranslationKeys',
@@ -37,6 +41,32 @@ class Oauth2 extends Plugin
         if ($hasBearer || $hasAccessToken) {
             $incomingToken = $tokenAuth ?: ($_POST['access_token'] ?? null);
             StaticContainer::get(ResourceServerAuthenticator::class)->prepareAuthenticationFromToken($incomingToken);
+        }
+    }
+
+    public function onApiRequestDispatch(&$finalParameters, $pluginName, $methodName)
+    {
+        $tokenAuth = Access::getInstance()->getTokenAuth();
+        if (empty($tokenAuth) || strncmp($tokenAuth, 'oauth2:', 7) !== 0) {
+            return;
+        }
+
+        $auth = StaticContainer::get('Piwik\Auth');
+        if (!$auth instanceof Oauth2Auth) {
+            return;
+        }
+
+        $scopes = (array) ($auth->scopes ?? []);
+        $nonReadScopes = array_filter($scopes, static function ($scope) {
+            return $scope !== 'matomo:read' && $scope !== 'offline_access';
+        });
+
+        if (!empty($nonReadScopes)) {
+            throw new NoPrivilegesException('Request not authorised, scope not allowed.');
+        }
+
+        if (!str_starts_with($methodName, 'get')) {
+            throw new NoPrivilegesException('Request not authorised, scope not allowed.');
         }
     }
 

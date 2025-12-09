@@ -45,8 +45,9 @@ class SystemSettings extends BaseSystemSettings
 
         $this->encryptionKey = $this->makeSetting('encryptionKey', '', FieldConfig::TYPE_STRING, function (FieldConfig $field) {
             $field->title = 'Token encryption key';
-            $field->description = 'Random 32+ character string to encrypt auth codes and refresh tokens (example: base64-encoded random bytes).';
-            $field->uiControl = FieldConfig::UI_CONTROL_TEXT;
+            $field->description = 'Random 32+ character string to encrypt auth codes and refresh tokens (example: base64-encoded random bytes). Required.';
+            $field->uiControl = FieldConfig::UI_CONTROL_PASSWORD;
+            $field->validators[] = new NotEmpty();
         });
 
         $this->accessTokenTtl = $this->makeSetting('accessTokenTtl', 3600, FieldConfig::TYPE_INT, function (FieldConfig $field) {
@@ -76,14 +77,14 @@ class SystemSettings extends BaseSystemSettings
             $field->title = 'Enable refresh tokens';
         });
 
-        $this->defaultScopes = $this->makeSetting('defaultScopes', ['matomo:read', 'matomo:write', 'matomo:admin', 'offline_access'], FieldConfig::TYPE_ARRAY, function (FieldConfig $field) {
+        $this->defaultScopes = $this->makeSetting('defaultScopes', ['matomo:read', 'matomo:write', 'matomo:superuser', 'offline_access'], FieldConfig::TYPE_ARRAY, function (FieldConfig $field) {
             $field->title = 'Allowed scopes';
             $field->description = 'Scopes available to OAuth2 clients. Remove entries to disable them globally.';
             $field->uiControl = FieldConfig::UI_CONTROL_MULTI_SELECT;
             $field->availableValues = [
                 'matomo:read' => 'Read analytics data you can access.',
                 'matomo:write' => 'Create and modify analytics configuration.',
-                'matomo:admin' => 'Matomo admin-level operations.',
+                'matomo:superuser' => 'Matomo superuser-level operations.',
                 'offline_access' => 'Access Matomo when you’re not actively using it.',
             ];
         });

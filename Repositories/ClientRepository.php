@@ -44,6 +44,10 @@ class ClientRepository implements ClientRepositoryInterface
             return false;
         }
 
+        if ($grantType === 'client_credentials' && ($row['type'] ?? 'confidential') === 'public') {
+            return false;
+        }
+
         if ($row['type'] === 'public') {
             return true;
         }

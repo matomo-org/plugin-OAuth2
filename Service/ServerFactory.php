@@ -12,7 +12,6 @@ namespace Piwik\Plugins\Oauth2\Service;
 use DateInterval;
 use League\OAuth2\Server\AuthorizationServer;
 use League\OAuth2\Server\CryptKey;
-use League\OAuth2\Server\Grant\AuthCodeGrant;
 use League\OAuth2\Server\Grant\ClientCredentialsGrant;
 use League\OAuth2\Server\Grant\RefreshTokenGrant;
 use League\OAuth2\Server\ResourceServer;
@@ -22,6 +21,7 @@ use Piwik\Plugins\Oauth2\Repositories\ClientRepository;
 use Piwik\Plugins\Oauth2\Repositories\RefreshTokenRepository;
 use Piwik\Plugins\Oauth2\Repositories\ScopeRepository;
 use Piwik\Plugins\Oauth2\SystemSettings;
+use Piwik\Plugins\Oauth2\Service\MatomoAuthCodeGrant;
 
 class ServerFactory
 {
@@ -54,14 +54,18 @@ class ServerFactory
 
         $accessTokenTtl = $this->getAccessTokenTtl();
         $refreshTokenTtl = $this->getRefreshTokenTtl();
+        $refreshTokensEnabled = $this->settings->enableRefreshTokens->getValue();
 
         if ($this->settings->enableAuthorizationCode->getValue()) {
-            $grant = new AuthCodeGrant(
+            $grant = new MatomoAuthCodeGrant(
                 $this->authCodeRepository,
                 $this->refreshTokenRepository,
-                $this->getAuthCodeTtl()
+                $this->getAuthCodeTtl(),
+                $refreshTokensEnabled
             );
-            $grant->setRefreshTokenTTL($refreshTokenTtl);
+            if ($refreshTokensEnabled) {
+                $grant->setRefreshTokenTTL($refreshTokenTtl);
+            }
             $server->enableGrantType($grant, $accessTokenTtl);
         }
 
@@ -69,7 +73,7 @@ class ServerFactory
             $server->enableGrantType(new ClientCredentialsGrant(), $accessTokenTtl);
         }
 
-        if ($this->settings->enableRefreshTokens->getValue()) {
+        if ($refreshTokensEnabled) {
             $grant = new RefreshTokenGrant($this->refreshTokenRepository);
             $grant->setRefreshTokenTTL($refreshTokenTtl);
             $server->enableGrantType($grant, $accessTokenTtl);

@@ -65,7 +65,7 @@ class ResourceServerAuthenticator
             return;
         }
 
-        $hasAdminScope = in_array('matomo:admin', $scopes, true);
+        $hasAdminScope = in_array('matomo:superuser', $scopes, true);
         $isSuperUser = !empty($user['superuser_access']) && $hasAdminScope;
 
         StaticContainer::getContainer()->set(
