@@ -42,8 +42,8 @@ class AuthCodeRepository implements AuthCodeRepositoryInterface
                 return $scope->getIdentifier();
             }, $authCodeEntity->getScopes()),
             'redirect_uri' => $authCodeEntity->getRedirectUri(),
-            'code_challenge' => $authCodeEntity->getCodeChallenge(),
-            'code_challenge_method' => $authCodeEntity->getCodeChallengeMethod(),
+            'code_challenge' => method_exists($authCodeEntity, 'getCodeChallenge') ? $authCodeEntity->getCodeChallenge() : null,
+            'code_challenge_method' => method_exists($authCodeEntity, 'getCodeChallengeMethod') ? $authCodeEntity->getCodeChallengeMethod() : null,
             'expires_at' => $authCodeEntity->getExpiryDateTime()->format('Y-m-d H:i:s'),
         ]);
     }
