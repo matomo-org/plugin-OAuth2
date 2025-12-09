@@ -48,7 +48,7 @@ class ServerFactory
             $this->clientRepository,
             $this->accessTokenRepository,
             $this->scopeRepository,
-            new CryptKey($this->settings->privateKeyPath->getValue(), null, false),
+            new CryptKey($this->settings->privateKeyPath->getValue(), null, true),
             $this->getEncryptionKey()
         );
 
@@ -88,7 +88,7 @@ class ServerFactory
 
         $this->resourceServer = new ResourceServer(
             $this->accessTokenRepository,
-            new CryptKey($this->settings->publicKeyPath->getValue(), null, false)
+            new CryptKey($this->settings->publicKeyPath->getValue(), null, true)
         );
 
         return $this->resourceServer;

@@ -25,6 +25,7 @@
             </div>
 
             <form method="post">
+                <input type="hidden" name="nonce" value="{{ nonce|e('html_attr') }}" />
                 <button type="submit" class="btn" name="decision" value="allow">{{ 'Oauth2_Allow'|translate }}</button>
                 <button type="submit" class="btn" name="decision" value="deny">{{ 'Oauth2_Deny'|translate }}</button>
             </form>

@@ -29,7 +29,10 @@ class ResourceServerAuthenticator
 
     public function prepareAuthenticationFromToken(?string $tokenAuth): void
     {
-        if (empty($tokenAuth)) {
+        $tokenAuth = $tokenAuth ?: ($_POST['access_token'] ?? null);
+        $hasAuthorizationHeader = !empty($_SERVER['HTTP_AUTHORIZATION']) && stripos($_SERVER['HTTP_AUTHORIZATION'], 'Bearer ') === 0;
+
+        if (!$hasAuthorizationHeader && empty($tokenAuth)) {
             return;
         }
 
@@ -45,7 +48,7 @@ class ResourceServerAuthenticator
 
         $login = $validated->getAttribute('oauth_user_id');
         $clientId = (string) $validated->getAttribute('oauth_client_id');
-        $scopes = $validated->getAttribute('oauth_scopes') ?? [];
+        $scopes = (array) ($validated->getAttribute('oauth_scopes') ?? []);
         $tokenId = (string) $validated->getAttribute('oauth_access_token_id');
 
         if (empty($login)) {
@@ -62,7 +65,8 @@ class ResourceServerAuthenticator
             return;
         }
 
-        $isSuperUser = !empty($user['superuser_access']);
+        $hasAdminScope = in_array('matomo:admin', $scopes, true);
+        $isSuperUser = !empty($user['superuser_access']) && $hasAdminScope;
 
         StaticContainer::getContainer()->set(
             'Piwik\Auth',
@@ -70,13 +74,13 @@ class ResourceServerAuthenticator
         );
     }
 
-    private function buildRequest(string $tokenAuth): ServerRequestInterface
+    private function buildRequest(?string $tokenAuth): ServerRequestInterface
     {
         $psr17Factory = new Psr17Factory();
         $creator = new ServerRequestCreator($psr17Factory, $psr17Factory, $psr17Factory, $psr17Factory);
 
         $request = $creator->fromGlobals();
-        if (!$request->hasHeader('Authorization')) {
+        if (!$request->hasHeader('Authorization') && !empty($tokenAuth)) {
             $request = $request->withHeader('Authorization', 'Bearer ' . $tokenAuth);
         }
 

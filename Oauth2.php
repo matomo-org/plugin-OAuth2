@@ -34,8 +34,9 @@ class Oauth2 extends Plugin
         // handled in Authentication listener class to keep plugin wiring contained
         $hasBearer = !empty($_SERVER['HTTP_AUTHORIZATION']) && strpos($_SERVER['HTTP_AUTHORIZATION'], 'Bearer ') === 0;
         $hasAccessToken = !empty($_POST['access_token']);
-        if ($hasBearer && $hasAccessToken) {
-            StaticContainer::get(ResourceServerAuthenticator::class)->prepareAuthenticationFromToken($tokenAuth);
+        if ($hasBearer || $hasAccessToken) {
+            $incomingToken = $tokenAuth ?: ($_POST['access_token'] ?? null);
+            StaticContainer::get(ResourceServerAuthenticator::class)->prepareAuthenticationFromToken($incomingToken);
         }
     }
 
