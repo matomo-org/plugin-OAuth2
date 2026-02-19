@@ -7,7 +7,7 @@
  * @license https://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
  */
 
-namespace Piwik\Plugins\Oauth2\Auth;
+namespace Piwik\Plugins\OAuth2\Auth;
 
 use Piwik\Auth;
 use Piwik\AuthResult;

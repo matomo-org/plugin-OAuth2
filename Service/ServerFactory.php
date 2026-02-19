@@ -7,7 +7,7 @@
  * @license https://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
  */
 
-namespace Piwik\Plugins\Oauth2\Service;
+namespace Piwik\Plugins\OAuth2\Service;
 
 use DateInterval;
 use League\OAuth2\Server\AuthorizationServer;
@@ -16,12 +16,12 @@ use League\OAuth2\Server\Grant\AuthCodeGrant;
 use League\OAuth2\Server\Grant\ClientCredentialsGrant;
 use League\OAuth2\Server\Grant\RefreshTokenGrant;
 use League\OAuth2\Server\ResourceServer;
-use Piwik\Plugins\Oauth2\Repositories\AccessTokenRepository;
-use Piwik\Plugins\Oauth2\Repositories\AuthCodeRepository;
-use Piwik\Plugins\Oauth2\Repositories\ClientRepository;
-use Piwik\Plugins\Oauth2\Repositories\RefreshTokenRepository;
-use Piwik\Plugins\Oauth2\Repositories\ScopeRepository;
-use Piwik\Plugins\Oauth2\SystemSettings;
+use Piwik\Plugins\OAuth2\Repositories\AccessTokenRepository;
+use Piwik\Plugins\OAuth2\Repositories\AuthCodeRepository;
+use Piwik\Plugins\OAuth2\Repositories\ClientRepository;
+use Piwik\Plugins\OAuth2\Repositories\RefreshTokenRepository;
+use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
+use Piwik\Plugins\OAuth2\SystemSettings;
 
 class ServerFactory
 {

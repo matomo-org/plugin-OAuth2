@@ -4,9 +4,9 @@
 	else if(typeof define === 'function' && define.amd)
 		define(["CoreHome", , "CorePluginsAdmin"], factory);
 	else if(typeof exports === 'object')
-		exports["Oauth2"] = factory(require("CoreHome"), require("vue"), require("CorePluginsAdmin"));
+		exports["OAuth2"] = factory(require("CoreHome"), require("vue"), require("CorePluginsAdmin"));
 	else
-		root["Oauth2"] = factory(root["CoreHome"], root["Vue"], root["CorePluginsAdmin"]);
+		root["OAuth2"] = factory(root["CoreHome"], root["Vue"], root["CorePluginsAdmin"]);
 })((typeof self !== 'undefined' ? self : this), function(__WEBPACK_EXTERNAL_MODULE__19dc__, __WEBPACK_EXTERNAL_MODULE__8bbf__, __WEBPACK_EXTERNAL_MODULE_a5a2__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
@@ -87,7 +87,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
 /******/
 /******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "plugins/Oauth2/vue/dist/";
+/******/ 	__webpack_require__.p = "plugins/OAuth2/vue/dist/";
 /******/
 /******/
 /******/ 	// Load entry module and return exports
@@ -146,7 +146,7 @@ if (typeof window !== 'undefined') {
 // EXTERNAL MODULE: external {"commonjs":"vue","commonjs2":"vue","root":"Vue"}
 var external_commonjs_vue_commonjs2_vue_root_Vue_ = __webpack_require__("8bbf");
 
-// CONCATENATED MODULE: ./node_modules/@vue/cli-plugin-babel/node_modules/cache-loader/dist/cjs.js??ref--13-0!./node_modules/@vue/cli-plugin-babel/node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist/templateLoader.js??ref--6!./node_modules/@vue/cli-service/node_modules/cache-loader/dist/cjs.js??ref--1-0!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist??ref--1-1!./plugins/Oauth2/vue/src/AdminApp.vue?vue&type=template&id=0625534b
+// CONCATENATED MODULE: ./node_modules/@vue/cli-plugin-babel/node_modules/cache-loader/dist/cjs.js??ref--13-0!./node_modules/@vue/cli-plugin-babel/node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist/templateLoader.js??ref--6!./node_modules/@vue/cli-service/node_modules/cache-loader/dist/cjs.js??ref--1-0!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist??ref--1-1!./plugins/OAuth2/vue/src/AdminApp.vue?vue&type=template&id=048d08fb
 
 const _hoisted_1 = {
   class: "oauth2-admin"
@@ -176,8 +176,8 @@ const _hoisted_11 = {
   class: "card card-table entityTable"
 };
 const _hoisted_12 = ["title"];
-const _hoisted_13 = ["onClick"];
-const _hoisted_14 = ["onClick"];
+const _hoisted_13 = ["onClick", "title"];
+const _hoisted_14 = ["onClick", "title"];
 const _hoisted_15 = {
   key: 1
 };
@@ -226,10 +226,10 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     type: "button",
     value: _ctx.translate('General_No')
   }, null, 8, _hoisted_10)], 512), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])(_component_ContentBlock, {
-    "content-title": _ctx.translate('Oauth2_AdminHeading'),
-    feature: _ctx.translate('Oauth2_AdminHeading')
+    "content-title": _ctx.translate('OAuth2_AdminHeading'),
+    feature: _ctx.translate('OAuth2_AdminHeading')
   }, {
-    default: Object(external_commonjs_vue_commonjs2_vue_root_Vue_["withCtx"])(() => [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("p", null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('Oauth2_AdminClientsDescriptions')), 1), _ctx.clients && _ctx.clients.length ? (Object(external_commonjs_vue_commonjs2_vue_root_Vue_["openBlock"])(), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementBlock"])("table", _hoisted_11, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("thead", null, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("tr", null, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("th", null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('Oauth2_AdminName')), 1), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("th", null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('Oauth2_AdminClientId')), 1), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("th", null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('Oauth2_AdminClientCreatedAt')), 1), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("th", null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('Oauth2_AdminClientType')), 1), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("th", null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('Oauth2_AdminClientGrants')), 1), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("th", null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('Oauth2_AdminClientRedirects')), 1), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("th", null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('Oauth2_AdminClientStatus')), 1), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("th", null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('Oauth2_AdminClientActions')), 1)])]), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("tbody", null, [(Object(external_commonjs_vue_commonjs2_vue_root_Vue_["openBlock"])(true), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementBlock"])(external_commonjs_vue_commonjs2_vue_root_Vue_["Fragment"], null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["renderList"])(_ctx.clients, client => {
+    default: Object(external_commonjs_vue_commonjs2_vue_root_Vue_["withCtx"])(() => [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("p", null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('OAuth2_AdminClientsDescriptions')), 1), _ctx.clients && _ctx.clients.length ? (Object(external_commonjs_vue_commonjs2_vue_root_Vue_["openBlock"])(), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementBlock"])("table", _hoisted_11, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("thead", null, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("tr", null, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("th", null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('OAuth2_AdminName')), 1), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("th", null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('OAuth2_AdminClientId')), 1), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("th", null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('OAuth2_AdminClientCreatedAt')), 1), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("th", null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('OAuth2_AdminClientType')), 1), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("th", null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('OAuth2_AdminClientGrants')), 1), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("th", null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('OAuth2_AdminClientRedirects')), 1), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("th", null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('OAuth2_AdminClientStatus')), 1), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("th", null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('OAuth2_AdminClientActions')), 1)])]), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("tbody", null, [(Object(external_commonjs_vue_commonjs2_vue_root_Vue_["openBlock"])(true), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementBlock"])(external_commonjs_vue_commonjs2_vue_root_Vue_["Fragment"], null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["renderList"])(_ctx.clients, client => {
       return Object(external_commonjs_vue_commonjs2_vue_root_Vue_["openBlock"])(), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementBlock"])("tr", {
         key: client.client_id
       }, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("td", {
@@ -238,19 +238,19 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         return Object(external_commonjs_vue_commonjs2_vue_root_Vue_["openBlock"])(), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementBlock"])("div", {
           key: uri
         }, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("code", null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(uri), 1)]);
-      }), 128))]), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("td", null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(client.active ? _ctx.translate('Oauth2_AdminActive') : _ctx.translate('Oauth2_AdminDisabled')), 1), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("td", null, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("button", {
+      }), 128))]), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("td", null, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(client.active ? _ctx.translate('OAuth2_AdminActive') : _ctx.translate('OAuth2_AdminDisabled')), 1), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("td", null, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("button", {
         class: "table-action icon-refresh",
         onClick: Object(external_commonjs_vue_commonjs2_vue_root_Vue_["withModifiers"])($event => _ctx.rotateSecret(client), ["prevent"]),
-        title: "{{ translate('Oauth2_AdminRotateSecret') }}"
+        title: _ctx.translate('OAuth2_AdminRotateSecret')
       }, null, 8, _hoisted_13), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("button", {
         class: "table-action icon-delete",
         onClick: Object(external_commonjs_vue_commonjs2_vue_root_Vue_["withModifiers"])($event => _ctx.deleteClient(client), ["prevent"]),
-        title: "{{ translate('Oauth2_AdminDelete') }}"
+        title: _ctx.translate('OAuth2_AdminDelete')
       }, null, 8, _hoisted_14)])]);
-    }), 128))])])) : (Object(external_commonjs_vue_commonjs2_vue_root_Vue_["openBlock"])(), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementBlock"])("div", _hoisted_15, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('Oauth2_AdminNoClients')), 1))]),
+    }), 128))])])) : (Object(external_commonjs_vue_commonjs2_vue_root_Vue_["openBlock"])(), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementBlock"])("div", _hoisted_15, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('OAuth2_AdminNoClients')), 1))]),
     _: 1
   }, 8, ["content-title", "feature"]), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])(_component_ContentBlock, {
-    "content-title": _ctx.translate('Oauth2_AdminCreateTitle')
+    "content-title": _ctx.translate('OAuth2_AdminCreateTitle')
   }, {
     default: Object(external_commonjs_vue_commonjs2_vue_root_Vue_["withCtx"])(() => [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("form", {
       onSubmit: _cache[7] || (_cache[7] = Object(external_commonjs_vue_commonjs2_vue_root_Vue_["withModifiers"])((...args) => _ctx.createClient && _ctx.createClient(...args), ["prevent"]))
@@ -259,25 +259,25 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       name: "name",
       modelValue: _ctx.form.name,
       "onUpdate:modelValue": _cache[0] || (_cache[0] = $event => _ctx.form.name = $event),
-      "inline-help": _ctx.translate('Oauth2_AdminNameHelp'),
-      title: _ctx.translate('Oauth2_AdminName')
+      "inline-help": _ctx.translate('OAuth2_AdminNameHelp'),
+      title: _ctx.translate('OAuth2_AdminName')
     }, null, 8, ["modelValue", "inline-help", "title"])]), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("div", _hoisted_17, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])(_component_Field, {
       uicontrol: "textarea",
       name: "description",
       modelValue: _ctx.form.description,
       "onUpdate:modelValue": _cache[1] || (_cache[1] = $event => _ctx.form.description = $event),
-      "inline-help": _ctx.translate('Oauth2_AdminDescriptionHelp'),
-      title: _ctx.translate('Oauth2_AdminDescription')
+      "inline-help": _ctx.translate('OAuth2_AdminDescriptionHelp'),
+      title: _ctx.translate('OAuth2_AdminDescription')
     }, null, 8, ["modelValue", "inline-help", "title"])]), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("div", _hoisted_18, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])(_component_Field, {
       uicontrol: "select",
       name: "type",
       modelValue: _ctx.form.type,
       "onUpdate:modelValue": _cache[2] || (_cache[2] = $event => _ctx.form.type = $event),
-      title: _ctx.translate('Oauth2_AdminType'),
-      "inline-help": _ctx.translate('Oauth2_AdminTypeHelp'),
+      title: _ctx.translate('OAuth2_AdminType'),
+      "inline-help": _ctx.translate('OAuth2_AdminTypeHelp'),
       options: {
-        confidential: _ctx.translate('Oauth2_AdminConfidential'),
-        public: _ctx.translate('Oauth2_AdminPublic')
+        confidential: _ctx.translate('OAuth2_AdminConfidential'),
+        public: _ctx.translate('OAuth2_AdminPublic')
       }
     }, null, 8, ["modelValue", "title", "inline-help", "options"])]), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("div", _hoisted_19, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])(_component_Field, {
       uicontrol: "checkbox",
@@ -286,8 +286,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       name: "grant_types",
       modelValue: _ctx.form.grant_types,
       "onUpdate:modelValue": _cache[3] || (_cache[3] = $event => _ctx.form.grant_types = $event),
-      "inline-help": _ctx.translate('Oauth2_AdminGrantTypesHelp'),
-      title: _ctx.translate('Oauth2_AdminClientGrants')
+      "inline-help": _ctx.translate('OAuth2_AdminGrantTypesHelp'),
+      title: _ctx.translate('OAuth2_AdminClientGrants')
     }, null, 8, ["options", "modelValue", "inline-help", "title"])]), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("div", _hoisted_20, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])(_component_Field, {
       uicontrol: "checkbox",
       options: _ctx.scopes,
@@ -295,33 +295,33 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       name: "scopes",
       modelValue: _ctx.form.scopes,
       "onUpdate:modelValue": _cache[4] || (_cache[4] = $event => _ctx.form.scopes = $event),
-      "inline-help": _ctx.translate('Oauth2_AdminScopesHelp'),
-      title: _ctx.translate('Oauth2_AdminScopes')
+      "inline-help": _ctx.translate('OAuth2_AdminScopesHelp'),
+      title: _ctx.translate('OAuth2_AdminScopes')
     }, null, 8, ["options", "modelValue", "inline-help", "title"])]), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("div", _hoisted_21, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])(_component_Field, {
       uicontrol: "textarea",
       name: "redirect_uris",
       modelValue: _ctx.form.redirect_uris,
       "onUpdate:modelValue": _cache[5] || (_cache[5] = $event => _ctx.form.redirect_uris = $event),
       placeholder: "https://example.com/callback",
-      "inline-help": _ctx.translate('Oauth2_AdminRedirectUrisHelp'),
-      title: _ctx.translate('Oauth2_AdminRedirectUris')
+      "inline-help": _ctx.translate('OAuth2_AdminRedirectUrisHelp'),
+      title: _ctx.translate('OAuth2_AdminRedirectUris')
     }, null, 8, ["modelValue", "inline-help", "title"])]), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("div", _hoisted_22, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])(_component_Field, {
       uicontrol: "checkbox",
       name: "active",
       modelValue: _ctx.form.active,
       "onUpdate:modelValue": _cache[6] || (_cache[6] = $event => _ctx.form.active = $event),
       "full-width": false,
-      "inline-help": _ctx.translate('Oauth2_AdminActiveHelp'),
-      title: _ctx.translate('Oauth2_AdminActiveLabel')
+      "inline-help": _ctx.translate('OAuth2_AdminActiveHelp'),
+      title: _ctx.translate('OAuth2_AdminActiveLabel')
     }, null, 8, ["modelValue", "inline-help", "title"])]), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("div", _hoisted_23, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("button", {
       type: "submit",
       class: "btn",
       disabled: _ctx.loading
-    }, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('Oauth2_AdminSave')), 9, _hoisted_24)])], 32)]),
+    }, Object(external_commonjs_vue_commonjs2_vue_root_Vue_["toDisplayString"])(_ctx.translate('OAuth2_AdminSave')), 9, _hoisted_24)])], 32)]),
     _: 1
   }, 8, ["content-title"])]);
 }
-// CONCATENATED MODULE: ./plugins/Oauth2/vue/src/AdminApp.vue?vue&type=template&id=0625534b
+// CONCATENATED MODULE: ./plugins/OAuth2/vue/src/AdminApp.vue?vue&type=template&id=048d08fb
 
 // EXTERNAL MODULE: external "CorePluginsAdmin"
 var external_CorePluginsAdmin_ = __webpack_require__("a5a2");
@@ -329,7 +329,7 @@ var external_CorePluginsAdmin_ = __webpack_require__("a5a2");
 // EXTERNAL MODULE: external "CoreHome"
 var external_CoreHome_ = __webpack_require__("19dc");
 
-// CONCATENATED MODULE: ./node_modules/@vue/cli-plugin-typescript/node_modules/cache-loader/dist/cjs.js??ref--15-0!./node_modules/babel-loader/lib!./node_modules/@vue/cli-plugin-typescript/node_modules/ts-loader??ref--15-2!./node_modules/@vue/cli-service/node_modules/cache-loader/dist/cjs.js??ref--1-0!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist??ref--1-1!./plugins/Oauth2/vue/src/AdminApp.vue?vue&type=script&lang=ts
+// CONCATENATED MODULE: ./node_modules/@vue/cli-plugin-typescript/node_modules/cache-loader/dist/cjs.js??ref--15-0!./node_modules/babel-loader/lib!./node_modules/@vue/cli-plugin-typescript/node_modules/ts-loader??ref--15-2!./node_modules/@vue/cli-service/node_modules/cache-loader/dist/cjs.js??ref--1-0!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist??ref--1-1!./plugins/OAuth2/vue/src/AdminApp.vue?vue&type=script&lang=ts
 
 
 
@@ -352,13 +352,13 @@ var external_CoreHome_ = __webpack_require__("19dc");
   data() {
     const scopes = this.scopes || {};
     const typeOptions = {
-      confidential: this.translate('Oauth2_AdminConfidential'),
-      public: this.translate('Oauth2_AdminPublic')
+      confidential: this.translate('OAuth2_AdminConfidential'),
+      public: this.translate('OAuth2_AdminPublic')
     };
     const grantOptions = {
-      authorization_code: this.translate('Oauth2_AdminGrantAuthorizationCode'),
-      client_credentials: this.translate('Oauth2_AdminGrantClientCredentials'),
-      refresh_token: this.translate('Oauth2_AdminGrantRefreshToken')
+      authorization_code: this.translate('OAuth2_AdminGrantAuthorizationCode'),
+      client_credentials: this.translate('OAuth2_AdminGrantClientCredentials'),
+      refresh_token: this.translate('OAuth2_AdminGrantRefreshToken')
     };
     return {
       clients: this.initialClients || [],
@@ -382,7 +382,7 @@ var external_CoreHome_ = __webpack_require__("19dc");
   methods: {
     showSuccessNotification(method, message) {
       const instanceId = external_CoreHome_["NotificationsStore"].show({
-        id: `Oauth2_${method}`,
+        id: `OAuth2_${method}`,
         type: 'transient',
         context: 'success',
         message
@@ -395,7 +395,7 @@ var external_CoreHome_ = __webpack_require__("19dc");
       this.loading = true;
       try {
         external_CoreHome_["AjaxHelper"].fetch({
-          method: 'Oauth2.getClients',
+          method: 'OAuth2.getClients',
           filter_limit: '-1'
         }).then(clients => {
           this.clients = clients;
@@ -408,7 +408,7 @@ var external_CoreHome_ = __webpack_require__("19dc");
       this.loading = true;
       this.secret = '';
       const params = {
-        method: 'Oauth2.createClient',
+        method: 'OAuth2.createClient',
         name: this.form.name,
         description: this.form.description,
         type: this.form.type,
@@ -420,7 +420,7 @@ var external_CoreHome_ = __webpack_require__("19dc");
       try {
         external_CoreHome_["AjaxHelper"].fetch(params).then(response => {
           this.clients.push(response.client);
-          const message = this.translate('Oauth2_AdminCreated', response.client.client_id);
+          const message = this.translate('OAuth2_AdminCreated', response.client.client_id);
           this.showSuccessNotification('createClient', message);
           if (response.secret) {
             this.secret = response.secret;
@@ -435,18 +435,18 @@ var external_CoreHome_ = __webpack_require__("19dc");
       if (!client) {
         return;
       }
-      this.confirmRotateLabel = this.translate('Oauth2_AdminRotateConfirm', (client === null || client === void 0 ? void 0 : client.name) || (client === null || client === void 0 ? void 0 : client.client_id));
+      this.confirmRotateLabel = this.translate('OAuth2_AdminRotateConfirm', (client === null || client === void 0 ? void 0 : client.name) || (client === null || client === void 0 ? void 0 : client.client_id));
       external_CoreHome_["Matomo"].helper.modalConfirm(this.$refs.confirmRotateClient, {
         yes: () => {
           this.loading = true;
           try {
             external_CoreHome_["AjaxHelper"].fetch({
-              method: 'Oauth2.rotateSecret',
+              method: 'OAuth2.rotateSecret',
               clientId: client.client_id
             }).then(response => {
               if (response && response.secret) {
                 this.secret = response.secret;
-                const message = this.translate('Oauth2_AdminRotated', client.client_id);
+                const message = this.translate('OAuth2_AdminRotated', client.client_id);
                 this.showSuccessNotification('rotateSecret', message);
               }
             });
@@ -460,18 +460,18 @@ var external_CoreHome_ = __webpack_require__("19dc");
       if (!client) {
         return;
       }
-      this.confirmDeleteLabel = this.translate('Oauth2_AdminDeleteConfirm', (client === null || client === void 0 ? void 0 : client.name) || (client === null || client === void 0 ? void 0 : client.client_id));
+      this.confirmDeleteLabel = this.translate('OAuth2_AdminDeleteConfirm', (client === null || client === void 0 ? void 0 : client.name) || (client === null || client === void 0 ? void 0 : client.client_id));
       external_CoreHome_["Matomo"].helper.modalConfirm(this.$refs.confirmDeleteClient, {
         yes: () => {
           this.loading = true;
           try {
             external_CoreHome_["AjaxHelper"].fetch({
-              method: 'Oauth2.deleteClient',
+              method: 'OAuth2.deleteClient',
               clientId: client.client_id
             }).then(response => {
               if (response.deleted) {
                 this.clients = this.clients.filter(c => c.client_id !== client.client_id);
-                const message = this.translate('Oauth2_AdminDeleted', client.client_id);
+                const message = this.translate('OAuth2_AdminDeleted', client.client_id);
                 this.showSuccessNotification('deleteClient', message);
               }
             });
@@ -492,16 +492,16 @@ var external_CoreHome_ = __webpack_require__("19dc");
     }
   }
 }));
-// CONCATENATED MODULE: ./plugins/Oauth2/vue/src/AdminApp.vue?vue&type=script&lang=ts
+// CONCATENATED MODULE: ./plugins/OAuth2/vue/src/AdminApp.vue?vue&type=script&lang=ts
  
-// CONCATENATED MODULE: ./plugins/Oauth2/vue/src/AdminApp.vue
+// CONCATENATED MODULE: ./plugins/OAuth2/vue/src/AdminApp.vue
 
 
 
 AdminAppvue_type_script_lang_ts.render = render
 
 /* harmony default export */ var AdminApp = (AdminAppvue_type_script_lang_ts);
-// CONCATENATED MODULE: ./plugins/Oauth2/vue/src/index.ts
+// CONCATENATED MODULE: ./plugins/OAuth2/vue/src/index.ts
 /*!
  * Matomo - free/libre analytics platform
  *
@@ -518,4 +518,4 @@ AdminAppvue_type_script_lang_ts.render = render
 
 /******/ });
 });
-//# sourceMappingURL=Oauth2.umd.js.map
+//# sourceMappingURL=OAuth2.umd.js.map
