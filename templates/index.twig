@@ -1,9 +1,9 @@
 {% extends 'admin.twig' %}
 
-{% set title %}{{ 'Oauth2_AdminHeading'|translate }}{% endset %}
+{% set title %}{{ 'OAuth2_AdminHeading'|translate }}{% endset %}
 
 {% block content %}
-    <div vue-entry="Oauth2.Oauth2AdminApp"
+    <div vue-entry="OAuth2.Oauth2AdminApp"
          initial-clients="{{ clients|json_encode|e('html_attr') }}"
          scopes="{{ scopes|json_encode|e('html_attr') }}"
     ></div>

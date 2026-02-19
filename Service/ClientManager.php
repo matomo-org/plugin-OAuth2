@@ -7,12 +7,12 @@
  * @license https://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
  */
 
-namespace Piwik\Plugins\Oauth2\Service;
+namespace Piwik\Plugins\OAuth2\Service;
 
-use Piwik\Plugins\Oauth2\Model\AccessTokenModel;
-use Piwik\Plugins\Oauth2\Model\AuthCodeModel;
-use Piwik\Plugins\Oauth2\Model\ClientModel;
-use Piwik\Plugins\Oauth2\Model\RefreshTokenModel;
+use Piwik\Plugins\OAuth2\Model\AccessTokenModel;
+use Piwik\Plugins\OAuth2\Model\AuthCodeModel;
+use Piwik\Plugins\OAuth2\Model\ClientModel;
+use Piwik\Plugins\OAuth2\Model\RefreshTokenModel;
 
 class ClientManager
 {

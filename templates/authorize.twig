@@ -7,8 +7,8 @@
 {% block body %}
     <div class="card">
         <div class="card-content">
-            <h2>{{ 'Oauth2_AuthorizeTitle'|translate(clientName) }}</h2>
-            <p>{{ 'Oauth2_AuthorizeIntro'|translate(clientName) }}</p>
+            <h2>{{ 'OAuth2_AuthorizeTitle'|translate(clientName) }}</h2>
+            <p>{{ 'OAuth2_AuthorizeIntro'|translate(clientName) }}</p>
 
             <div class="form-group">
                 <strong>{{ userLogin }}</strong>
@@ -16,7 +16,7 @@
             </div>
 
             <div class="form-group">
-                <h3>{{ 'Oauth2_RequestedScopes'|translate }}</h3>
+                <h3>{{ 'OAuth2_RequestedScopes'|translate }}</h3>
                 <ul>
                     {% for scope in scopes %}
                         <li><strong>{{ scope }}</strong>{% if scopeDescriptions[scope] %}: {{ scopeDescriptions[scope] }}{% endif %}</li>
@@ -25,8 +25,8 @@
             </div>
 
             <form method="post">
-                <button type="submit" class="btn" name="decision" value="allow">{{ 'Oauth2_Allow'|translate }}</button>
-                <button type="submit" class="btn" name="decision" value="deny">{{ 'Oauth2_Deny'|translate }}</button>
+                <button type="submit" class="btn" name="decision" value="allow">{{ 'OAuth2_Allow'|translate }}</button>
+                <button type="submit" class="btn" name="decision" value="deny">{{ 'OAuth2_Deny'|translate }}</button>
             </form>
         </div>
     </div>

@@ -14,7 +14,7 @@ This plugin adds a first-party OAuth2 authorization server to Matomo. It lets yo
 - **Scopes:** `matomo:read`, `matomo:write`, `matomo:admin`, `offline_access` (extendable).
 - **Keys & crypto:** Uses RSA private/public key pair (Lcobucci JWT via league/oauth2-server).
 - **UI:** Vue-powered admin screen for client CRUD + secret rotation.
-- **API endpoint:** `/index.php?module=Oauth2&action=token` (alias `/oauth2/token` if you add routing) for JSON token responses.
+- **API endpoint:** `/index.php?module=OAuth2&action=token` (alias `/oauth2/token` if you add routing) for JSON token responses.
 - **Resource server:** Bearer tokens accepted on Matomo API calls; sets current user context based on the token subject.
 
 ## Setup
@@ -40,9 +40,9 @@ chmod 600 config/oauth-private.key config/oauth-public.key
 
 4) **Authorize & obtain tokens**
 - **Authorization Code + PKCE:**
-  - Authorization endpoint: `/index.php?module=Oauth2&action=authorize` (add an alias `/oauth2/authorize` if desired).
+  - Authorization endpoint: `/index.php?module=OAuth2&action=authorize` (add an alias `/oauth2/authorize` if desired).
   - Include `response_type=code`, `client_id`, `redirect_uri`, `scope`, `state`, `code_challenge`, `code_challenge_method=S256`.
-  - On approval, exchange `code` at `/index.php?module=Oauth2&action=token` with `grant_type=authorization_code`, `code_verifier`, `redirect_uri`, and client auth (secret for confidential clients).
+  - On approval, exchange `code` at `/index.php?module=OAuth2&action=token` with `grant_type=authorization_code`, `code_verifier`, `redirect_uri`, and client auth (secret for confidential clients).
 - **Client Credentials:**
   - Token endpoint: `/index.php?module=Oauth2&action=token`
   - Body: `grant_type=client_credentials&scope=matomo:read` (or other allowed scopes).

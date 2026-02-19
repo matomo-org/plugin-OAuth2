@@ -7,7 +7,7 @@
  * @license https://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
  */
 
-namespace Piwik\Plugins\Oauth2;
+namespace Piwik\Plugins\OAuth2;
 
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7\Response;
@@ -15,10 +15,10 @@ use Nyholm\Psr7Server\ServerRequestCreator;
 use Piwik\Common;
 use Piwik\Piwik;
 use Piwik\Plugin\ControllerAdmin;
-use Piwik\Plugins\Oauth2\Entities\UserEntity;
-use Piwik\Plugins\Oauth2\Model\ClientModel;
-use Piwik\Plugins\Oauth2\Repositories\ScopeRepository;
-use Piwik\Plugins\Oauth2\Service\ServerFactory;
+use Piwik\Plugins\OAuth2\Entities\UserEntity;
+use Piwik\Plugins\OAuth2\Model\ClientModel;
+use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
+use Piwik\Plugins\OAuth2\Service\ServerFactory;
 use Piwik\Plugins\UsersManager\Model as UserModel;
 use Piwik\Request;
 use Psr\Http\Message\ResponseInterface;
