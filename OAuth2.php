@@ -7,7 +7,7 @@
  * @license https://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
  */
 
-namespace Piwik\Plugins\Oauth2;
+namespace Piwik\Plugins\OAuth2;
 
 use Piwik\Access;
 use Piwik\Container\StaticContainer;
@@ -16,11 +16,11 @@ use Piwik\Db;
 use Piwik\DbHelper;
 use Piwik\Exception\NoPrivilegesException;
 use Piwik\Plugin;
-use Piwik\Plugins\Oauth2\Auth\Oauth2Auth;
-use Piwik\Plugins\Oauth2\Auth\ResourceServerAuthenticator;
+use Piwik\Plugins\OAuth2\Auth\Oauth2Auth;
+use Piwik\Plugins\OAuth2\Auth\ResourceServerAuthenticator;
 use Piwik\Request\AuthenticationToken;
 
-class Oauth2 extends Plugin
+class OAuth2 extends Plugin
 {
     public function registerEvents()
     {
@@ -36,7 +36,8 @@ class Oauth2 extends Plugin
     public function onApiAuthenticate($tokenAuth)
     {
         // handled in Authentication listener class to keep plugin wiring contained
-        $hasBearer = !empty($_SERVER['HTTP_AUTHORIZATION']) && strpos($_SERVER['HTTP_AUTHORIZATION'], 'Bearer ') === 0;
+        $headers = getallheaders();
+        $hasBearer = !empty($headers['Authorization']) && strpos($headers['Authorization'], 'Bearer ') === 0;
         $hasAccessToken = !empty($_POST['access_token']);
         if ($hasBearer || $hasAccessToken) {
             $incomingToken = $tokenAuth ?: ($_POST['access_token'] ?? null);
@@ -77,55 +78,55 @@ class Oauth2 extends Plugin
 
     public function getClientSideTranslationKeys(&$translationKeys)
     {
-        $translationKeys[] = 'Oauth2_PlatformMenu';
-        $translationKeys[] = 'Oauth2_AuthorizeTitle';
-        $translationKeys[] = 'Oauth2_AuthorizeIntro';
-        $translationKeys[] = 'Oauth2_RequestedScopes';
-        $translationKeys[] = 'Oauth2_Allow';
-        $translationKeys[] = 'Oauth2_Deny';
-        $translationKeys[] = 'Oauth2_AdminHeading';
-        $translationKeys[] = 'Oauth2_AdminClients';
-        $translationKeys[] = 'Oauth2_AdminNoClients';
-        $translationKeys[] = 'Oauth2_AdminClientId';
-        $translationKeys[] = 'Oauth2_AdminClientCreatedAt';
-        $translationKeys[] = 'Oauth2_AdminClientType';
-        $translationKeys[] = 'Oauth2_AdminClientGrants';
-        $translationKeys[] = 'Oauth2_AdminClientRedirects';
-        $translationKeys[] = 'Oauth2_AdminClientStatus';
-        $translationKeys[] = 'Oauth2_AdminClientActions';
-        $translationKeys[] = 'Oauth2_AdminActive';
-        $translationKeys[] = 'Oauth2_AdminDisabled';
-        $translationKeys[] = 'Oauth2_AdminRotateSecret';
-        $translationKeys[] = 'Oauth2_AdminDelete';
-        $translationKeys[] = 'Oauth2_AdminCreateTitle';
-        $translationKeys[] = 'Oauth2_AdminName';
-        $translationKeys[] = 'Oauth2_AdminDescription';
-        $translationKeys[] = 'Oauth2_AdminType';
-        $translationKeys[] = 'Oauth2_AdminConfidential';
-        $translationKeys[] = 'Oauth2_AdminPublic';
-        $translationKeys[] = 'Oauth2_AdminGrantAuthorizationCode';
-        $translationKeys[] = 'Oauth2_AdminGrantClientCredentials';
-        $translationKeys[] = 'Oauth2_AdminGrantRefreshToken';
-        $translationKeys[] = 'Oauth2_AdminScopes';
-        $translationKeys[] = 'Oauth2_AdminRedirectUris';
-        $translationKeys[] = 'Oauth2_AdminActiveLabel';
-        $translationKeys[] = 'Oauth2_AdminSave';
-        $translationKeys[] = 'Oauth2_AdminSecretMessage';
-        $translationKeys[] = 'Oauth2_AdminSecretHelp';
-        $translationKeys[] = 'Oauth2_AdminCreated';
-        $translationKeys[] = 'Oauth2_AdminRotated';
-        $translationKeys[] = 'Oauth2_AdminDeleted';
-        $translationKeys[] = 'Oauth2_AdminLoading';
-        $translationKeys[] = 'Oauth2_AdminDeleteConfirm';
-        $translationKeys[] = 'Oauth2_AdminRotateConfirm';
-        $translationKeys[] = 'Oauth2_AdminClientsDescriptions';
-        $translationKeys[] = 'Oauth2_AdminNameHelp';
-        $translationKeys[] = 'Oauth2_AdminDescriptionHelp';
-        $translationKeys[] = 'Oauth2_AdminTypeHelp';
-        $translationKeys[] = 'Oauth2_AdminGrantTypesHelp';
-        $translationKeys[] = 'Oauth2_AdminScopesHelp';
-        $translationKeys[] = 'Oauth2_AdminRedirectUrisHelp';
-        $translationKeys[] = 'Oauth2_AdminActiveHelp';
+        $translationKeys[] = 'OAuth2_PlatformMenu';
+        $translationKeys[] = 'OAuth2_AuthorizeTitle';
+        $translationKeys[] = 'OAuth2_AuthorizeIntro';
+        $translationKeys[] = 'OAuth2_RequestedScopes';
+        $translationKeys[] = 'OAuth2_Allow';
+        $translationKeys[] = 'OAuth2_Deny';
+        $translationKeys[] = 'OAuth2_AdminHeading';
+        $translationKeys[] = 'OAuth2_AdminClients';
+        $translationKeys[] = 'OAuth2_AdminNoClients';
+        $translationKeys[] = 'OAuth2_AdminClientId';
+        $translationKeys[] = 'OAuth2_AdminClientCreatedAt';
+        $translationKeys[] = 'OAuth2_AdminClientType';
+        $translationKeys[] = 'OAuth2_AdminClientGrants';
+        $translationKeys[] = 'OAuth2_AdminClientRedirects';
+        $translationKeys[] = 'OAuth2_AdminClientStatus';
+        $translationKeys[] = 'OAuth2_AdminClientActions';
+        $translationKeys[] = 'OAuth2_AdminActive';
+        $translationKeys[] = 'OAuth2_AdminDisabled';
+        $translationKeys[] = 'OAuth2_AdminRotateSecret';
+        $translationKeys[] = 'OAuth2_AdminDelete';
+        $translationKeys[] = 'OAuth2_AdminCreateTitle';
+        $translationKeys[] = 'OAuth2_AdminName';
+        $translationKeys[] = 'OAuth2_AdminDescription';
+        $translationKeys[] = 'OAuth2_AdminType';
+        $translationKeys[] = 'OAuth2_AdminConfidential';
+        $translationKeys[] = 'OAuth2_AdminPublic';
+        $translationKeys[] = 'OAuth2_AdminGrantAuthorizationCode';
+        $translationKeys[] = 'OAuth2_AdminGrantClientCredentials';
+        $translationKeys[] = 'OAuth2_AdminGrantRefreshToken';
+        $translationKeys[] = 'OAuth2_AdminScopes';
+        $translationKeys[] = 'OAuth2_AdminRedirectUris';
+        $translationKeys[] = 'OAuth2_AdminActiveLabel';
+        $translationKeys[] = 'OAuth2_AdminSave';
+        $translationKeys[] = 'OAuth2_AdminSecretMessage';
+        $translationKeys[] = 'OAuth2_AdminSecretHelp';
+        $translationKeys[] = 'OAuth2_AdminCreated';
+        $translationKeys[] = 'OAuth2_AdminRotated';
+        $translationKeys[] = 'OAuth2_AdminDeleted';
+        $translationKeys[] = 'OAuth2_AdminLoading';
+        $translationKeys[] = 'OAuth2_AdminDeleteConfirm';
+        $translationKeys[] = 'OAuth2_AdminRotateConfirm';
+        $translationKeys[] = 'OAuth2_AdminClientsDescriptions';
+        $translationKeys[] = 'OAuth2_AdminNameHelp';
+        $translationKeys[] = 'OAuth2_AdminDescriptionHelp';
+        $translationKeys[] = 'OAuth2_AdminTypeHelp';
+        $translationKeys[] = 'OAuth2_AdminGrantTypesHelp';
+        $translationKeys[] = 'OAuth2_AdminScopesHelp';
+        $translationKeys[] = 'OAuth2_AdminRedirectUrisHelp';
+        $translationKeys[] = 'OAuth2_AdminActiveHelp';
     }
 
     public function getTablesInstalled(&$allTablesInstalled)

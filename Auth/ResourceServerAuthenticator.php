@@ -7,13 +7,14 @@
  * @license https://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
  */
 
-namespace Piwik\Plugins\Oauth2\Auth;
+namespace Piwik\Plugins\OAuth2\Auth;
 
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7Server\ServerRequestCreator;
+use Piwik\Access;
 use Piwik\Container\StaticContainer;
-use Piwik\Plugins\Oauth2\Model\ClientModel;
-use Piwik\Plugins\Oauth2\Service\ServerFactory;
+use Piwik\Plugins\OAuth2\Model\ClientModel;
+use Piwik\Plugins\OAuth2\Service\ServerFactory;
 use Piwik\Plugins\UsersManager\Model as UserModel;
 use Psr\Http\Message\ServerRequestInterface;
 use League\OAuth2\Server\Exception\OAuthServerException;
@@ -66,12 +67,14 @@ class ResourceServerAuthenticator
         }
 
         $hasAdminScope = in_array('matomo:superuser', $scopes, true);
-        $isSuperUser = !empty($user['superuser_access']) && $hasAdminScope;
+        $isSuperUser = !empty($user['superuser_access']);
 
+        $auth = new Oauth2Auth($login, $isSuperUser, $tokenId, $clientId, (array) $scopes);
         StaticContainer::getContainer()->set(
             'Piwik\Auth',
-            new Oauth2Auth($login, $isSuperUser, $tokenId, $clientId, (array) $scopes)
+            $auth
         );
+        Access::getInstance()->reloadAccess($auth);
     }
 
     private function buildRequest(?string $tokenAuth): ServerRequestInterface

@@ -7,12 +7,12 @@
  * @license https://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
  */
 
-namespace Piwik\Plugins\Oauth2\Repositories;
+namespace Piwik\Plugins\OAuth2\Repositories;
 
 use League\OAuth2\Server\Entities\ClientEntityInterface;
 use League\OAuth2\Server\Repositories\ClientRepositoryInterface;
-use Piwik\Plugins\Oauth2\Entities\ClientEntity;
-use Piwik\Plugins\Oauth2\Model\ClientModel;
+use Piwik\Plugins\OAuth2\Entities\ClientEntity;
+use Piwik\Plugins\OAuth2\Model\ClientModel;
 
 class ClientRepository implements ClientRepositoryInterface
 {

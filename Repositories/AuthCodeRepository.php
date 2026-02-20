@@ -7,13 +7,13 @@
  * @license https://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
  */
 
-namespace Piwik\Plugins\Oauth2\Repositories;
+namespace Piwik\Plugins\OAuth2\Repositories;
 
 use League\OAuth2\Server\Entities\AuthCodeEntityInterface;
 use League\OAuth2\Server\Entities\ScopeEntityInterface;
 use League\OAuth2\Server\Repositories\AuthCodeRepositoryInterface;
-use Piwik\Plugins\Oauth2\Entities\AuthCodeEntity;
-use Piwik\Plugins\Oauth2\Model\AuthCodeModel;
+use Piwik\Plugins\OAuth2\Entities\AuthCodeEntity;
+use Piwik\Plugins\OAuth2\Model\AuthCodeModel;
 
 class AuthCodeRepository implements AuthCodeRepositoryInterface
 {
