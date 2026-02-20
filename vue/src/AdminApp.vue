@@ -234,13 +234,14 @@ export default defineComponent({
     },
   },
   watch: {
-    'form.type': function (newType: string) {
+    'form.type': 'onFormTypeChange',
+  },
+  methods: {
+    onFormTypeChange(newType: string) {
       if (newType === 'public' && this.form.grant_types.includes('client_credentials')) {
         this.form.grant_types = this.form.grant_types.filter((value: string) => value !== 'client_credentials');
       }
     },
-  },
-  methods: {
     showSuccessNotification(method: string, message: string) {
       const instanceId = NotificationsStore.show({
         id: `OAuth2_${method}`,

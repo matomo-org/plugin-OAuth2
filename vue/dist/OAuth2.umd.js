@@ -146,7 +146,7 @@ if (typeof window !== 'undefined') {
 // EXTERNAL MODULE: external {"commonjs":"vue","commonjs2":"vue","root":"Vue"}
 var external_commonjs_vue_commonjs2_vue_root_Vue_ = __webpack_require__("8bbf");
 
-// CONCATENATED MODULE: ./node_modules/@vue/cli-plugin-babel/node_modules/cache-loader/dist/cjs.js??ref--13-0!./node_modules/@vue/cli-plugin-babel/node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist/templateLoader.js??ref--6!./node_modules/@vue/cli-service/node_modules/cache-loader/dist/cjs.js??ref--1-0!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist??ref--1-1!./plugins/OAuth2/vue/src/AdminApp.vue?vue&type=template&id=f1f74bcc
+// CONCATENATED MODULE: ./node_modules/@vue/cli-plugin-babel/node_modules/cache-loader/dist/cjs.js??ref--13-0!./node_modules/@vue/cli-plugin-babel/node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist/templateLoader.js??ref--6!./node_modules/@vue/cli-service/node_modules/cache-loader/dist/cjs.js??ref--1-0!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist??ref--1-1!./plugins/OAuth2/vue/src/AdminApp.vue?vue&type=template&id=0aad7e4c
 
 const _hoisted_1 = {
   class: "oauth2-admin"
@@ -321,7 +321,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1
   }, 8, ["content-title"])]);
 }
-// CONCATENATED MODULE: ./plugins/OAuth2/vue/src/AdminApp.vue?vue&type=template&id=f1f74bcc
+// CONCATENATED MODULE: ./plugins/OAuth2/vue/src/AdminApp.vue?vue&type=template&id=0aad7e4c
 
 // EXTERNAL MODULE: external "CorePluginsAdmin"
 var external_CorePluginsAdmin_ = __webpack_require__("a5a2");
@@ -395,13 +395,14 @@ var external_CoreHome_ = __webpack_require__("19dc");
     }
   },
   watch: {
-    'form.type': function (newType) {
+    'form.type': 'onFormTypeChange'
+  },
+  methods: {
+    onFormTypeChange(newType) {
       if (newType === 'public' && this.form.grant_types.includes('client_credentials')) {
         this.form.grant_types = this.form.grant_types.filter(value => value !== 'client_credentials');
       }
-    }
-  },
-  methods: {
+    },
     showSuccessNotification(method, message) {
       const instanceId = external_CoreHome_["NotificationsStore"].show({
         id: `OAuth2_${method}`,
