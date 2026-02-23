@@ -31,7 +31,8 @@ class ResourceServerAuthenticator
     public function prepareAuthenticationFromToken(?string $tokenAuth): void
     {
         $tokenAuth = $tokenAuth ?: ($_POST['access_token'] ?? null);
-        $hasAuthorizationHeader = !empty($_SERVER['HTTP_AUTHORIZATION']) && stripos($_SERVER['HTTP_AUTHORIZATION'], 'Bearer ') === 0;
+        $headers = getallheaders();
+        $hasAuthorizationHeader = !empty($headers['Authorization']) && strpos($headers['Authorization'], 'Bearer ') === 0;
 
         if (!$hasAuthorizationHeader && empty($tokenAuth)) {
             return;
