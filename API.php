@@ -7,13 +7,13 @@
  * @license https://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
  */
 
-namespace Piwik\Plugins\Oauth2;
+namespace Piwik\Plugins\OAuth2;
 
 use League\OAuth2\Server\RedirectUriValidators\RedirectUriValidator;
 use Piwik\Piwik;
-use Piwik\Plugins\Oauth2\Repositories\ScopeRepository;
-use Piwik\Plugins\Oauth2\Service\ClientManager;
-use Piwik\Plugins\Oauth2\Model\ClientModel;
+use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
+use Piwik\Plugins\OAuth2\Service\ClientManager;
+use Piwik\Plugins\OAuth2\Model\ClientModel;
 
 class API extends \Piwik\Plugin\API
 {

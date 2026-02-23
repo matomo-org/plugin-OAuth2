@@ -7,11 +7,11 @@
  * @license https://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
  */
 
-namespace Piwik\Plugins\Oauth2\Activity;
+namespace Piwik\Plugins\OAuth2\Activity;
 
-class RotateClient extends BaseActivity
+class RotateSecret extends BaseActivity
 {
-    protected $eventName = 'API.Oauth2.rotateClient.end';
+    protected $eventName = 'API.OAuth2.rotateSecret.end';
 
     public function extractParams($eventData)
     {
