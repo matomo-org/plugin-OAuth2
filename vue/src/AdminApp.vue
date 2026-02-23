@@ -70,10 +70,6 @@
               : translate('OAuth2_AdminDisabled') }}
           </td>
           <td>
-            {{ client.active ? translate('OAuth2_AdminActive')
-              : translate('OAuth2_AdminDisabled') }}
-          </td>
-          <td>
             <button class="table-action icon-refresh" @click.prevent="rotateSecret(client)"
                     :title="translate('OAuth2_AdminRotateSecret')"></button>
             <button class="table-action icon-delete" @click.prevent="deleteClient(client)"
