@@ -38,7 +38,7 @@ class Oauth2Auth implements Auth
 
     public function getName()
     {
-        return 'Oauth2';
+        return 'OAuth2';
     }
 
     public function setTokenAuth(

@@ -11,7 +11,7 @@ namespace Piwik\Plugins\OAuth2\Activity;
 
 class DeleteClient extends BaseActivity
 {
-    protected $eventName = 'API.Oauth2.deleteClient.end';
+    protected $eventName = 'API.OAuth2.deleteClient.end';
 
     public function extractParams($eventData)
     {

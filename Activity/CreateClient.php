@@ -11,7 +11,7 @@ namespace Piwik\Plugins\OAuth2\Activity;
 
 class CreateClient extends BaseActivity
 {
-    protected $eventName = 'API.Oauth2.createClient.end';
+    protected $eventName = 'API.OAuth2.createClient.end';
 
     public function extractParams($eventData)
     {
