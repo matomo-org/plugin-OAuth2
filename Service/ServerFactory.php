@@ -123,7 +123,7 @@ class ServerFactory
 
     private function getEncryptionKey(): string
     {
-        $key = (string) $this->settings->encryptionKey->getValue();
+        $key = (string) OAuth2::getEncryptionKey();
         if ($key === '') {
             throw new \RuntimeException('OAuth2 encryption key is not configured.');
         }

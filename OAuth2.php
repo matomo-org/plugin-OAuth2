@@ -30,6 +30,7 @@ class OAuth2 extends Plugin
     public const PUBLIC_KEY_FILE_NAME = 'oauth-public.key';
     public const OAUTH2_PRIVATE_OPTION_KEY = 'oauth2_private';
     public const OAUTH2_PUBLIC_OPTION_KEY = 'oauth2_public';
+    public const OAUTH2_ENCRYPTION_OPTION_KEY = 'oauth2_encryption';
     public function registerEvents()
     {
         return [
@@ -147,12 +148,8 @@ class OAuth2 extends Plugin
 
     public function activate()
     {
-        $systemSettings = StaticContainer::get(SystemSettings::class);
-        if (!$systemSettings->encryptionKey->getValue()) {
-            $systemSettings->encryptionKey = base64_encode(random_bytes(32));
-            $systemSettings->save();
-        }
         $this->setupRSAKeys();
+        $this->setEncryptionKey();
     }
 
     public function install()
@@ -226,7 +223,11 @@ class OAuth2 extends Plugin
         }
     }
 
-    public static function getRSAKey($type = 'private')
+    /**
+     * @param $type
+     * @return string
+     */
+    public static function getRSAKey($type = 'private'): string
     {
         $configPath = PIWIK_USER_PATH . '/config/';
         $fileName = self::PRIVATE_KEY_FILE_NAME;
@@ -244,7 +245,20 @@ class OAuth2 extends Plugin
         return $optionValue ?? '';
     }
 
-    private function setupRSAKeys()
+    /**
+     * @return string
+     */
+    public static function getEncryptionKey(): string
+    {
+        $value = Option::get(self::OAUTH2_ENCRYPTION_OPTION_KEY);
+
+        return $value ?? '';
+    }
+
+    /**
+     * @return void
+     */
+    private function setupRSAKeys(): void
     {
         $configPath = PIWIK_USER_PATH . '/config/';
         if (file_exists($configPath . self::PRIVATE_KEY_FILE_NAME) && file_exists($configPath . self::PUBLIC_KEY_FILE_NAME)) {
@@ -271,6 +285,18 @@ class OAuth2 extends Plugin
             // Add tdo db
             Option::set(self::OAUTH2_PRIVATE_OPTION_KEY, $privateKey);
             Option::set(self::OAUTH2_PUBLIC_OPTION_KEY, $publicKey);
+        }
+    }
+
+    /**
+     * @return void
+     * @throws \Random\RandomException
+     */
+    private function setEncryptionKey(): void
+    {
+        $value = Option::get(self::OAUTH2_ENCRYPTION_OPTION_KEY);
+        if (!$value) {
+            Option::set(self::OAUTH2_ENCRYPTION_OPTION_KEY, base64_encode(random_bytes(32)));
         }
     }
 }
