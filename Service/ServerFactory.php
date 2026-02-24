@@ -16,6 +16,7 @@ use League\OAuth2\Server\Grant\AuthCodeGrant;
 use League\OAuth2\Server\Grant\ClientCredentialsGrant;
 use League\OAuth2\Server\Grant\RefreshTokenGrant;
 use League\OAuth2\Server\ResourceServer;
+use Piwik\Plugins\OAuth2\OAuth2;
 use Piwik\Plugins\OAuth2\Repositories\AccessTokenRepository;
 use Piwik\Plugins\OAuth2\Repositories\AuthCodeRepository;
 use Piwik\Plugins\OAuth2\Repositories\ClientRepository;
@@ -49,7 +50,7 @@ class ServerFactory
             $this->clientRepository,
             $this->accessTokenRepository,
             $this->scopeRepository,
-            new CryptKey($this->settings->privateKeyPath->getValue(), null, true),
+            new CryptKey(OAuth2::getRSAKey('private'), null, true),
             $this->getEncryptionKey()
         );
 
@@ -93,7 +94,7 @@ class ServerFactory
 
         $this->resourceServer = new ResourceServer(
             $this->accessTokenRepository,
-            new CryptKey($this->settings->publicKeyPath->getValue(), null, true)
+            new CryptKey(OAuth2::getRSAKey('public'), null, true)
         );
 
         return $this->resourceServer;

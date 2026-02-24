@@ -10,11 +10,14 @@
 namespace Piwik\Plugins\OAuth2;
 
 use Piwik\Access;
+use Piwik\Config;
 use Piwik\Container\StaticContainer;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\DbHelper;
 use Piwik\Exception\NoPrivilegesException;
+use Piwik\Option;
+use Piwik\Piwik;
 use Piwik\Plugin;
 use Piwik\Plugins\OAuth2\Auth\Oauth2Auth;
 use Piwik\Plugins\OAuth2\Auth\ResourceServerAuthenticator;
@@ -22,6 +25,11 @@ use Piwik\Request\AuthenticationToken;
 
 class OAuth2 extends Plugin
 {
+
+    public const PRIVATE_KEY_FILE_NAME = 'oauth-private.key';
+    public const PUBLIC_KEY_FILE_NAME = 'oauth-public.key';
+    public const OAUTH2_PRIVATE_OPTION_KEY = 'oauth2_private';
+    public const OAUTH2_PUBLIC_OPTION_KEY = 'oauth2_public';
     public function registerEvents()
     {
         return [
@@ -137,6 +145,16 @@ class OAuth2 extends Plugin
         $allTablesInstalled[] = Common::prefixTable('oauth2_auth_code');
     }
 
+    public function activate()
+    {
+        $systemSettings = StaticContainer::get(SystemSettings::class);
+        if (!$systemSettings->encryptionKey->getValue()) {
+            $systemSettings->encryptionKey = base64_encode(random_bytes(32));
+            $systemSettings->save();
+        }
+        $this->setupRSAKeys();
+    }
+
     public function install()
     {
         DbHelper::createTable(
@@ -205,6 +223,54 @@ class OAuth2 extends Plugin
     {
         foreach (['oauth2_auth_code', 'oauth2_refresh_token', 'oauth2_access_token', 'oauth2_client'] as $table) {
             Db::query('DROP TABLE IF EXISTS ' . Common::prefixTable($table));
+        }
+    }
+
+    public static function getRSAKey($type = 'private')
+    {
+        $configPath = PIWIK_USER_PATH . '/config/';
+        $fileName = self::PRIVATE_KEY_FILE_NAME;
+        $optionKey = self::OAUTH2_PRIVATE_OPTION_KEY;
+        if ($type !== 'private') {
+            $fileName = self::PUBLIC_KEY_FILE_NAME;
+            $optionKey = self::OAUTH2_PUBLIC_OPTION_KEY;
+        }
+        if (file_exists($configPath . $fileName)) {
+            return file_get_contents($configPath . $fileName);
+        }
+
+        $optionValue = Option::get($optionKey);
+
+        return $optionValue ?? '';
+    }
+
+    private function setupRSAKeys()
+    {
+        $configPath = PIWIK_USER_PATH . '/config/';
+        if (file_exists($configPath . self::PRIVATE_KEY_FILE_NAME) && file_exists($configPath . self::PUBLIC_KEY_FILE_NAME)) {
+            return;
+        }
+        $config = [
+            "private_key_bits" => 4096,
+            "private_key_type" => OPENSSL_KEYTYPE_RSA,
+        ];
+
+        $res = openssl_pkey_new($config);
+        if ($res === false) {
+            return;
+        }
+        openssl_pkey_export($res, $privateKey);
+        $publicKeyDetails = openssl_pkey_get_details($res);
+        $publicKey = $publicKeyDetails['key'];
+        if (
+            !file_put_contents($configPath . self::PRIVATE_KEY_FILE_NAME, $privateKey)
+            || !file_put_contents($configPath . self::PUBLIC_KEY_FILE_NAME, $publicKey)
+            || !chmod($configPath . self::PRIVATE_KEY_FILE_NAME, 0600)
+            || !chmod($configPath . self::PUBLIC_KEY_FILE_NAME, 0600)
+        ) {
+            // Add tdo db
+            Option::set(self::OAUTH2_PRIVATE_OPTION_KEY, $privateKey);
+            Option::set(self::OAUTH2_PUBLIC_OPTION_KEY, $publicKey);
         }
     }
 }
