@@ -10,18 +10,15 @@
 namespace Piwik\Plugins\OAuth2;
 
 use Piwik\Access;
-use Piwik\Config;
 use Piwik\Container\StaticContainer;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\DbHelper;
 use Piwik\Exception\NoPrivilegesException;
 use Piwik\Option;
-use Piwik\Piwik;
 use Piwik\Plugin;
 use Piwik\Plugins\OAuth2\Auth\Oauth2Auth;
 use Piwik\Plugins\OAuth2\Auth\ResourceServerAuthenticator;
-use Piwik\Request\AuthenticationToken;
 
 class OAuth2 extends Plugin
 {
@@ -148,8 +145,8 @@ class OAuth2 extends Plugin
 
     public function activate()
     {
-        $this->setupRSAKeys();
-        $this->setEncryptionKey();
+        self::setupRSAKeys();
+        self::setEncryptionKey();
     }
 
     public function install()
@@ -229,16 +226,7 @@ class OAuth2 extends Plugin
      */
     public static function getRSAKey($type = 'private'): string
     {
-        $configPath = PIWIK_USER_PATH . '/config/';
-        $fileName = self::PRIVATE_KEY_FILE_NAME;
-        $optionKey = self::OAUTH2_PRIVATE_OPTION_KEY;
-        if ($type !== 'private') {
-            $fileName = self::PUBLIC_KEY_FILE_NAME;
-            $optionKey = self::OAUTH2_PUBLIC_OPTION_KEY;
-        }
-        if (file_exists($configPath . $fileName)) {
-            return file_get_contents($configPath . $fileName);
-        }
+        $optionKey = $type === 'private' ? self::OAUTH2_PRIVATE_OPTION_KEY : self::OAUTH2_PUBLIC_OPTION_KEY;
 
         $optionValue = Option::get($optionKey);
 
@@ -256,13 +244,21 @@ class OAuth2 extends Plugin
     }
 
     /**
-     * @return void
+     * @param $isForce
+     * @return bool
      */
-    private function setupRSAKeys(): void
+    public static function setupRSAKeys($isForce = false): bool
     {
-        $configPath = PIWIK_USER_PATH . '/config/';
-        if (file_exists($configPath . self::PRIVATE_KEY_FILE_NAME) && file_exists($configPath . self::PUBLIC_KEY_FILE_NAME)) {
-            return;
+        $privateKeyValue = Option::get(self::OAUTH2_PRIVATE_OPTION_KEY);
+        $publicKeyValue = Option::get(self::OAUTH2_PUBLIC_OPTION_KEY);
+        if (
+            (!empty($publicKeyValue) && !empty($privateKeyValue) && !$isForce)
+            || !defined('OPENSSL_KEYTYPE_RSA')
+            || !function_exists('openssl_pkey_new')
+            || !function_exists('openssl_pkey_export')
+            || !function_exists('openssl_pkey_get_details')
+        ) {
+            return false;
         }
         $config = [
             "private_key_bits" => 4096,
@@ -271,31 +267,26 @@ class OAuth2 extends Plugin
 
         $res = openssl_pkey_new($config);
         if ($res === false) {
-            return;
+            return false;
         }
         openssl_pkey_export($res, $privateKey);
         $publicKeyDetails = openssl_pkey_get_details($res);
         $publicKey = $publicKeyDetails['key'];
-        if (
-            !file_put_contents($configPath . self::PRIVATE_KEY_FILE_NAME, $privateKey)
-            || !file_put_contents($configPath . self::PUBLIC_KEY_FILE_NAME, $publicKey)
-            || !chmod($configPath . self::PRIVATE_KEY_FILE_NAME, 0600)
-            || !chmod($configPath . self::PUBLIC_KEY_FILE_NAME, 0600)
-        ) {
-            // Add tdo db
-            Option::set(self::OAUTH2_PRIVATE_OPTION_KEY, $privateKey);
-            Option::set(self::OAUTH2_PUBLIC_OPTION_KEY, $publicKey);
-        }
+        Option::set(self::OAUTH2_PRIVATE_OPTION_KEY, $privateKey);
+        Option::set(self::OAUTH2_PUBLIC_OPTION_KEY, $publicKey);
+
+        return true;
     }
 
     /**
+     * @param $isForce
      * @return void
      * @throws \Random\RandomException
      */
-    private function setEncryptionKey(): void
+    public static function setEncryptionKey($isForce = false): void
     {
         $value = Option::get(self::OAUTH2_ENCRYPTION_OPTION_KEY);
-        if (!$value) {
+        if (!$value || $isForce) {
             Option::set(self::OAUTH2_ENCRYPTION_OPTION_KEY, base64_encode(random_bytes(32)));
         }
     }
