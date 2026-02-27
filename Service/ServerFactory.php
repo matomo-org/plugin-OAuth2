@@ -16,12 +16,14 @@ use League\OAuth2\Server\Grant\AuthCodeGrant;
 use League\OAuth2\Server\Grant\ClientCredentialsGrant;
 use League\OAuth2\Server\Grant\RefreshTokenGrant;
 use League\OAuth2\Server\ResourceServer;
+use Piwik\Plugins\OAuth2\OAuth2;
 use Piwik\Plugins\OAuth2\Repositories\AccessTokenRepository;
 use Piwik\Plugins\OAuth2\Repositories\AuthCodeRepository;
 use Piwik\Plugins\OAuth2\Repositories\ClientRepository;
 use Piwik\Plugins\OAuth2\Repositories\RefreshTokenRepository;
 use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
 use Piwik\Plugins\OAuth2\SystemSettings;
+use Piwik\Plugins\OAuth2\Service\MatomoAuthCodeGrant;
 
 class ServerFactory
 {
@@ -48,20 +50,24 @@ class ServerFactory
             $this->clientRepository,
             $this->accessTokenRepository,
             $this->scopeRepository,
-            new CryptKey($this->settings->privateKeyPath->getValue(), null, false),
+            new CryptKey(OAuth2::getRSAKey('private'), null, true),
             $this->getEncryptionKey()
         );
 
         $accessTokenTtl = $this->getAccessTokenTtl();
         $refreshTokenTtl = $this->getRefreshTokenTtl();
+        $refreshTokensEnabled = $this->settings->enableRefreshTokens->getValue();
 
         if ($this->settings->enableAuthorizationCode->getValue()) {
-            $grant = new AuthCodeGrant(
+            $grant = new MatomoAuthCodeGrant(
                 $this->authCodeRepository,
                 $this->refreshTokenRepository,
-                $this->getAuthCodeTtl()
+                $this->getAuthCodeTtl(),
+                $refreshTokensEnabled
             );
-            $grant->setRefreshTokenTTL($refreshTokenTtl);
+            if ($refreshTokensEnabled) {
+                $grant->setRefreshTokenTTL($refreshTokenTtl);
+            }
             $server->enableGrantType($grant, $accessTokenTtl);
         }
 
@@ -69,7 +75,7 @@ class ServerFactory
             $server->enableGrantType(new ClientCredentialsGrant(), $accessTokenTtl);
         }
 
-        if ($this->settings->enableRefreshTokens->getValue()) {
+        if ($refreshTokensEnabled) {
             $grant = new RefreshTokenGrant($this->refreshTokenRepository);
             $grant->setRefreshTokenTTL($refreshTokenTtl);
             $server->enableGrantType($grant, $accessTokenTtl);
@@ -88,7 +94,7 @@ class ServerFactory
 
         $this->resourceServer = new ResourceServer(
             $this->accessTokenRepository,
-            new CryptKey($this->settings->publicKeyPath->getValue(), null, false)
+            new CryptKey(OAuth2::getRSAKey('public'), null, true)
         );
 
         return $this->resourceServer;
@@ -117,7 +123,7 @@ class ServerFactory
 
     private function getEncryptionKey(): string
     {
-        $key = (string) $this->settings->encryptionKey->getValue();
+        $key = (string) OAuth2::getEncryptionKey();
         if ($key === '') {
             throw new \RuntimeException('OAuth2 encryption key is not configured.');
         }

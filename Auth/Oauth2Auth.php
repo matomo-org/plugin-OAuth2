@@ -14,7 +14,10 @@ use Piwik\AuthResult;
 
 class Oauth2Auth implements Auth
 {
-    private string $login;
+    /**
+     * @var string
+     */
+    private $login;
 
     private bool $isSuperUser;
 
@@ -35,7 +38,7 @@ class Oauth2Auth implements Auth
 
     public function getName()
     {
-        return 'Oauth2';
+        return 'OAuth2';
     }
 
     public function setTokenAuth(

@@ -75,6 +75,8 @@ class API extends \Piwik\Plugin\API
     {
         Piwik::checkUserHasSuperUserAccess();
 
+        $type = $type === 'public' ? 'public' : 'confidential';
+
         $redirects = is_array($redirectUris) ? $redirectUris : preg_split('/[\r\n]+/', (string) $redirectUris);
         if ($redirects === false) {
             $redirects = [];
@@ -85,6 +87,10 @@ class API extends \Piwik\Plugin\API
 
         $grantTypes = array_values(array_filter(array_map('trim', (array) $grantTypes), static fn($v) => $v !== ''));
         $grantTypes = $this->validateGrantTypes($grantTypes);
+
+        if ($type === 'public' && in_array('client_credentials', $grantTypes, true)) {
+            throw new \InvalidArgumentException('Public clients cannot use the client_credentials grant type');
+        }
 
         $scopes = array_values(array_intersect((array) $scopes, $this->scopeRepository->getAllowedScopeIds()));
 

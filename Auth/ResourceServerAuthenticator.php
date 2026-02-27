@@ -11,6 +11,7 @@ namespace Piwik\Plugins\OAuth2\Auth;
 
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7Server\ServerRequestCreator;
+use Piwik\Access;
 use Piwik\Container\StaticContainer;
 use Piwik\Plugins\OAuth2\Model\ClientModel;
 use Piwik\Plugins\OAuth2\Service\ServerFactory;
@@ -29,7 +30,11 @@ class ResourceServerAuthenticator
 
     public function prepareAuthenticationFromToken(?string $tokenAuth): void
     {
-        if (empty($tokenAuth)) {
+        $tokenAuth = $tokenAuth ?: ($_POST['access_token'] ?? null);
+        $headers = getallheaders();
+        $hasAuthorizationHeader = !empty($headers['Authorization']) && strpos($headers['Authorization'], 'Bearer ') === 0;
+
+        if (!$hasAuthorizationHeader && empty($tokenAuth)) {
             return;
         }
 
@@ -45,7 +50,7 @@ class ResourceServerAuthenticator
 
         $login = $validated->getAttribute('oauth_user_id');
         $clientId = (string) $validated->getAttribute('oauth_client_id');
-        $scopes = $validated->getAttribute('oauth_scopes') ?? [];
+        $scopes = (array) ($validated->getAttribute('oauth_scopes') ?? []);
         $tokenId = (string) $validated->getAttribute('oauth_access_token_id');
 
         if (empty($login)) {
@@ -62,21 +67,24 @@ class ResourceServerAuthenticator
             return;
         }
 
+        $hasAdminScope = in_array('matomo:superuser', $scopes, true);
         $isSuperUser = !empty($user['superuser_access']);
 
+        $auth = new Oauth2Auth($login, $isSuperUser, $tokenId, $clientId, (array) $scopes);
         StaticContainer::getContainer()->set(
             'Piwik\Auth',
-            new Oauth2Auth($login, $isSuperUser, $tokenId, $clientId, (array) $scopes)
+            $auth
         );
+        Access::getInstance()->reloadAccess($auth);
     }
 
-    private function buildRequest(string $tokenAuth): ServerRequestInterface
+    private function buildRequest(?string $tokenAuth): ServerRequestInterface
     {
         $psr17Factory = new Psr17Factory();
         $creator = new ServerRequestCreator($psr17Factory, $psr17Factory, $psr17Factory, $psr17Factory);
 
         $request = $creator->fromGlobals();
-        if (!$request->hasHeader('Authorization')) {
+        if (!$request->hasHeader('Authorization') && !empty($tokenAuth)) {
             $request = $request->withHeader('Authorization', 'Bearer ' . $tokenAuth);
         }
 

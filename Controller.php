@@ -13,6 +13,7 @@ use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7\Response;
 use Nyholm\Psr7Server\ServerRequestCreator;
 use Piwik\Common;
+use Piwik\Nonce;
 use Piwik\Piwik;
 use Piwik\Plugin\ControllerAdmin;
 use Piwik\Plugins\OAuth2\Entities\UserEntity;
@@ -78,6 +79,12 @@ class Controller extends ControllerAdmin
 
         if ($this->isPostRequest()) {
             $decision = Request::fromRequest()->getStringParameter('decision', '');
+            $nonce = Request::fromRequest()->getStringParameter('nonce', '');
+
+            if (!Nonce::verifyNonce('Oauth2.authorize', $nonce)) {
+                return $this->renderUnauthorized('Invalid authorization request.');
+            }
+
             $authRequest->setAuthorizationApproved($decision === 'allow');
 
             try {
@@ -103,11 +110,21 @@ class Controller extends ControllerAdmin
                 return $scope->getIdentifier();
             }, $scopes),
             'scopeDescriptions' => $this->scopeRepository->describeScopes(),
+            'nonce' => Nonce::getNonce('Oauth2.authorize'),
         ]);
     }
 
     public function token()
     {
+        if (!$this->isPostRequest()) {
+            $response = (new Response())
+                ->withStatus(405, 'Method Not Allowed')
+                ->withHeader('Allow', 'POST')
+                ->withBody((new Psr17Factory())->createStream('Token endpoint only accepts POST'));
+
+            return $this->emitResponse($response);
+        }
+
         $psrRequest = $this->createServerRequest();
         $authServer = $this->serverFactory->makeAuthorizationServer();
         $response = new Response();

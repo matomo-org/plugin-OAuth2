@@ -146,7 +146,7 @@ if (typeof window !== 'undefined') {
 // EXTERNAL MODULE: external {"commonjs":"vue","commonjs2":"vue","root":"Vue"}
 var external_commonjs_vue_commonjs2_vue_root_Vue_ = __webpack_require__("8bbf");
 
-// CONCATENATED MODULE: ./node_modules/@vue/cli-plugin-babel/node_modules/cache-loader/dist/cjs.js??ref--13-0!./node_modules/@vue/cli-plugin-babel/node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist/templateLoader.js??ref--6!./node_modules/@vue/cli-service/node_modules/cache-loader/dist/cjs.js??ref--1-0!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist??ref--1-1!./plugins/OAuth2/vue/src/AdminApp.vue?vue&type=template&id=048d08fb
+// CONCATENATED MODULE: ./node_modules/@vue/cli-plugin-babel/node_modules/cache-loader/dist/cjs.js??ref--13-0!./node_modules/@vue/cli-plugin-babel/node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist/templateLoader.js??ref--6!./node_modules/@vue/cli-service/node_modules/cache-loader/dist/cjs.js??ref--1-0!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist??ref--1-1!./plugins/OAuth2/vue/src/AdminApp.vue?vue&type=template&id=278c0bbb
 
 const _hoisted_1 = {
   class: "oauth2-admin"
@@ -321,7 +321,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1
   }, 8, ["content-title"])]);
 }
-// CONCATENATED MODULE: ./plugins/OAuth2/vue/src/AdminApp.vue?vue&type=template&id=048d08fb
+// CONCATENATED MODULE: ./plugins/OAuth2/vue/src/AdminApp.vue?vue&type=template&id=278c0bbb
 
 // EXTERNAL MODULE: external "CorePluginsAdmin"
 var external_CorePluginsAdmin_ = __webpack_require__("a5a2");
@@ -379,7 +379,30 @@ var external_CoreHome_ = __webpack_require__("19dc");
       }
     };
   },
+  computed: {
+    visibleGrantOptions() {
+      if (this.form.type === 'public') {
+        const filtered = {};
+        if (this.grant_options.authorization_code) {
+          filtered.authorization_code = this.grant_options.authorization_code;
+        }
+        if (this.grant_options.refresh_token) {
+          filtered.refresh_token = this.grant_options.refresh_token;
+        }
+        return filtered;
+      }
+      return this.grant_options;
+    }
+  },
+  watch: {
+    'form.type': 'onFormTypeChange'
+  },
   methods: {
+    onFormTypeChange(newType) {
+      if (newType === 'public' && this.form.grant_types.includes('client_credentials')) {
+        this.form.grant_types = this.form.grant_types.filter(value => value !== 'client_credentials');
+      }
+    },
     showSuccessNotification(method, message) {
       const instanceId = external_CoreHome_["NotificationsStore"].show({
         id: `OAuth2_${method}`,

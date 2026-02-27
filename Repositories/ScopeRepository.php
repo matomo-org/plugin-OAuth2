@@ -22,7 +22,7 @@ class ScopeRepository implements ScopeRepositoryInterface
     private const DESCRIPTIONS = [
         'matomo:read' => 'Read analytics data you can access.',
         'matomo:write' => 'Create and modify analytics configuration.',
-        'matomo:admin' => 'Matomo admin-level operations.',
+        'matomo:superuser' => 'Matomo superuser-level operations.',
         'offline_access' => 'Access Matomo when you’re not actively using it.',
     ];
 
@@ -76,7 +76,7 @@ class ScopeRepository implements ScopeRepositoryInterface
                 throw OAuthServerException::invalidScope($identifier);
             }
 
-            if ($identifier === 'matomo:admin' && !Access::getInstance()->hasSuperUserAccess()) {
+            if ($identifier === 'matomo:superuser' && !Access::getInstance()->hasSuperUserAccess()) {
                 throw OAuthServerException::invalidScope($identifier);
             }
 

@@ -213,7 +213,31 @@ export default defineComponent({
       },
     };
   },
+  computed: {
+    visibleGrantOptions(): Record<string, string> {
+      if (this.form.type === 'public') {
+        const filtered: Record<string, string> = {};
+        if (this.grant_options.authorization_code) {
+          filtered.authorization_code = this.grant_options.authorization_code;
+        }
+        if (this.grant_options.refresh_token) {
+          filtered.refresh_token = this.grant_options.refresh_token;
+        }
+        return filtered;
+      }
+
+      return this.grant_options;
+    },
+  },
+  watch: {
+    'form.type': 'onFormTypeChange',
+  },
   methods: {
+    onFormTypeChange(newType: string) {
+      if (newType === 'public' && this.form.grant_types.includes('client_credentials')) {
+        this.form.grant_types = this.form.grant_types.filter((value: string) => value !== 'client_credentials');
+      }
+    },
     showSuccessNotification(method: string, message: string) {
       const instanceId = NotificationsStore.show({
         id: `OAuth2_${method}`,

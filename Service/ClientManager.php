@@ -30,15 +30,19 @@ class ClientManager
         $secret = $this->shouldUseSecret($data) ? $this->generateSecret() : null;
         $secretHash = $secret ? password_hash($secret, PASSWORD_DEFAULT) : null;
 
+        $type = $this->normalizeType($data['type'] ?? null);
+        $grantTypes = $this->normalizeGrantTypes($data['grant_types'] ?? []);
+        $this->assertGrantTypesAreAllowed($grantTypes, $type);
+
         $client = $this->clientModel->create([
             'client_id' => $clientId,
             'name' => $data['name'],
             'description' => $data['description'] ?? '',
             'secret_hash' => $secretHash,
             'redirect_uris' => $data['redirect_uris'] ?? [],
-            'grant_types' => $this->normalizeGrantTypes($data['grant_types'] ?? []),
+            'grant_types' => $grantTypes,
             'scopes' => $data['scopes'] ?? [],
-            'type' => $this->normalizeType($data['type'] ?? null),
+            'type' => $type,
             'active' => $data['active'] ?? true,
             'owner_login' => $ownerLogin,
         ]);
@@ -48,13 +52,17 @@ class ClientManager
 
     public function update(string $clientId, array $data, ?string $ownerLogin = null): void
     {
+        $type = $this->normalizeType($data['type'] ?? null);
+        $grantTypes = $this->normalizeGrantTypes($data['grant_types'] ?? []);
+        $this->assertGrantTypesAreAllowed($grantTypes, $type);
+
         $this->clientModel->update($clientId, [
             'name' => $data['name'],
             'description' => $data['description'] ?? '',
             'redirect_uris' => $data['redirect_uris'] ?? [],
-            'grant_types' => $this->normalizeGrantTypes($data['grant_types'] ?? []),
+            'grant_types' => $grantTypes,
             'scopes' => $data['scopes'] ?? [],
-            'type' => $this->normalizeType($data['type'] ?? null),
+            'type' => $type,
             'active' => $data['active'] ?? true,
             'owner_login' => $ownerLogin ?? $data['owner_login'],
         ]);
@@ -99,5 +107,12 @@ class ClientManager
         });
 
         return $normalized;
+    }
+
+    private function assertGrantTypesAreAllowed(array $grantTypes, string $type): void
+    {
+        if ($type === 'public' && in_array('client_credentials', $grantTypes, true)) {
+            throw new \InvalidArgumentException('Public clients cannot use the client_credentials grant type');
+        }
     }
 }
