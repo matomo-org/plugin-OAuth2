@@ -72,7 +72,35 @@ class OAuth2 extends Plugin
             throw new NoPrivilegesException('Request not authorised, scope not allowed.');
         }
 
-        if ($methodName === 'getBulkRequest' || (!str_starts_with($methodName, 'get') && !str_starts_with($methodName, 'is'))) {
+        $whiteListedMethods = [
+            'isPluginActivated',
+            'doesIncludePluginTrackersAutomatically',
+            'hasAnyActivatedFunnelForSite',
+            'testUrlMatchesSteps',
+            'testUrlMatchPages',
+            'canGenerateInsights',
+            'isLanguageAvailable',
+            'uses12HourClockForUser',
+            'isVisitorProfileEnabled',
+            'hasRecords',
+            'areSMSAPICredentialProvided',
+            'validatePhoneNumber',
+            'exportDataSubjects',
+            'findDataSubjects',
+            'isUserCanAddNewSegment',
+            'isTimezoneSupportEnabled',
+            'exportContainerVersion',
+            'isPeriodAllowed',
+            'hasSuperUserAccess',
+            'userExists',
+            'userEmailExists',
+        ];
+
+        if (
+            $methodName === 'getBulkRequest'
+            || (!str_starts_with($methodName, 'get') && !str_starts_with($methodName, 'is'))
+            || !in_array($methodName, $whiteListedMethods)
+        ) {
             throw new NoPrivilegesException('Request not authorised, scope not allowed.');
         }
     }
