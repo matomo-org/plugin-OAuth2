@@ -15,13 +15,19 @@ use Piwik\Common;
 use Piwik\Db;
 use Piwik\DbHelper;
 use Piwik\Exception\NoPrivilegesException;
+use Piwik\Option;
 use Piwik\Plugin;
 use Piwik\Plugins\OAuth2\Auth\Oauth2Auth;
 use Piwik\Plugins\OAuth2\Auth\ResourceServerAuthenticator;
-use Piwik\Request\AuthenticationToken;
 
 class OAuth2 extends Plugin
 {
+
+    public const PRIVATE_KEY_FILE_NAME = 'oauth-private.key';
+    public const PUBLIC_KEY_FILE_NAME = 'oauth-public.key';
+    public const OAUTH2_PRIVATE_OPTION_KEY = 'oauth2_private';
+    public const OAUTH2_PUBLIC_OPTION_KEY = 'oauth2_public';
+    public const OAUTH2_ENCRYPTION_OPTION_KEY = 'oauth2_encryption';
     public function registerEvents()
     {
         return [
@@ -66,7 +72,35 @@ class OAuth2 extends Plugin
             throw new NoPrivilegesException('Request not authorised, scope not allowed.');
         }
 
-        if (!str_starts_with($methodName, 'get')) {
+        $whiteListedMethods = [
+            'isPluginActivated',
+            'doesIncludePluginTrackersAutomatically',
+            'hasAnyActivatedFunnelForSite',
+            'testUrlMatchesSteps',
+            'testUrlMatchPages',
+            'canGenerateInsights',
+            'isLanguageAvailable',
+            'uses12HourClockForUser',
+            'isVisitorProfileEnabled',
+            'hasRecords',
+            'areSMSAPICredentialProvided',
+            'validatePhoneNumber',
+            'exportDataSubjects',
+            'findDataSubjects',
+            'isUserCanAddNewSegment',
+            'isTimezoneSupportEnabled',
+            'exportContainerVersion',
+            'isPeriodAllowed',
+            'hasSuperUserAccess',
+            'userExists',
+            'userEmailExists',
+        ];
+
+        if (
+            $methodName === 'getBulkRequest'
+            || (!str_starts_with($methodName, 'get') && !str_starts_with($methodName, 'is'))
+            || !in_array($methodName, $whiteListedMethods)
+        ) {
             throw new NoPrivilegesException('Request not authorised, scope not allowed.');
         }
     }
@@ -137,6 +171,12 @@ class OAuth2 extends Plugin
         $allTablesInstalled[] = Common::prefixTable('oauth2_auth_code');
     }
 
+    public function activate()
+    {
+        self::setupRSAKeys();
+        self::setEncryptionKey();
+    }
+
     public function install()
     {
         DbHelper::createTable(
@@ -205,6 +245,77 @@ class OAuth2 extends Plugin
     {
         foreach (['oauth2_auth_code', 'oauth2_refresh_token', 'oauth2_access_token', 'oauth2_client'] as $table) {
             Db::query('DROP TABLE IF EXISTS ' . Common::prefixTable($table));
+        }
+    }
+
+    /**
+     * @param $type
+     * @return string
+     */
+    public static function getRSAKey($type = 'private'): string
+    {
+        $optionKey = $type === 'private' ? self::OAUTH2_PRIVATE_OPTION_KEY : self::OAUTH2_PUBLIC_OPTION_KEY;
+
+        $optionValue = Option::get($optionKey);
+
+        return $optionValue ?? '';
+    }
+
+    /**
+     * @return string
+     */
+    public static function getEncryptionKey(): string
+    {
+        $value = Option::get(self::OAUTH2_ENCRYPTION_OPTION_KEY);
+
+        return $value ?? '';
+    }
+
+    /**
+     * @param $isForce
+     * @return bool
+     */
+    public static function setupRSAKeys($isForce = false): bool
+    {
+        $privateKeyValue = Option::get(self::OAUTH2_PRIVATE_OPTION_KEY);
+        $publicKeyValue = Option::get(self::OAUTH2_PUBLIC_OPTION_KEY);
+        if (
+            (!empty($publicKeyValue) && !empty($privateKeyValue) && !$isForce)
+            || !defined('OPENSSL_KEYTYPE_RSA')
+            || !function_exists('openssl_pkey_new')
+            || !function_exists('openssl_pkey_export')
+            || !function_exists('openssl_pkey_get_details')
+        ) {
+            return false;
+        }
+        $config = [
+            "private_key_bits" => 4096,
+            "private_key_type" => OPENSSL_KEYTYPE_RSA,
+        ];
+
+        $res = openssl_pkey_new($config);
+        if ($res === false) {
+            return false;
+        }
+        openssl_pkey_export($res, $privateKey);
+        $publicKeyDetails = openssl_pkey_get_details($res);
+        $publicKey = $publicKeyDetails['key'];
+        Option::set(self::OAUTH2_PRIVATE_OPTION_KEY, $privateKey);
+        Option::set(self::OAUTH2_PUBLIC_OPTION_KEY, $publicKey);
+
+        return true;
+    }
+
+    /**
+     * @param $isForce
+     * @return void
+     * @throws \Random\RandomException
+     */
+    public static function setEncryptionKey($isForce = false): void
+    {
+        $value = Option::get(self::OAUTH2_ENCRYPTION_OPTION_KEY);
+        if (!$value || $isForce) {
+            Option::set(self::OAUTH2_ENCRYPTION_OPTION_KEY, base64_encode(random_bytes(32)));
         }
     }
 }

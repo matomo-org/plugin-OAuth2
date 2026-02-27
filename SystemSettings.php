@@ -16,9 +16,6 @@ use Piwik\Validators\NotEmpty;
 
 class SystemSettings extends BaseSystemSettings
 {
-    public Setting $privateKeyPath;
-    public Setting $publicKeyPath;
-    public Setting $encryptionKey;
     public Setting $accessTokenTtl;
     public Setting $refreshTokenTtl;
     public Setting $authCodeTtl;
@@ -29,27 +26,6 @@ class SystemSettings extends BaseSystemSettings
 
     protected function init()
     {
-        $this->privateKeyPath = $this->makeSetting('privateKeyPath', '', FieldConfig::TYPE_STRING, function (FieldConfig $field) {
-            $field->title = 'Private key path';
-            $field->description = 'Filesystem path to the RSA private key used to sign access tokens.';
-            $field->uiControl = FieldConfig::UI_CONTROL_TEXT;
-            $field->validators[] = new NotEmpty();
-        });
-
-        $this->publicKeyPath = $this->makeSetting('publicKeyPath', '', FieldConfig::TYPE_STRING, function (FieldConfig $field) {
-            $field->title = 'Public key path';
-            $field->description = 'Filesystem path to the RSA public key used to validate access tokens.';
-            $field->uiControl = FieldConfig::UI_CONTROL_TEXT;
-            $field->validators[] = new NotEmpty();
-        });
-
-        $this->encryptionKey = $this->makeSetting('encryptionKey', '', FieldConfig::TYPE_STRING, function (FieldConfig $field) {
-            $field->title = 'Token encryption key';
-            $field->description = 'Random 32+ character string to encrypt auth codes and refresh tokens (example: base64-encoded random bytes). Required.';
-            $field->uiControl = FieldConfig::UI_CONTROL_PASSWORD;
-            $field->validators[] = new NotEmpty();
-        });
-
         $this->accessTokenTtl = $this->makeSetting('accessTokenTtl', 3600, FieldConfig::TYPE_INT, function (FieldConfig $field) {
             $field->title = 'Access token lifetime (seconds)';
             $field->uiControl = FieldConfig::UI_CONTROL_TEXT;

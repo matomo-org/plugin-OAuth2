@@ -38,4 +38,7 @@ return [
     AuthCodeRepository::class => Piwik\DI::autowire(),
     ScopeRepository::class => Piwik\DI::autowire(),
     ClientManager::class => Piwik\DI::autowire(),
+    'diagnostics.required' => Piwik\DI::add([
+        Piwik\DI::get(\Piwik\Plugins\OAuth2\Diagnostic\OpenSslRsaCheck::class),
+    ]),
 ];
