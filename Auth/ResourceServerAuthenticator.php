@@ -14,6 +14,7 @@ use Nyholm\Psr7Server\ServerRequestCreator;
 use Piwik\Access;
 use Piwik\Container\StaticContainer;
 use Piwik\Plugins\OAuth2\Model\ClientModel;
+use Piwik\Plugins\OAuth2\OAuth2;
 use Piwik\Plugins\OAuth2\Service\ServerFactory;
 use Piwik\Plugins\UsersManager\Model as UserModel;
 use Psr\Http\Message\ServerRequestInterface;
@@ -31,8 +32,8 @@ class ResourceServerAuthenticator
     public function prepareAuthenticationFromToken(?string $tokenAuth): void
     {
         $tokenAuth = $tokenAuth ?: ($_POST['access_token'] ?? null);
-        $headers = getallheaders();
-        $hasAuthorizationHeader = !empty($headers['Authorization']) && strpos($headers['Authorization'], 'Bearer ') === 0;
+        $authorizationHeader = OAuth2::getAuthorizationHeader();
+        $hasAuthorizationHeader = !empty($authorizationHeader) && strpos($authorizationHeader, 'Bearer ') === 0;
 
         if (!$hasAuthorizationHeader && empty($tokenAuth)) {
             return;
