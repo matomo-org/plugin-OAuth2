@@ -42,7 +42,7 @@ class OAuth2 extends Plugin
     public function onApiAuthenticate($tokenAuth)
     {
         // handled in Authentication listener class to keep plugin wiring contained
-        $headers = getallheaders();
+        $headers = function_exists('getallheaders') ? getallheaders() : [];
         $hasBearer = !empty($headers['Authorization']) && strpos($headers['Authorization'], 'Bearer ') === 0;
         $hasAccessToken = !empty($_POST['access_token']);
         if ($hasBearer || $hasAccessToken) {
