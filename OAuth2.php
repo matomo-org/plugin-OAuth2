@@ -98,8 +98,11 @@ class OAuth2 extends Plugin
 
         if (
             $methodName === 'getBulkRequest'
-            || (!str_starts_with($methodName, 'get') && !str_starts_with($methodName, 'is'))
-            || !in_array($methodName, $whiteListedMethods)
+            || (
+                !str_starts_with($methodName, 'get')
+                && !str_starts_with($methodName, 'is')
+                && !in_array($methodName, $whiteListedMethods)
+            )
         ) {
             throw new NoPrivilegesException('Request not authorised, scope not allowed.');
         }
