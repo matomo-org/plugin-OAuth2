@@ -42,8 +42,8 @@ class OAuth2 extends Plugin
     public function onApiAuthenticate($tokenAuth)
     {
         // handled in Authentication listener class to keep plugin wiring contained
-        $headers = function_exists('getallheaders') ? getallheaders() : [];
-        $hasBearer = !empty($headers['Authorization']) && strpos($headers['Authorization'], 'Bearer ') === 0;
+        $authorizationHeader = self::getAuthorizationHeader();
+        $hasBearer = !empty($authorizationHeader) && strpos($authorizationHeader, 'Bearer ') === 0;
         $hasAccessToken = !empty($_POST['access_token']);
         if ($hasBearer || $hasAccessToken) {
             $incomingToken = $tokenAuth ?: ($_POST['access_token'] ?? null);
@@ -317,5 +317,23 @@ class OAuth2 extends Plugin
         if (!$value || $isForce) {
             Option::set(self::OAUTH2_ENCRYPTION_OPTION_KEY, base64_encode(random_bytes(32)));
         }
+    }
+
+
+
+    public static function getAuthorizationHeader(): ?string
+    {
+        if (!empty($_SERVER['HTTP_AUTHORIZATION'])) {
+            return $_SERVER['HTTP_AUTHORIZATION'];
+        }
+
+        if (function_exists('getallheaders')) {
+            $headers = getallheaders();
+            if (!empty($headers['Authorization'])) {
+                return $headers['Authorization'];
+            }
+        }
+
+        return null;
     }
 }
