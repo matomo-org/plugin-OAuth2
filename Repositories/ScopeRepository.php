@@ -19,11 +19,11 @@ use Piwik\Plugins\OAuth2\SystemSettings;
 
 class ScopeRepository implements ScopeRepositoryInterface
 {
-    private const DESCRIPTIONS = [
-        'matomo:read' => 'Read analytics data you can access.',
-        'matomo:write' => 'Create and modify analytics configuration.',
-        'matomo:superuser' => 'Matomo superuser-level operations.',
-        'offline_access' => 'Access Matomo when you’re not actively using it.',
+    public const DESCRIPTIONS = [
+        'matomo:read' => 'Matomo read level access.',
+        'matomo:write' => 'Matomo write level access.',
+        'matomo:admin' => 'Matomo admin level access.',
+        'matomo:superuser' => 'Matomo superuser level operations.',
     ];
 
     private SystemSettings $settings;

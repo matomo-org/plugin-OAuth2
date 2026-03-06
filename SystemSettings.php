@@ -9,10 +9,10 @@
 
 namespace Piwik\Plugins\OAuth2;
 
+use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
 use Piwik\Settings\FieldConfig;
 use Piwik\Settings\Plugin\SystemSettings as BaseSystemSettings;
 use Piwik\Settings\Setting;
-use Piwik\Validators\NotEmpty;
 
 class SystemSettings extends BaseSystemSettings
 {
@@ -26,6 +26,7 @@ class SystemSettings extends BaseSystemSettings
 
     protected function init()
     {
+        $this->title = 'OAuth 2.0';
         $this->accessTokenTtl = $this->makeSetting('accessTokenTtl', 3600, FieldConfig::TYPE_INT, function (FieldConfig $field) {
             $field->title = 'Access token lifetime (seconds)';
             $field->uiControl = FieldConfig::UI_CONTROL_TEXT;
@@ -53,16 +54,17 @@ class SystemSettings extends BaseSystemSettings
             $field->title = 'Enable refresh tokens';
         });
 
-        $this->defaultScopes = $this->makeSetting('defaultScopes', ['matomo:read', 'matomo:write', 'matomo:superuser', 'offline_access'], FieldConfig::TYPE_ARRAY, function (FieldConfig $field) {
+        $scopes = ScopeRepository::DESCRIPTIONS;
+        $defaultScopes = array_keys($scopes);
+        $key = array_search('matomo:superuser', $defaultScopes);
+        if ($key) {
+            unset($defaultScopes[$key]);
+        }
+        $this->defaultScopes = $this->makeSetting('defaultScopes', array_keys($defaultScopes), FieldConfig::TYPE_ARRAY, function (FieldConfig $field) use ($scopes) {
             $field->title = 'Allowed scopes';
             $field->description = 'Scopes available to OAuth2 clients. Remove entries to disable them globally.';
-            $field->uiControl = FieldConfig::UI_CONTROL_MULTI_SELECT;
-            $field->availableValues = [
-                'matomo:read' => 'Read analytics data you can access.',
-                'matomo:write' => 'Create and modify analytics configuration.',
-                'matomo:superuser' => 'Matomo superuser-level operations.',
-                'offline_access' => 'Access Matomo when you’re not actively using it.',
-            ];
+            $field->uiControl = FieldConfig::UI_CONTROL_CHECKBOX;
+            $field->availableValues = $scopes;
         });
     }
 }

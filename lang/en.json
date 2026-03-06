@@ -33,6 +33,7 @@
     "AdminGrantClientCredentials": "Client credentials",
     "AdminGrantRefreshToken": "Refresh token",
     "AdminGrantTypesHelp": "Grant flows this client is allowed to use when requesting tokens.",
+    "AdminScope": "Allowed scope",
     "AdminScopes": "Allowed scopes",
     "AdminScopesHelp": "API scopes the client may request; issued tokens are limited to these.",
     "AdminRedirectUris": "Redirect URIs (one per line)",

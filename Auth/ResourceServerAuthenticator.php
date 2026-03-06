@@ -68,7 +68,6 @@ class ResourceServerAuthenticator
             return;
         }
 
-        $hasAdminScope = in_array('matomo:superuser', $scopes, true);
         $isSuperUser = !empty($user['superuser_access']);
 
         $auth = new Oauth2Auth($login, $isSuperUser, $tokenId, $clientId, (array) $scopes);

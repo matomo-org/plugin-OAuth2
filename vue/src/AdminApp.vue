@@ -116,10 +116,10 @@
           </div>
           <div class="row">
             <Field
-              uicontrol="checkbox" :options="scopes" var-type="array"
-              name="scopes" v-model="form.scopes"
+              uicontrol="select" :options="scopes" var-type="array"
+              name="scopes" v-model="form.scope"
               :inline-help="translate('OAuth2_AdminScopesHelp')"
-              :title="translate('OAuth2_AdminScopes')"/>
+              :title="translate('OAuth2_AdminScope')"/>
           </div>
           <div class="row">
             <Field
@@ -184,6 +184,7 @@ export default defineComponent({
   },
   data() {
     const scopes = (this.scopes as ScopeMap) || {};
+    const firstScope = scopes ? Object.keys(scopes)[0] : '';
     const typeOptions = {
       confidential: this.translate('OAuth2_AdminConfidential'),
       public: this.translate('OAuth2_AdminPublic'),
@@ -207,7 +208,7 @@ export default defineComponent({
         description: '',
         type: 'confidential',
         grant_types: ['authorization_code', 'client_credentials', 'refresh_token'],
-        scopes: Object.keys(scopes),
+        scope: firstScope,
         redirect_uris: '',
         active: true,
       },
@@ -272,7 +273,7 @@ export default defineComponent({
         description: this.form.description,
         type: this.form.type,
         grantTypes: this.form.grant_types,
-        scopes: this.form.scopes,
+        scope: this.form.scope,
         redirectUris: this.form.redirect_uris,
         active: this.form.active ? 1 : 0,
       };
@@ -353,7 +354,7 @@ export default defineComponent({
       this.form.description = '';
       this.form.type = 'confidential';
       this.form.grant_types = ['authorization_code', 'client_credentials', 'refresh_token'];
-      this.form.scopes = Object.keys(this.scopes as ScopeMap);
+      this.form.scope = '';
       this.form.redirect_uris = '';
       this.form.active = true;
     },
