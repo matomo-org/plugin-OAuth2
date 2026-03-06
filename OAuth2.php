@@ -308,7 +308,7 @@ class OAuth2 extends Plugin
         return null;
     }
 
-    private function modifyAccessBasedOnScope(array $idSitesAccess, ?string $scope): array
+    private function modifyAccessBasedOnScope(?array $idSitesAccess, ?string $scope): array
     {
         $levels = ['view' => 1, 'write' => 2, 'admin' => 3, 'superuser' => 4];
         $scopToLevelMapping = ['matomo:read' => 'view', 'matomo:write' => 'write', 'matomo:admin' => 'superuser', 'matomo:superuser' => 'superuser'];
