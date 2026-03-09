@@ -79,7 +79,10 @@ class Controller extends ControllerAdmin
             return $scope->getIdentifier();
         }, $authRequest->getScopes());
 
-        if ($authRequest->getClient()->allowedScopes !== $scopes || count($scopes) > 1) {
+        $clientScopes = array_values((array) $authRequest->getClient()->allowedScopes);
+        $scopes = array_values($scopes);
+
+        if (count($scopes) !== 1 || count($clientScopes) !== 1 || $clientScopes[0] !== $scopes[0]) {
             return $this->renderUnauthorized('Invalid scope, check the scope mapped to the requested client.');
         }
 

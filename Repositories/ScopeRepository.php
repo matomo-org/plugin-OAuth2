@@ -52,6 +52,10 @@ class ScopeRepository implements ScopeRepositoryInterface
         string|null $userIdentifier = null,
         ?string $authCodeId = null
     ): array {
+        if (count($scopes) > 1) {
+            throw OAuthServerException::invalidScope('Multiple scopes are not allowed.');
+        }
+
         $allowed = $this->getAllowedScopeIds();
         if (!empty($clientEntity->allowedScopes)) {
             $allowed = array_values(array_intersect($allowed, $clientEntity->allowedScopes));
@@ -70,10 +74,6 @@ class ScopeRepository implements ScopeRepositoryInterface
             $identifier = $scope instanceof ScopeEntityInterface ? $scope->getIdentifier() : null;
             if ($identifier === null || !in_array($identifier, $allowed, true)) {
                 throw OAuthServerException::invalidScope($identifier ?? '');
-            }
-
-            if (!$this->settings->enableRefreshTokens->getValue()) {
-                throw OAuthServerException::invalidScope($identifier);
             }
 
             if ($identifier === 'matomo:superuser' && !Access::getInstance()->hasSuperUserAccess()) {
