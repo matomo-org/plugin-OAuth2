@@ -43,7 +43,7 @@ class API extends \Piwik\Plugin\API
      * Returns the configured OAuth2 scopes (super users only).
      *
      * The array keys are scope identifiers (for example `matomo:read`, `matomo:write`,
-     * `matomo:admin`, `offline_access`) and the values are human-readable descriptions.
+     * `matomo:admin`, `matomo:superuser`) and the values are human-readable descriptions.
      *
      * @return array<string, string>
      */
@@ -63,7 +63,7 @@ class API extends \Piwik\Plugin\API
      * @param string          $name          Display name shown in the Matomo UI.
      * @param string|string[] $redirectUris  Allowed redirect URIs (array or newline-separated string).
      * @param string[]        $grantTypes    Grant types to enable (`authorization_code`, `client_credentials`, `refresh_token`).
-     * @param string          $scope        Scope identifiers to allow; filtered against configured scopes.
+     * @param string          $scope         Scope identifier to allow; filtered against configured scopes.
      * @param string          $description   Optional description for administrators.
      * @param string          $type          `confidential` (default, requires secret) or `public` (no client secret).
      * @param string          $active        `'1'` to enable the client or `'0'` to disable it.

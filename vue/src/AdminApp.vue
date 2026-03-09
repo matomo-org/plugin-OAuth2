@@ -49,7 +49,6 @@
           <th>{{ translate('OAuth2_AdminClientType') }}</th>
           <th>{{ translate('OAuth2_AdminClientGrants') }}</th>
           <th>{{ translate('OAuth2_AdminClientRedirects') }}</th>
-          <th>{{ translate('OAuth2_AdminClientStatus') }}</th>
           <th>{{ translate('OAuth2_AdminClientActions') }}</th>
         </tr>
         </thead>
@@ -116,7 +115,7 @@
           </div>
           <div class="row">
             <Field
-              uicontrol="select" :options="scopes" var-type="array"
+              uicontrol="select" :options="scopes"
               name="scopes" v-model="form.scope"
               :inline-help="translate('OAuth2_AdminScopesHelp')"
               :title="translate('OAuth2_AdminScope')"/>

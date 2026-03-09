@@ -11,7 +11,7 @@ This plugin adds a first-party OAuth2 authorization server to Matomo. It lets yo
 ## Features
 
 - **Grants:** Authorization Code (with PKCE), Client Credentials, Refresh Token.
-- **Scopes:** `matomo:read`, `matomo:write`, `matomo:superuser`, `offline_access` (extendable).
+- **Scopes:** `matomo:read`, `matomo:write`, `matomo:admin`, `matomo:superuser` (extendable).
 - **Keys & crypto:** Uses RSA private/public key pair (Lcobucci JWT via league/oauth2-server).
 - **UI:** Vue-powered admin screen for client CRUD + secret rotation.
 - **API endpoint:** `/index.php?module=OAuth2&action=token` (alias `/oauth2/token` if you add routing) for JSON token responses.
@@ -45,5 +45,4 @@ This plugin adds a first-party OAuth2 authorization server to Matomo. It lets yo
 
 - Keys/secrets must be kept secure and not world-readable.
 - Public clients must use PKCE for Authorization Code.
-- `offline_access` scope is required to receive refresh tokens.
 - Consider adding route aliases (`/oauth2/authorize`, `/oauth2/token`) via Matomo routing if you want cleaner URLs.

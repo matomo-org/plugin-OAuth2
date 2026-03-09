@@ -72,7 +72,7 @@ class ScopeRepository implements ScopeRepositoryInterface
                 throw OAuthServerException::invalidScope($identifier ?? '');
             }
 
-            if ($identifier === 'offline_access' && !$this->settings->enableRefreshTokens->getValue()) {
+            if (!$this->settings->enableRefreshTokens->getValue()) {
                 throw OAuthServerException::invalidScope($identifier);
             }
 
