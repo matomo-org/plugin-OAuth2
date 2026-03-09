@@ -65,10 +65,6 @@
             <div v-for="uri in (client.redirect_uris || [])" :key="uri"><code>{{ uri }}</code></div>
           </td>
           <td>
-            {{ client.active ? translate('OAuth2_AdminActive')
-              : translate('OAuth2_AdminDisabled') }}
-          </td>
-          <td>
             <button class="table-action icon-refresh" @click.prevent="rotateSecret(client)"
                     :title="translate('OAuth2_AdminRotateSecret')"></button>
             <button class="table-action icon-delete" @click.prevent="deleteClient(client)"
@@ -125,12 +121,6 @@
               uicontrol="textarea" name="redirect_uris" v-model="form.redirect_uris"  placeholder="https://example.com/callback"
               :inline-help="translate('OAuth2_AdminRedirectUrisHelp')"
               :title="translate('OAuth2_AdminRedirectUris')"/>
-          </div>
-          <div class="row">
-            <Field
-              uicontrol="checkbox" name="active" v-model="form.active" :full-width="false"
-              :inline-help="translate('OAuth2_AdminActiveHelp')"
-              :title="translate('OAuth2_AdminActiveLabel')"/>
           </div>
           <div class="row">
             <button type="submit" class="btn" :disabled="loading">
@@ -270,7 +260,7 @@ export default defineComponent({
         grantTypes: this.form.grant_types,
         scope: this.form.scope,
         redirectUris: this.form.redirect_uris,
-        active: this.form.active ? 1 : 0,
+        active: 1,
       };
       try {
         AjaxHelper.fetch(params).then((response) => {

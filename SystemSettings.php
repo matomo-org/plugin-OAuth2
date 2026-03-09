@@ -55,10 +55,9 @@ class SystemSettings extends BaseSystemSettings
         });
 
         $scopes = ScopeRepository::DESCRIPTIONS;
-        $defaultScopes = array_keys($scopes);
-        $key = array_search('matomo:superuser', $defaultScopes, true);
-        if ($key !== false) {
-            unset($defaultScopes[$key]);
+        $defaultScopes = $scopes;
+        if (isset($defaultScopes['matomo:superuser'])) {
+            unset($defaultScopes['matomo:superuser']);
         }
         $this->defaultScopes = $this->makeSetting('defaultScopes', array_keys($defaultScopes), FieldConfig::TYPE_ARRAY, function (FieldConfig $field) use ($scopes) {
             $field->title = 'Allowed scopes';
