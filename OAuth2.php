@@ -14,7 +14,6 @@ use Piwik\Container\StaticContainer;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\DbHelper;
-use Piwik\Exception\NoPrivilegesException;
 use Piwik\Option;
 use Piwik\Plugin;
 use Piwik\Plugins\OAuth2\Access\OAuth2Access;
@@ -45,10 +44,8 @@ class OAuth2 extends Plugin
         // handled in Authentication listener class to keep plugin wiring contained
         $authorizationHeader = self::getAuthorizationHeader();
         $hasBearer = !empty($authorizationHeader) && strpos($authorizationHeader, 'Bearer ') === 0;
-        $hasAccessToken = !empty($_POST['access_token']);
-        if ($hasBearer || $hasAccessToken) {
-            $incomingToken = $tokenAuth ?: ($_POST['access_token'] ?? null);
-            StaticContainer::get(ResourceServerAuthenticator::class)->prepareAuthenticationFromToken($incomingToken);
+        if ($hasBearer) {
+            StaticContainer::get(ResourceServerAuthenticator::class)->prepareAuthenticationFromToken($tokenAuth);
         }
     }
 

@@ -14,6 +14,7 @@ use Piwik\Piwik;
 use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
 use Piwik\Plugins\OAuth2\Service\ClientManager;
 use Piwik\Plugins\OAuth2\Model\ClientModel;
+use Piwik\UrlHelper;
 
 class API extends \Piwik\Plugin\API
 {
@@ -176,7 +177,7 @@ class API extends \Piwik\Plugin\API
         $validator = new RedirectUriValidator($redirectUris);
 
         foreach ($redirectUris as $redirectUri) {
-            if (!$validator->validateRedirectUri($redirectUri)) {
+            if (!$validator->validateRedirectUri($redirectUri) || !UrlHelper::isLookLikeUrl($redirectUri)) {
                 throw new \InvalidArgumentException('Invalid redirect_uri: ' . $redirectUri);
             }
         }
