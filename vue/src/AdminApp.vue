@@ -164,8 +164,6 @@ type Client = {
   active: boolean;
 };
 
-type ScopeMap = Record<string, string>;
-
 export default defineComponent({
   name: 'Oauth2AdminApp',
   props: {
@@ -183,8 +181,6 @@ export default defineComponent({
     ContentBlock,
   },
   data() {
-    const scopes = (this.scopes as ScopeMap) || {};
-    const firstScope = scopes ? Object.keys(scopes)[0] : '';
     const typeOptions = {
       confidential: this.translate('OAuth2_AdminConfidential'),
       public: this.translate('OAuth2_AdminPublic'),
@@ -208,7 +204,7 @@ export default defineComponent({
         description: '',
         type: 'confidential',
         grant_types: ['authorization_code', 'client_credentials', 'refresh_token'],
-        scope: firstScope,
+        scope: '',
         redirect_uris: '',
         active: true,
       },

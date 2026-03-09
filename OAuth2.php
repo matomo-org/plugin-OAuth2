@@ -311,12 +311,12 @@ class OAuth2 extends Plugin
     private function modifyAccessBasedOnScope(?array $idSitesAccess, ?string $scope): array
     {
         $levels = ['view' => 1, 'write' => 2, 'admin' => 3, 'superuser' => 4];
-        $scopToLevelMapping = ['matomo:read' => 'view', 'matomo:write' => 'write', 'matomo:admin' => 'superuser', 'matomo:superuser' => 'superuser'];
-        if (empty($scopToLevelMapping[$scope])) {
+        $scopeToLevelMapping = ['matomo:read' => 'view', 'matomo:write' => 'write', 'matomo:admin' => 'admin', 'matomo:superuser' => 'superuser'];
+        if (empty($scopeToLevelMapping[$scope])) {
             return [];
         }
 
-        $target = $scopToLevelMapping[$scope];
+        $target = $scopeToLevelMapping[$scope];
         $targetLevel = $levels[$target];
 
         foreach ($levels as $access => $level) {
