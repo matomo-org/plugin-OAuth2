@@ -97,7 +97,7 @@
               name="type"
               v-model="form.type"
               :title="translate('OAuth2_AdminType')"
-              :inline-help="translate('OAuth2_AdminTypeHelp')"
+              :inline-help="translate('OAuth2_AdminTypeHelp', '<strong>', '</strong>')"
               :options="{confidential: translate('OAuth2_AdminConfidential'),
               public:translate('OAuth2_AdminPublic')}"
             />

@@ -1,6 +1,6 @@
 {
   "name": "Oauth2",
-  "description": "First-party OAuth2 server for Matomo (authorization code with PKCE, client credentials, refresh tokens).",
+  "description": "First-party OAuth2 server for Matomo (authorisation code with PKCE, client credentials, refresh tokens).",
   "version": "0.1.0",
   "theme": false,
   "require": {

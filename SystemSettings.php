@@ -9,6 +9,7 @@
 
 namespace Piwik\Plugins\OAuth2;
 
+use Piwik\Piwik;
 use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
 use Piwik\Settings\FieldConfig;
 use Piwik\Settings\Plugin\SystemSettings as BaseSystemSettings;
@@ -28,30 +29,33 @@ class SystemSettings extends BaseSystemSettings
     {
         $this->title = 'OAuth 2.0';
         $this->accessTokenTtl = $this->makeSetting('accessTokenTtl', 3600, FieldConfig::TYPE_INT, function (FieldConfig $field) {
-            $field->title = 'Access token lifetime (seconds)';
+            $field->title = Piwik::translate('OAuth2_SystemSettingOAuthAccessTokenLifetimeTitle');
+            $field->description = Piwik::translate('OAuth2_SystemSettingOAuthAccessTokenLifetimeDescription');
             $field->uiControl = FieldConfig::UI_CONTROL_TEXT;
         });
 
         $this->refreshTokenTtl = $this->makeSetting('refreshTokenTtl', 2592000, FieldConfig::TYPE_INT, function (FieldConfig $field) {
-            $field->title = 'Refresh token lifetime (seconds)';
+            $field->title = Piwik::translate('OAuth2_SystemSettingOAuthRefreshTokenLifetimeTitle');
+            $field->description = Piwik::translate('OAuth2_SystemSettingOAuthRefreshTokenLifetimeDescription');
             $field->uiControl = FieldConfig::UI_CONTROL_TEXT;
         });
 
         $this->authCodeTtl = $this->makeSetting('authCodeTtl', 600, FieldConfig::TYPE_INT, function (FieldConfig $field) {
-            $field->title = 'Authorization code lifetime (seconds)';
+            $field->title = Piwik::translate('OAuth2_SystemSettingOAuthAuthorizationCodeLifetimeTitle');
+            $field->description = Piwik::translate('OAuth2_SystemSettingOAuthAuthorizationCodeLifetimeDescription');
             $field->uiControl = FieldConfig::UI_CONTROL_TEXT;
         });
 
         $this->enableAuthorizationCode = $this->makeSetting('enableAuthorizationCode', true, FieldConfig::TYPE_BOOL, function (FieldConfig $field) {
-            $field->title = 'Enable authorization code grant (PKCE supported)';
+            $field->title = Piwik::translate('OAuth2_SystemSettingOAuthEnableAuthorizationCodeTitle');
         });
 
         $this->enableClientCredentials = $this->makeSetting('enableClientCredentials', true, FieldConfig::TYPE_BOOL, function (FieldConfig $field) {
-            $field->title = 'Enable client credentials grant';
+            $field->title = Piwik::translate('OAuth2_SystemSettingOAuthEnableAClientCredentialsTitle');
         });
 
         $this->enableRefreshTokens = $this->makeSetting('enableRefreshTokens', true, FieldConfig::TYPE_BOOL, function (FieldConfig $field) {
-            $field->title = 'Enable refresh tokens';
+            $field->title = Piwik::translate('OAuth2_SystemSettingOAuthEnableRefreshTokenTitle');
         });
 
         $scopes = ScopeRepository::DESCRIPTIONS;
@@ -60,8 +64,8 @@ class SystemSettings extends BaseSystemSettings
             unset($defaultScopes['matomo:superuser']);
         }
         $this->defaultScopes = $this->makeSetting('defaultScopes', array_keys($defaultScopes), FieldConfig::TYPE_ARRAY, function (FieldConfig $field) use ($scopes) {
-            $field->title = 'Allowed scopes';
-            $field->description = 'Scopes available to OAuth2 clients. Remove entries to disable them globally.';
+            $field->title = Piwik::translate('OAuth2_SystemSettingOAuthScopeTitle');
+            $field->description = Piwik::translate('OAuth2_SystemSettingOAuthScopeDescription');
             $field->uiControl = FieldConfig::UI_CONTROL_CHECKBOX;
             $field->availableValues = $scopes;
         });
