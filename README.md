@@ -1,48 +1,256 @@
-# OAuth2 Plugin (Matomo first-party authorization server)
+# OAuth2 Plugin for Matomo
 
-This plugin adds a first-party OAuth2 authorization server to Matomo. It lets you:
+This plugin adds a **first-party OAuth2 Authorization Server** to Matomo, allowing external applications to securely access Matomo APIs using OAuth2 access tokens instead of `token_auth`.
 
-- Manage OAuth2 clients from the Matomo admin UI (Platform → OAuth2).
-- Issue tokens via Authorization Code + PKCE, Client Credentials, and Refresh Token grants.
-- Present an end-user consent screen for Authorization Code flows.
-- Accept `Authorization: Bearer <access_token>` for Matomo API requests and map tokens to Matomo users.
-- Rotate client secrets, disable/delete clients, and configure token lifetimes.
+It supports standard OAuth2 flows including **Authorization Code (PKCE)**, **Client Credentials**, and **Refresh Token**.
 
-## Features
+---
 
-- **Grants:** Authorization Code (with PKCE), Client Credentials, Refresh Token.
-- **Scopes:** `matomo:read`, `matomo:write`, `matomo:admin`, `matomo:superuser` (extendable).
-- **Keys & crypto:** Uses RSA private/public key pair (Lcobucci JWT via league/oauth2-server).
-- **UI:** Vue-powered admin screen for client CRUD + secret rotation.
-- **API endpoint:** `/index.php?module=OAuth2&action=token` (alias `/oauth2/token` if you add routing) for JSON token responses.
-- **Resource server:** Bearer tokens accepted on Matomo API calls; sets current user context based on the token subject.
+# Features
 
-## Setup
+- OAuth2 Authorization Server integrated with Matomo
+- Manage OAuth clients via **Administration → Platform → OAuth2**
+- Supported grant types:
+  - Authorization Code (with PKCE)
+  - Client Credentials
+  - Refresh Token
+- OAuth scopes:
+  - `matomo:read`
+  - `matomo:write`
+  - `matomo:admin`
+  - `matomo:superuser`
+- RSA signing keys for JWT tokens
+- Built using **league/oauth2-server**
+- Bearer token authentication for Matomo APIs
+- Client management UI with secret rotation
 
-1) **Create clients (Admin → Platform → OAuth2)**
-- Choose type: Confidential (requires secret) or Public (no secret).
-- Set allowed grant types, scopes, and redirect URIs (required for Authorization Code).
-- Save the client; copy the secret immediately (shown once) for confidential clients.
+---
 
-2) **Authorize & obtain tokens**
-- **Authorization Code + PKCE:**
-  - Authorization endpoint: `/index.php?module=OAuth2&action=authorize` (add an alias `/oauth2/authorize` if desired).
-  - Include `response_type=code`, `client_id`, `redirect_uri`, `scope`, `state`, `code_challenge`, `code_challenge_method=S256`.
-  - On approval, exchange `code` at `/index.php?module=OAuth2&action=token` with `grant_type=authorization_code`, `code_verifier`, `redirect_uri`, and client auth (secret for confidential clients).
-- **Client Credentials:**
-  - Token endpoint: `/index.php?module=Oauth2&action=token`
-  - Body: `grant_type=client_credentials&scope=matomo:read` (or other allowed scopes).
-  - Auth: HTTP Basic or `client_id`/`client_secret`.
-- **Refresh Token:**
-  - Body: `grant_type=refresh_token&refresh_token=<token>`.
+# OAuth Endpoints
 
-3) **Call Matomo APIs with Bearer tokens**
-- Add header: `Authorization: Bearer <access_token>`.
-- The token subject sets the Matomo user context; permissions derive from scopes and the user’s Matomo rights.
-- If both token_auth and Bearer are supplied, Bearer takes precedence (configurable in plugin code).
+| Endpoint | Description |
+|--------|-------------|
+| `/index.php?module=OAuth2&action=authorize` | Authorization endpoint |
+| `/index.php?module=OAuth2&action=token` | Token endpoint |
 
-## Notes
+Optional cleaner routes can be added:
 
-- Keys/secrets must be kept secure and not world-readable.
-- Public clients must use PKCE for Authorization Code.
-- Consider adding route aliases (`/oauth2/authorize`, `/oauth2/token`) via Matomo routing if you want cleaner URLs.
+```
+/oauth2/authorize
+/oauth2/token
+```
+
+---
+
+# Setup
+
+## 1. Create an OAuth Client
+
+Navigate to:
+
+```
+Administration → Platform → OAuth2
+```
+
+Create a client and configure:
+
+- Client type
+  - **Confidential** (requires client secret)
+  - **Public** (no secret)
+- Allowed grant types
+- Allowed scopes
+- Redirect URI (required for Authorization Code flow)
+
+Example client:
+
+```
+Client ID: analytics_app
+Client Secret: 7fa9c0f81b8b4a12
+Redirect URI: https://example-app.com/oauth/callback
+```
+
+---
+
+# OAuth Flow Overview
+
+1. Client redirects the user to `/authorize`
+2. User logs into Matomo and approves access
+3. Matomo redirects back with an authorization `code`
+4. Client exchanges the `code` for an access token at `/token`
+5. Client calls Matomo APIs using
+
+```
+Authorization: Bearer ACCESS_TOKEN
+```
+
+---
+
+# Authorization Code Flow
+
+## Step 1 — Generate PKCE parameters (Public Clients)
+
+PKCE requires two values:
+
+- `code_verifier`
+- `code_challenge`
+
+Example:
+
+```
+code_verifier = dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+code_challenge = E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+```
+
+Where:
+
+```
+code_challenge = BASE64URL(SHA256(code_verifier))
+```
+
+---
+
+## Step 2 — Redirect user to Authorization Endpoint
+
+### PKCE Example (Public Client)
+
+```
+https://matomo.example.com/index.php?module=OAuth2&action=authorize
+&response_type=code
+&client_id=analytics_app
+&redirect_uri=https://example-app.com/oauth/callback
+&scope=matomo:read
+&state=abc123
+&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+&code_challenge_method=S256
+```
+
+### Confidential Client Example
+
+```
+https://matomo.example.com/index.php?module=OAuth2&action=authorize
+&response_type=code
+&client_id=analytics_app
+&redirect_uri=https://example-app.com/oauth/callback
+&scope=matomo:read
+&state=abc123
+```
+
+The user will:
+
+1. Log in to Matomo
+2. Review requested permissions
+3. Click **Allow**
+
+Matomo will redirect back:
+
+```
+https://example-app.com/oauth/callback?code=AUTHORIZATION_CODE&state=abc123
+```
+
+---
+
+# Exchange Authorization Code for Tokens
+
+**Note:** The scope should be same as client scope and only one scope is allowed at the moment.
+
+## PKCE Token Request
+
+```
+curl -X POST 'https://matomo.example.com/index.php?module=OAuth2&action=token' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'grant_type=authorization_code' \
+  -d 'client_id=analytics_app' \
+  -d 'redirect_uri=https://example-app.com/oauth/callback' \
+  -d 'code=AUTHORIZATION_CODE' \
+  -d 'code_verifier=dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk'
+```
+
+## Confidential Client Token Request
+
+```
+curl -X POST 'https://matomo.example.com/index.php?module=OAuth2&action=token' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'grant_type=authorization_code' \
+  -d 'client_id=analytics_app' \
+  -d 'client_secret=7fa9c0f81b8b4a12' \
+  -d 'redirect_uri=https://example-app.com/oauth/callback' \
+  -d 'code=AUTHORIZATION_CODE'
+```
+
+---
+
+# Example Token Response
+
+```json
+{
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "def50200a1b9"
+}
+```
+
+---
+
+# Refresh Token
+
+Use a refresh token to obtain a new access token.
+
+### Public Client (PKCE)
+
+```
+curl -X POST 'https://matomo.example.com/index.php?module=OAuth2&action=token' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'grant_type=refresh_token' \
+  -d 'client_id=analytics_app' \
+  -d 'refresh_token=def50200a1b9'
+```
+
+### Confidential Client
+
+```
+curl -X POST 'https://matomo.example.com/index.php?module=OAuth2&action=token' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'grant_type=refresh_token' \
+  -d 'client_id=analytics_app' \
+  -d 'client_secret=7fa9c0f81b8b4a12' \
+  -d 'refresh_token=def50200a1b9'
+```
+
+---
+
+# Calling Matomo APIs with OAuth2
+
+Once an access token is obtained, call Matomo APIs using the **Bearer token**.
+
+Example:
+
+```
+curl https://matomo.example.com/index.php \
+  -H "Authorization: Bearer ACCESS_TOKEN" \
+  -d "module=API" \
+  -d "method=VisitsSummary.get" \
+  -d "idSite=1" \
+  -d "period=day" \
+  -d "date=today" \
+  -d "format=json"
+```
+
+Example response:
+
+```json
+{
+  "nb_visits": 124,
+  "nb_actions": 210
+}
+```
+
+---
+
+# Security Notes
+
+- Never expose **client secrets** in frontend applications.
+- Public clients **must use PKCE**.
+- Always use **HTTPS**.
+- Store access tokens securely.
+- Rotate client secrets periodically.
