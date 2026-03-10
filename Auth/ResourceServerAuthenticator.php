@@ -31,7 +31,6 @@ class ResourceServerAuthenticator
 
     public function prepareAuthenticationFromToken(?string $tokenAuth): void
     {
-        $tokenAuth = $tokenAuth ?: ($_POST['access_token'] ?? null);
         $authorizationHeader = OAuth2::getAuthorizationHeader();
         $hasAuthorizationHeader = !empty($authorizationHeader) && strpos($authorizationHeader, 'Bearer ') === 0;
 
