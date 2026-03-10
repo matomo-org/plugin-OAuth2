@@ -76,10 +76,6 @@ class ScopeRepository implements ScopeRepositoryInterface
                 throw OAuthServerException::invalidScope($identifier ?? '');
             }
 
-            if ($identifier === 'matomo:superuser' && !Access::getInstance()->hasSuperUserAccess()) {
-                throw OAuthServerException::invalidScope($identifier);
-            }
-
             $final[] = $scope;
         }
 
