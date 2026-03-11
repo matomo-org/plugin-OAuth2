@@ -31,7 +31,6 @@ class ResourceServerAuthenticator
 
     public function prepareAuthenticationFromToken(?string $tokenAuth): void
     {
-        $tokenAuth = $tokenAuth ?: ($_POST['access_token'] ?? null);
         $authorizationHeader = OAuth2::getAuthorizationHeader();
         $hasAuthorizationHeader = !empty($authorizationHeader) && strpos($authorizationHeader, 'Bearer ') === 0;
 
@@ -68,7 +67,6 @@ class ResourceServerAuthenticator
             return;
         }
 
-        $hasAdminScope = in_array('matomo:superuser', $scopes, true);
         $isSuperUser = !empty($user['superuser_access']);
 
         $auth = new Oauth2Auth($login, $isSuperUser, $tokenId, $clientId, (array) $scopes);

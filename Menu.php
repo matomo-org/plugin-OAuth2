@@ -10,11 +10,14 @@
 namespace Piwik\Plugins\OAuth2;
 
 use Piwik\Menu\MenuAdmin;
+use Piwik\Piwik;
 
 class Menu extends \Piwik\Plugin\Menu
 {
     public function configureAdminMenu(MenuAdmin $menu)
     {
-        $menu->addPlatformItem('OAuth2_PlatformMenu', $this->urlForAction('index'), 40);
+        if (Piwik::hasUserSuperUserAccess()) {
+            $menu->addPlatformItem('OAuth2_PlatformMenu', $this->urlForAction('index'), 40);
+        }
     }
 }

@@ -12,9 +12,9 @@ namespace Piwik\Plugins\OAuth2\Repositories;
 use League\OAuth2\Server\Entities\AccessTokenEntityInterface;
 use League\OAuth2\Server\Entities\ClientEntityInterface;
 use League\OAuth2\Server\Entities\ScopeEntityInterface;
-use League\OAuth2\Server\Exception\UniqueTokenIdentifierConstraintViolationException;
 use League\OAuth2\Server\Repositories\AccessTokenRepositoryInterface;
 use Piwik\Plugins\OAuth2\Entities\AccessTokenEntity;
+use Piwik\Plugins\OAuth2\Entities\ClientEntity;
 use Piwik\Plugins\OAuth2\Model\AccessTokenModel;
 
 class AccessTokenRepository implements AccessTokenRepositoryInterface
@@ -34,6 +34,10 @@ class AccessTokenRepository implements AccessTokenRepositoryInterface
         $token = new AccessTokenEntity();
         $token->setIdentifier($this->generateIdentifier());
         $token->setClient($clientEntity);
+        if (empty($userIdentifier) && $clientEntity instanceof ClientEntity && !empty($clientEntity->ownerLogin)) {
+            $userIdentifier = $clientEntity->ownerLogin;
+        }
+
         if (!empty($userIdentifier)) {
             $token->setUserIdentifier($userIdentifier);
         }

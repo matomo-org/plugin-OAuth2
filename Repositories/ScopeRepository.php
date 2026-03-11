@@ -19,11 +19,11 @@ use Piwik\Plugins\OAuth2\SystemSettings;
 
 class ScopeRepository implements ScopeRepositoryInterface
 {
-    private const DESCRIPTIONS = [
-        'matomo:read' => 'Read analytics data you can access.',
-        'matomo:write' => 'Create and modify analytics configuration.',
-        'matomo:superuser' => 'Matomo superuser-level operations.',
-        'offline_access' => 'Access Matomo when you’re not actively using it.',
+    public const DESCRIPTIONS = [
+        'matomo:read' => 'Matomo read level access.',
+        'matomo:write' => 'Matomo write level access.',
+        'matomo:admin' => 'Matomo admin level access.',
+        'matomo:superuser' => 'Matomo superuser level operations.',
     ];
 
     private SystemSettings $settings;
@@ -52,6 +52,10 @@ class ScopeRepository implements ScopeRepositoryInterface
         string|null $userIdentifier = null,
         ?string $authCodeId = null
     ): array {
+        if (count($scopes) > 1) {
+            throw OAuthServerException::invalidScope('Multiple scopes are not allowed.');
+        }
+
         $allowed = $this->getAllowedScopeIds();
         if (!empty($clientEntity->allowedScopes)) {
             $allowed = array_values(array_intersect($allowed, $clientEntity->allowedScopes));
@@ -70,14 +74,6 @@ class ScopeRepository implements ScopeRepositoryInterface
             $identifier = $scope instanceof ScopeEntityInterface ? $scope->getIdentifier() : null;
             if ($identifier === null || !in_array($identifier, $allowed, true)) {
                 throw OAuthServerException::invalidScope($identifier ?? '');
-            }
-
-            if ($identifier === 'offline_access' && !$this->settings->enableRefreshTokens->getValue()) {
-                throw OAuthServerException::invalidScope($identifier);
-            }
-
-            if ($identifier === 'matomo:superuser' && !Access::getInstance()->hasSuperUserAccess()) {
-                throw OAuthServerException::invalidScope($identifier);
             }
 
             $final[] = $scope;

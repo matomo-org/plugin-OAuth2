@@ -14,6 +14,7 @@ use Piwik\Piwik;
 use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
 use Piwik\Plugins\OAuth2\Service\ClientManager;
 use Piwik\Plugins\OAuth2\Model\ClientModel;
+use Piwik\UrlHelper;
 
 class API extends \Piwik\Plugin\API
 {
@@ -43,7 +44,7 @@ class API extends \Piwik\Plugin\API
      * Returns the configured OAuth2 scopes (super users only).
      *
      * The array keys are scope identifiers (for example `matomo:read`, `matomo:write`,
-     * `matomo:admin`, `offline_access`) and the values are human-readable descriptions.
+     * `matomo:admin`, `matomo:superuser`) and the values are human-readable descriptions.
      *
      * @return array<string, string>
      */
@@ -63,7 +64,7 @@ class API extends \Piwik\Plugin\API
      * @param string          $name          Display name shown in the Matomo UI.
      * @param string|string[] $redirectUris  Allowed redirect URIs (array or newline-separated string).
      * @param string[]        $grantTypes    Grant types to enable (`authorization_code`, `client_credentials`, `refresh_token`).
-     * @param string|string[] $scopes        Scope identifiers to allow; filtered against configured scopes.
+     * @param string          $scope         Scope identifier to allow; filtered against configured scopes.
      * @param string          $description   Optional description for administrators.
      * @param string          $type          `confidential` (default, requires secret) or `public` (no client secret).
      * @param string          $active        `'1'` to enable the client or `'0'` to disable it.
@@ -71,7 +72,7 @@ class API extends \Piwik\Plugin\API
      *
      * @throws \InvalidArgumentException When redirect URIs or grant types are invalid.
      */
-    public function createClient(string $name, $redirectUris, array $grantTypes, $scopes, string $description = '', string $type = 'confidential', string $active = '1'): array
+    public function createClient(string $name, $redirectUris, array $grantTypes, string $scope, string $description = '', string $type = 'confidential', string $active = '1'): array
     {
         Piwik::checkUserHasSuperUserAccess();
 
@@ -92,14 +93,18 @@ class API extends \Piwik\Plugin\API
             throw new \InvalidArgumentException('Public clients cannot use the client_credentials grant type');
         }
 
-        $scopes = array_values(array_intersect((array) $scopes, $this->scopeRepository->getAllowedScopeIds()));
+        $scope = array_values(array_intersect([$scope], $this->scopeRepository->getAllowedScopeIds()));
+
+        if (empty($scope)) {
+            throw new \InvalidArgumentException('Invalid scope value.');
+        }
 
         $result = $this->clientManager->create([
             'name' => $name,
             'description' => $description,
             'redirect_uris' => $redirects,
             'grant_types' => $grantTypes,
-            'scopes' => $scopes,
+            'scopes' => $scope,
             'type' => $type,
             'active' => $active,
         ], Piwik::getCurrentUserLogin());
@@ -172,7 +177,7 @@ class API extends \Piwik\Plugin\API
         $validator = new RedirectUriValidator($redirectUris);
 
         foreach ($redirectUris as $redirectUri) {
-            if (!$validator->validateRedirectUri($redirectUri)) {
+            if (!$validator->validateRedirectUri($redirectUri) || !UrlHelper::isLookLikeUrl($redirectUri)) {
                 throw new \InvalidArgumentException('Invalid redirect_uri: ' . $redirectUri);
             }
         }

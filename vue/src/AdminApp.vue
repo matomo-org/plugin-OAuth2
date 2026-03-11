@@ -49,7 +49,6 @@
           <th>{{ translate('OAuth2_AdminClientType') }}</th>
           <th>{{ translate('OAuth2_AdminClientGrants') }}</th>
           <th>{{ translate('OAuth2_AdminClientRedirects') }}</th>
-          <th>{{ translate('OAuth2_AdminClientStatus') }}</th>
           <th>{{ translate('OAuth2_AdminClientActions') }}</th>
         </tr>
         </thead>
@@ -64,10 +63,6 @@
           <td>{{ (client.grant_types || []).join(', ') }}</td>
           <td>
             <div v-for="uri in (client.redirect_uris || [])" :key="uri"><code>{{ uri }}</code></div>
-          </td>
-          <td>
-            {{ client.active ? translate('OAuth2_AdminActive')
-              : translate('OAuth2_AdminDisabled') }}
           </td>
           <td>
             <button class="table-action icon-refresh" @click.prevent="rotateSecret(client)"
@@ -102,7 +97,7 @@
               name="type"
               v-model="form.type"
               :title="translate('OAuth2_AdminType')"
-              :inline-help="translate('OAuth2_AdminTypeHelp')"
+              :inline-help="translate('OAuth2_AdminTypeHelp', '<strong>', '</strong>')"
               :options="{confidential: translate('OAuth2_AdminConfidential'),
               public:translate('OAuth2_AdminPublic')}"
             />
@@ -116,22 +111,16 @@
           </div>
           <div class="row">
             <Field
-              uicontrol="checkbox" :options="scopes" var-type="array"
-              name="scopes" v-model="form.scopes"
+              uicontrol="select" :options="scopes"
+              name="scopes" v-model="form.scope"
               :inline-help="translate('OAuth2_AdminScopesHelp')"
-              :title="translate('OAuth2_AdminScopes')"/>
+              :title="translate('OAuth2_AdminScope')"/>
           </div>
           <div class="row">
             <Field
               uicontrol="textarea" name="redirect_uris" v-model="form.redirect_uris"  placeholder="https://example.com/callback"
               :inline-help="translate('OAuth2_AdminRedirectUrisHelp')"
               :title="translate('OAuth2_AdminRedirectUris')"/>
-          </div>
-          <div class="row">
-            <Field
-              uicontrol="checkbox" name="active" v-model="form.active" :full-width="false"
-              :inline-help="translate('OAuth2_AdminActiveHelp')"
-              :title="translate('OAuth2_AdminActiveLabel')"/>
           </div>
           <div class="row">
             <button type="submit" class="btn" :disabled="loading">
@@ -164,8 +153,6 @@ type Client = {
   active: boolean;
 };
 
-type ScopeMap = Record<string, string>;
-
 export default defineComponent({
   name: 'Oauth2AdminApp',
   props: {
@@ -183,7 +170,6 @@ export default defineComponent({
     ContentBlock,
   },
   data() {
-    const scopes = (this.scopes as ScopeMap) || {};
     const typeOptions = {
       confidential: this.translate('OAuth2_AdminConfidential'),
       public: this.translate('OAuth2_AdminPublic'),
@@ -207,7 +193,7 @@ export default defineComponent({
         description: '',
         type: 'confidential',
         grant_types: ['authorization_code', 'client_credentials', 'refresh_token'],
-        scopes: Object.keys(scopes),
+        scope: '',
         redirect_uris: '',
         active: true,
       },
@@ -272,9 +258,9 @@ export default defineComponent({
         description: this.form.description,
         type: this.form.type,
         grantTypes: this.form.grant_types,
-        scopes: this.form.scopes,
+        scope: this.form.scope,
         redirectUris: this.form.redirect_uris,
-        active: this.form.active ? 1 : 0,
+        active: 1,
       };
       try {
         AjaxHelper.fetch(params).then((response) => {
@@ -353,7 +339,7 @@ export default defineComponent({
       this.form.description = '';
       this.form.type = 'confidential';
       this.form.grant_types = ['authorization_code', 'client_credentials', 'refresh_token'];
-      this.form.scopes = Object.keys(this.scopes as ScopeMap);
+      this.form.scope = '';
       this.form.redirect_uris = '';
       this.form.active = true;
     },

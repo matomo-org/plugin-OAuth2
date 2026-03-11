@@ -75,7 +75,18 @@ class Controller extends ControllerAdmin
         $userEntity->setIdentifier($login);
         $authRequest->setUser($userEntity);
 
-        $scopes = $authRequest->getScopes();
+        $scopes = array_map(function ($scope) {
+            return $scope->getIdentifier();
+        }, $authRequest->getScopes());
+
+        $clientScopes = array_values((array) $authRequest->getClient()->allowedScopes);
+        $scopes = array_values($scopes);
+
+        if (count($scopes) !== 1 || count($clientScopes) !== 1 || $clientScopes[0] !== $scopes[0]) {
+            return $this->renderUnauthorized('Invalid scope, check the scope mapped to the requested client.');
+        }
+
+        $this->checkDoesUserHasAccessAsPerScope($scopes[0]);
 
         if ($this->isPostRequest()) {
             $decision = Request::fromRequest()->getStringParameter('decision', '');
@@ -106,9 +117,7 @@ class Controller extends ControllerAdmin
             'clientId' => $client->getIdentifier(),
             'userLogin' => $login,
             'userEmail' => $user['email'] ?? '',
-            'scopes' => array_map(function ($scope) {
-                return $scope->getIdentifier();
-            }, $scopes),
+            'scopes' => $scopes,
             'scopeDescriptions' => $this->scopeRepository->describeScopes(),
             'nonce' => Nonce::getNonce('Oauth2.authorize'),
         ]);
@@ -168,5 +177,23 @@ class Controller extends ControllerAdmin
     {
         http_response_code(400);
         return $message;
+    }
+
+    private function checkDoesUserHasAccessAsPerScope(string $scope): void
+    {
+        switch ($scope) {
+            case 'matomo:read':
+                Piwik::checkUserHasSomeViewAccess();
+                break;
+            case 'matomo:write':
+                Piwik::checkUserHasSomeWriteAccess();
+                break;
+            case 'matomo:admin':
+                Piwik::checkUserHasSomeAdminAccess();
+                break;
+            case 'matomo:superuser':
+                Piwik::checkUserHasSuperUserAccess();
+                break;
+        }
     }
 }

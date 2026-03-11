@@ -14,9 +14,9 @@ use Piwik\Container\StaticContainer;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\DbHelper;
-use Piwik\Exception\NoPrivilegesException;
 use Piwik\Option;
 use Piwik\Plugin;
+use Piwik\Plugins\OAuth2\Access\OAuth2Access;
 use Piwik\Plugins\OAuth2\Auth\Oauth2Auth;
 use Piwik\Plugins\OAuth2\Auth\ResourceServerAuthenticator;
 
@@ -44,10 +44,8 @@ class OAuth2 extends Plugin
         // handled in Authentication listener class to keep plugin wiring contained
         $authorizationHeader = self::getAuthorizationHeader();
         $hasBearer = !empty($authorizationHeader) && strpos($authorizationHeader, 'Bearer ') === 0;
-        $hasAccessToken = !empty($_POST['access_token']);
-        if ($hasBearer || $hasAccessToken) {
-            $incomingToken = $tokenAuth ?: ($_POST['access_token'] ?? null);
-            StaticContainer::get(ResourceServerAuthenticator::class)->prepareAuthenticationFromToken($incomingToken);
+        if ($hasBearer) {
+            StaticContainer::get(ResourceServerAuthenticator::class)->prepareAuthenticationFromToken($tokenAuth);
         }
     }
 
@@ -64,48 +62,14 @@ class OAuth2 extends Plugin
         }
 
         $scopes = (array) ($auth->scopes ?? []);
-        $nonReadScopes = array_filter($scopes, static function ($scope) {
-            return $scope !== 'matomo:read' && $scope !== 'offline_access';
-        });
-
-        if (!empty($nonReadScopes)) {
-            throw new NoPrivilegesException('Request not authorised, scope not allowed.');
+        $access = Access::getInstance();
+        OAuth2Access::loadSitesIfNeededFor($access);
+        $siteAccess = OAuth2Access::getSiteAccessFor($access);
+        $siteAccess = $this->modifyAccessBasedOnScope($siteAccess, $scopes[0] ?? null);
+        if ($access->hasSuperUserAccess() && empty($siteAccess['superuser'])) {
+            $access->setSuperUserAccess(false);
         }
-
-        $whiteListedMethods = [
-            'isPluginActivated',
-            'doesIncludePluginTrackersAutomatically',
-            'hasAnyActivatedFunnelForSite',
-            'testUrlMatchesSteps',
-            'testUrlMatchPages',
-            'canGenerateInsights',
-            'isLanguageAvailable',
-            'uses12HourClockForUser',
-            'isVisitorProfileEnabled',
-            'hasRecords',
-            'areSMSAPICredentialProvided',
-            'validatePhoneNumber',
-            'exportDataSubjects',
-            'findDataSubjects',
-            'isUserCanAddNewSegment',
-            'isTimezoneSupportEnabled',
-            'exportContainerVersion',
-            'isPeriodAllowed',
-            'hasSuperUserAccess',
-            'userExists',
-            'userEmailExists',
-        ];
-
-        if (
-            $methodName === 'getBulkRequest'
-            || (
-                !str_starts_with($methodName, 'get')
-                && !str_starts_with($methodName, 'is')
-                && !in_array($methodName, $whiteListedMethods)
-            )
-        ) {
-            throw new NoPrivilegesException('Request not authorised, scope not allowed.');
-        }
+        OAuth2Access::setSiteAccessFor($access, $siteAccess);
     }
 
     public function registerVueComponents(&$components)
@@ -144,6 +108,7 @@ class OAuth2 extends Plugin
         $translationKeys[] = 'OAuth2_AdminGrantAuthorizationCode';
         $translationKeys[] = 'OAuth2_AdminGrantClientCredentials';
         $translationKeys[] = 'OAuth2_AdminGrantRefreshToken';
+        $translationKeys[] = 'OAuth2_AdminScope';
         $translationKeys[] = 'OAuth2_AdminScopes';
         $translationKeys[] = 'OAuth2_AdminRedirectUris';
         $translationKeys[] = 'OAuth2_AdminActiveLabel';
@@ -338,5 +303,39 @@ class OAuth2 extends Plugin
         }
 
         return null;
+    }
+
+    private function modifyAccessBasedOnScope(?array $idSitesAccess, ?string $scope): array
+    {
+        $levels = ['view' => 1, 'write' => 2, 'admin' => 3, 'superuser' => 4];
+        $scopeToLevelMapping = ['matomo:read' => 'view', 'matomo:write' => 'write', 'matomo:admin' => 'admin', 'matomo:superuser' => 'superuser'];
+        if (empty($scopeToLevelMapping[$scope])) {
+            return [];
+        }
+
+        $target = $scopeToLevelMapping[$scope];
+        $targetLevel = $levels[$target];
+
+        foreach ($levels as $access => $level) {
+            if ($level <= $targetLevel) {
+                continue;
+            }
+            // Assign all the capabilities of a superuser too
+            if ($access === 'superuser' && !empty($idSitesAccess['superuser'])) {
+                $capabilityProvider = StaticContainer::get('Piwik\Access\CapabilitiesProvider');
+                foreach ($capabilityProvider->getAllCapabilities() as $capability) {
+                    if ($capability->hasRoleCapability($target)) {
+                        $idSitesAccess[$capability->getId()] = $idSitesAccess['superuser'];
+                    }
+                }
+            }
+            $idSitesAccess[$target] = array_values(array_unique(array_merge(
+                $idSitesAccess[$target] ?? [],
+                $idSitesAccess[$access] ?? []
+            )));
+            $idSitesAccess[$access] = [];
+        }
+
+        return $idSitesAccess;
     }
 }
