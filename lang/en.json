@@ -60,6 +60,7 @@
     "SystemSettingOAuthScopeDescription": "Defines which scopes OAuth clients can request. Removing a scope here disables it for all OAuth clients globally.",
     "SystemSettingOAuthEnableAuthorizationCodeTitle": "Enable authorisation code grant (PKCE supported)",
     "SystemSettingOAuthEnableAClientCredentialsTitle": "Enable client credentials grant",
-    "SystemSettingOAuthEnableRefreshTokenTitle": "Enable refresh tokens"
+    "SystemSettingOAuthEnableRefreshTokenTitle": "Enable refresh tokens",
+    "InvalidValueException": "Invalid value, it should be greater than 0."
   }
 }

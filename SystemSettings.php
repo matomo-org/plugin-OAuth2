@@ -32,18 +32,33 @@ class SystemSettings extends BaseSystemSettings
             $field->title = Piwik::translate('OAuth2_SystemSettingOAuthAccessTokenLifetimeTitle');
             $field->description = Piwik::translate('OAuth2_SystemSettingOAuthAccessTokenLifetimeDescription');
             $field->uiControl = FieldConfig::UI_CONTROL_TEXT;
+            $field->validate = function ($value) {
+                if ($value <= 0) {
+                    throw new \Exception(Piwik::translate('OAuth2_InvalidValueException'));
+                }
+            };
         });
 
         $this->refreshTokenTtl = $this->makeSetting('refreshTokenTtl', 2592000, FieldConfig::TYPE_INT, function (FieldConfig $field) {
             $field->title = Piwik::translate('OAuth2_SystemSettingOAuthRefreshTokenLifetimeTitle');
             $field->description = Piwik::translate('OAuth2_SystemSettingOAuthRefreshTokenLifetimeDescription');
             $field->uiControl = FieldConfig::UI_CONTROL_TEXT;
+            $field->validate = function ($value) {
+                if ($value <= 0) {
+                    throw new \Exception(Piwik::translate('OAuth2_InvalidValueException'));
+                }
+            };
         });
 
         $this->authCodeTtl = $this->makeSetting('authCodeTtl', 600, FieldConfig::TYPE_INT, function (FieldConfig $field) {
             $field->title = Piwik::translate('OAuth2_SystemSettingOAuthAuthorizationCodeLifetimeTitle');
             $field->description = Piwik::translate('OAuth2_SystemSettingOAuthAuthorizationCodeLifetimeDescription');
             $field->uiControl = FieldConfig::UI_CONTROL_TEXT;
+            $field->validate = function ($value) {
+                if ($value <= 0) {
+                    throw new \Exception(Piwik::translate('OAuth2_InvalidValueException'));
+                }
+            };
         });
 
         $this->enableAuthorizationCode = $this->makeSetting('enableAuthorizationCode', true, FieldConfig::TYPE_BOOL, function (FieldConfig $field) {
