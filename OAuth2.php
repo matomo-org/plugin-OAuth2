@@ -324,7 +324,9 @@ class OAuth2 extends Plugin
             if ($access === 'superuser' && !empty($idSitesAccess['superuser'])) {
                 $capabilityProvider = StaticContainer::get('Piwik\Access\CapabilitiesProvider');
                 foreach ($capabilityProvider->getAllCapabilities() as $capability) {
-                    $idSitesAccess[$capability->getId()] = $idSitesAccess['superuser'];
+                    if ($capability->hasRoleCapability($target)) {
+                        $idSitesAccess[$capability->getId()] = $idSitesAccess['superuser'];
+                    }
                 }
             }
             $idSitesAccess[$target] = array_values(array_unique(array_merge(
