@@ -320,6 +320,13 @@ class OAuth2 extends Plugin
             if ($level <= $targetLevel) {
                 continue;
             }
+            // Assign all the capabilities of a superuser too
+            if ($access === 'superuser' && !empty($idSitesAccess['superuser'])) {
+                $capabilityProvider = StaticContainer::get('Piwik\Access\CapabilitiesProvider');
+                foreach ($capabilityProvider->getAllCapabilities() as $capability) {
+                    $idSitesAccess[$capability->getId()] = $idSitesAccess['superuser'];
+                }
+            }
             $idSitesAccess[$target] = array_values(array_unique(array_merge(
                 $idSitesAccess[$target] ?? [],
                 $idSitesAccess[$access] ?? []
