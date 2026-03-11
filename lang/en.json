@@ -35,7 +35,7 @@
     "AdminGrantTypesHelp": "Select the OAuth authentication methods this client can use to obtain access tokens from Matomo.",
     "AdminScope": "Allowed scope",
     "AdminScopes": "Allowed scopes",
-    "AdminScopesHelp": "Defines which API scopes the client is allowed to request. Access tokens will be limited to these scopes.",
+    "AdminScopesHelp": "Defines which API scope the client is allowed to request. Access tokens will be limited to these scope max.",
     "AdminRedirectUris": "Redirect URIs (one per line)",
     "AdminRedirectUrisHelp": "Allowed redirect or callback URLs for the authorisation code flow (one per line, must match exactly).",
     "AdminActiveLabel": "Active",
