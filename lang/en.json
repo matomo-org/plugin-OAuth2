@@ -1,7 +1,7 @@
 {
   "OAuth2": {
     "PlatformMenu": "OAuth2",
-    "AuthorizeTitle": "Authorize %s",
+    "AuthorizeTitle": "Authorise %s",
     "AuthorizeIntro": "%s is requesting access to your Matomo account.",
     "RequestedScopes": "Requested scopes",
     "Allow": "Allow",
