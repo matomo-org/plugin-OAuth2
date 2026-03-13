@@ -1,0 +1,22 @@
+parameters:
+    level: 5
+    phpVersion: 80100
+    tmpDir: /tmp/phpstan/Oauth2/main
+    paths:
+        - .
+    excludePaths:
+        - tests/*
+        - github-action-tests
+        - vendor
+    bootstrapFiles:
+        - ../../bootstrap-phpstan.php
+    universalObjectCratesClasses:
+        - Piwik\Config
+        - Piwik\View
+        - Piwik\ViewDataTable\Config
+    scanDirectories:
+        # ../../ does not actually seem to give us anything
+        # that ../plugins/ does not, but including it for
+        # completeness.  It does not seem to slow down performance.
+        - .
+

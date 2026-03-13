@@ -41,6 +41,14 @@ class ClientEntity implements ClientEntityInterface
 
     public ?string $ownerLogin = null;
 
+    /**
+     * @return string[]
+     */
+    public function getAllowedScopes(): array
+    {
+        return $this->allowedScopes;
+    }
+
     public function getName(): string
     {
         return $this->name;

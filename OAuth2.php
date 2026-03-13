@@ -228,7 +228,7 @@ class OAuth2 extends Plugin
 
         $optionValue = Option::get($optionKey);
 
-        return $optionValue ?? '';
+        return $optionValue;
     }
 
     /**
@@ -238,7 +238,7 @@ class OAuth2 extends Plugin
     {
         $value = Option::get(self::OAUTH2_ENCRYPTION_OPTION_KEY);
 
-        return $value ?? '';
+        return $value;
     }
 
     /**
@@ -279,7 +279,6 @@ class OAuth2 extends Plugin
     /**
      * @param $isForce
      * @return void
-     * @throws \Random\RandomException
      */
     public static function setEncryptionKey($isForce = false): void
     {

@@ -16,14 +16,14 @@ class DeleteClient extends BaseActivity
     public function extractParams($eventData)
     {
         if (!is_array($eventData) || count($eventData) < 2) {
-            return false;
+            return [];
         }
 
         list($result, $finalParameters) = $eventData;
 
         $clientId = $finalParameters['parameters']['clientId'] ?? $finalParameters['parameters']['client_id'] ?? null;
         if (!$clientId) {
-            return false;
+            return [];
         }
 
         return [

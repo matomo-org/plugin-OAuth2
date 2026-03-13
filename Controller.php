@@ -16,6 +16,7 @@ use Piwik\Common;
 use Piwik\Nonce;
 use Piwik\Piwik;
 use Piwik\Plugin\ControllerAdmin;
+use Piwik\Plugins\OAuth2\Entities\ClientEntity;
 use Piwik\Plugins\OAuth2\Entities\UserEntity;
 use Piwik\Plugins\OAuth2\Model\ClientModel;
 use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
@@ -79,7 +80,11 @@ class Controller extends ControllerAdmin
             return $scope->getIdentifier();
         }, $authRequest->getScopes());
 
-        $clientScopes = array_values((array) $authRequest->getClient()->allowedScopes);
+        $client = $authRequest->getClient();
+        $clientScopes = [];
+        if ($client instanceof ClientEntity) {
+            $clientScopes = array_values($client->getAllowedScopes());
+        }
         $scopes = array_values($scopes);
 
         if (count($scopes) !== 1 || count($clientScopes) !== 1 || $clientScopes[0] !== $scopes[0]) {

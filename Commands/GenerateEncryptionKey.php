@@ -11,7 +11,7 @@ namespace Piwik\Plugins\OAuth2\Commands;
 
 use Piwik\Option;
 use Piwik\Plugin\ConsoleCommand;
-use Piwik\Plugins\Oauth2\Oauth2;
+use Piwik\Plugins\OAuth2\OAuth2;
 
 class GenerateEncryptionKey extends ConsoleCommand
 {
@@ -40,13 +40,13 @@ class GenerateEncryptionKey extends ConsoleCommand
 
         $isForce = $input->getOption('force');
 
-        $value = Option::get(Oauth2::OAUTH2_ENCRYPTION_OPTION_KEY);
+        $value = Option::get(OAuth2::OAUTH2_ENCRYPTION_OPTION_KEY);
         if ($value && !$isForce) {
             $output->writeln('<error>Key already setup, send --force parameter to forcefully generate new key.</error>');
             return self::FAILURE;
         }
 
-        Oauth2::setEncryptionKey($isForce);
+        OAuth2::setEncryptionKey($isForce);
 
         $output->writeln('Generated new encryption key.');
 

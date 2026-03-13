@@ -13,6 +13,7 @@ use League\OAuth2\Server\Entities\ClientEntityInterface;
 use League\OAuth2\Server\Entities\ScopeEntityInterface;
 use League\OAuth2\Server\Exception\OAuthServerException;
 use League\OAuth2\Server\Repositories\ScopeRepositoryInterface;
+use Piwik\Plugins\OAuth2\Entities\ClientEntity;
 use Piwik\Plugins\OAuth2\Entities\ScopeEntity;
 use Piwik\Plugins\OAuth2\SystemSettings;
 
@@ -56,8 +57,8 @@ class ScopeRepository implements ScopeRepositoryInterface
         }
 
         $allowed = $this->getAllowedScopeIds();
-        if (!empty($clientEntity->allowedScopes)) {
-            $allowed = array_values(array_intersect($allowed, $clientEntity->allowedScopes));
+        if ($clientEntity instanceof ClientEntity && !empty($clientEntity->getAllowedScopes())) {
+            $allowed = array_values(array_intersect($allowed, $clientEntity->getAllowedScopes()));
         }
 
         if (empty($scopes)) {
