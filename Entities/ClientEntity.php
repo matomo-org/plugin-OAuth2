@@ -9,9 +9,8 @@
 
 namespace Piwik\Plugins\OAuth2\Entities;
 
-use League\OAuth2\Server\Entities\ClientEntityInterface;
-use League\OAuth2\Server\Entities\Traits\EntityTrait;
-
+use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ClientEntityInterface;
+use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\Traits\EntityTrait;
 class ClientEntity implements ClientEntityInterface
 {
     use EntityTrait;

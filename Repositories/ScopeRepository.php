@@ -9,10 +9,10 @@
 
 namespace Piwik\Plugins\OAuth2\Repositories;
 
-use League\OAuth2\Server\Entities\ClientEntityInterface;
-use League\OAuth2\Server\Entities\ScopeEntityInterface;
-use League\OAuth2\Server\Exception\OAuthServerException;
-use League\OAuth2\Server\Repositories\ScopeRepositoryInterface;
+use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ClientEntityInterface;
+use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ScopeEntityInterface;
+use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Exception\OAuthServerException;
+use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\ScopeRepositoryInterface;
 use Piwik\Plugins\OAuth2\Entities\ScopeEntity;
 use Piwik\Plugins\OAuth2\SystemSettings;
 

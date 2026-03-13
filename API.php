@@ -9,7 +9,7 @@
 
 namespace Piwik\Plugins\OAuth2;
 
-use League\OAuth2\Server\RedirectUriValidators\RedirectUriValidator;
+use Matomo\Dependencies\Oauth2\League\OAuth2\Server\RedirectUriValidators\RedirectUriValidator;
 use Piwik\Piwik;
 use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
 use Piwik\Plugins\OAuth2\Service\ClientManager;

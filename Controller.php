@@ -9,9 +9,9 @@
 
 namespace Piwik\Plugins\OAuth2;
 
-use Nyholm\Psr7\Factory\Psr17Factory;
-use Nyholm\Psr7\Response;
-use Nyholm\Psr7Server\ServerRequestCreator;
+use Matomo\Dependencies\Oauth2\Nyholm\Psr7\Factory\Psr17Factory;
+use Matomo\Dependencies\Oauth2\Nyholm\Psr7\Response;
+use Matomo\Dependencies\Oauth2\Nyholm\Psr7Server\ServerRequestCreator;
 use Piwik\Common;
 use Piwik\Nonce;
 use Piwik\Piwik;
@@ -22,8 +22,8 @@ use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
 use Piwik\Plugins\OAuth2\Service\ServerFactory;
 use Piwik\Plugins\UsersManager\Model as UserModel;
 use Piwik\Request;
-use Psr\Http\Message\ResponseInterface;
-use League\OAuth2\Server\Exception\OAuthServerException;
+use Matomo\Dependencies\Oauth2\Psr\Http\Message\ResponseInterface;
+use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Exception\OAuthServerException;
 
 class Controller extends ControllerAdmin
 {
