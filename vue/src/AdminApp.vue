@@ -104,7 +104,7 @@
           </div>
           <div class="row">
             <Field
-              uicontrol="checkbox" :options="getGrantOptions" var-type="array"
+              uicontrol="checkbox" :options="visibleGrantOptions" var-type="array"
               name="grant_types" v-model="form.grant_types"
               :inline-help="translate('OAuth2_AdminGrantTypesHelp')"
               :title="translate('OAuth2_AdminClientGrants')"/>
@@ -177,13 +177,8 @@ export default defineComponent({
       confidential: this.translate('OAuth2_AdminConfidential'),
       public: this.translate('OAuth2_AdminPublic'),
     };
-    type GrantOptions = {
-      authorization_code: string;
-      client_credentials?: string;
-      refresh_token: string;
-    };
 
-    const grantOptions: GrantOptions = {
+    const grantOptions = {
       authorization_code: this.translate('OAuth2_AdminGrantAuthorizationCode'),
       client_credentials: this.translate('OAuth2_AdminGrantClientCredentials'),
       refresh_token: this.translate('OAuth2_AdminGrantRefreshToken'),
@@ -222,13 +217,6 @@ export default defineComponent({
       }
 
       return this.grant_options;
-    },
-    getGrantOptions() {
-      const grantOptions = this.grant_options;
-      if (this.form.type === 'public') {
-        delete grantOptions.client_credentials;
-      }
-      return grantOptions;
     },
   },
   watch: {
@@ -366,19 +354,19 @@ export default defineComponent({
     checkRequiredFieldsAreSet() {
       let response = true;
       let errorMessage = '';
-      if (!this.form.name) {
+      if (!this.form.name.trim()) {
         response = false;
         errorMessage = this.translate('OAuth2_AdminName');
-      } else if (!this.form.type) {
+      } else if (!this.form.type.trim()) {
         response = false;
         errorMessage = this.translate('OAuth2_AdminType');
       } else if (!this.form.grant_types.length) {
         response = false;
         errorMessage = this.translate('OAuth2_AdminClientGrants');
-      } else if (!this.form.scope) {
+      } else if (!this.form.scope.trim()) {
         response = false;
         errorMessage = this.translate('OAuth2_AdminScope');
-      } else if (!this.form.redirect_uris) {
+      } else if (!this.form.redirect_uris.trim() && this.form.grant_types.includes('authorization_code')) {
         response = false;
         errorMessage = this.translate('OAuth2_AdminRedirectUris');
       }

@@ -146,7 +146,7 @@ if (typeof window !== 'undefined') {
 // EXTERNAL MODULE: external {"commonjs":"vue","commonjs2":"vue","root":"Vue"}
 var external_commonjs_vue_commonjs2_vue_root_Vue_ = __webpack_require__("8bbf");
 
-// CONCATENATED MODULE: ./node_modules/@vue/cli-plugin-babel/node_modules/cache-loader/dist/cjs.js??ref--13-0!./node_modules/@vue/cli-plugin-babel/node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist/templateLoader.js??ref--6!./node_modules/@vue/cli-service/node_modules/cache-loader/dist/cjs.js??ref--1-0!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist??ref--1-1!./plugins/OAuth2/vue/src/AdminApp.vue?vue&type=template&id=f9f0e3de
+// CONCATENATED MODULE: ./node_modules/@vue/cli-plugin-babel/node_modules/cache-loader/dist/cjs.js??ref--13-0!./node_modules/@vue/cli-plugin-babel/node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist/templateLoader.js??ref--6!./node_modules/@vue/cli-service/node_modules/cache-loader/dist/cjs.js??ref--1-0!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist??ref--1-1!./plugins/OAuth2/vue/src/AdminApp.vue?vue&type=template&id=f80da52a
 
 const _hoisted_1 = {
   class: "oauth2-admin"
@@ -278,7 +278,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       }
     }, null, 8, ["modelValue", "title", "inline-help", "options"])]), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("div", _hoisted_19, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])(_component_Field, {
       uicontrol: "checkbox",
-      options: _ctx.getGrantOptions,
+      options: _ctx.visibleGrantOptions,
       "var-type": "array",
       name: "grant_types",
       modelValue: _ctx.form.grant_types,
@@ -309,7 +309,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1
   }, 8, ["content-title"])]);
 }
-// CONCATENATED MODULE: ./plugins/OAuth2/vue/src/AdminApp.vue?vue&type=template&id=f9f0e3de
+// CONCATENATED MODULE: ./plugins/OAuth2/vue/src/AdminApp.vue?vue&type=template&id=f80da52a
 
 // EXTERNAL MODULE: external "CorePluginsAdmin"
 var external_CorePluginsAdmin_ = __webpack_require__("a5a2");
@@ -380,13 +380,6 @@ const notificationId = 'oauth2clientcreate';
         return filtered;
       }
       return this.grant_options;
-    },
-    getGrantOptions() {
-      const grantOptions = this.grant_options;
-      if (this.form.type === 'public') {
-        delete grantOptions.client_credentials;
-      }
-      return grantOptions;
     }
   },
   watch: {
@@ -515,19 +508,19 @@ const notificationId = 'oauth2clientcreate';
     checkRequiredFieldsAreSet() {
       let response = true;
       let errorMessage = '';
-      if (!this.form.name) {
+      if (!this.form.name.trim()) {
         response = false;
         errorMessage = this.translate('OAuth2_AdminName');
-      } else if (!this.form.type) {
+      } else if (!this.form.type.trim()) {
         response = false;
         errorMessage = this.translate('OAuth2_AdminType');
       } else if (!this.form.grant_types.length) {
         response = false;
         errorMessage = this.translate('OAuth2_AdminClientGrants');
-      } else if (!this.form.scope) {
+      } else if (!this.form.scope.trim()) {
         response = false;
         errorMessage = this.translate('OAuth2_AdminScope');
-      } else if (!this.form.redirect_uris) {
+      } else if (!this.form.redirect_uris.trim() && this.form.grant_types.includes('authorization_code')) {
         response = false;
         errorMessage = this.translate('OAuth2_AdminRedirectUris');
       }

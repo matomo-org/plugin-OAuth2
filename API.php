@@ -62,9 +62,9 @@ class API extends \Piwik\Plugin\API
      * `client_credentials`, or `refresh_token`.
      *
      * @param string          $name          Display name shown in the Matomo UI.
-     * @param string|string[] $redirectUris  Allowed redirect URIs (array or newline-separated string).
      * @param string[]        $grantTypes    Grant types to enable (`authorization_code`, `client_credentials`, `refresh_token`).
      * @param string          $scope         Scope identifier to allow; filtered against configured scopes.
+     * @param string|string[] $redirectUris Allowed redirect URIs (array or newline-separated string).
      * @param string          $description   Optional description for administrators.
      * @param string          $type          `confidential` (default, requires secret) or `public` (no client secret).
      * @param string          $active        `'1'` to enable the client or `'0'` to disable it.
@@ -72,7 +72,7 @@ class API extends \Piwik\Plugin\API
      *
      * @throws \InvalidArgumentException When redirect URIs or grant types are invalid.
      */
-    public function createClient(string $name, $redirectUris, array $grantTypes, string $scope, string $description = '', string $type = 'confidential', string $active = '1'): array
+    public function createClient(string $name, array $grantTypes, string $scope, $redirectUris = [], string $description = '', string $type = 'confidential', string $active = '1'): array
     {
         Piwik::checkUserHasSuperUserAccess();
 
@@ -84,10 +84,10 @@ class API extends \Piwik\Plugin\API
         }
         $redirects = array_values(array_filter(array_map('trim', $redirects), static fn($v) => $v !== ''));
 
-        $this->validateRedirectUris($redirects);
-
         $grantTypes = array_values(array_filter(array_map('trim', (array) $grantTypes), static fn($v) => $v !== ''));
         $grantTypes = $this->validateGrantTypes($grantTypes);
+
+        $this->validateRedirectUris($redirects, $grantTypes);
 
         if ($type === 'public' && in_array('client_credentials', $grantTypes, true)) {
             throw new \InvalidArgumentException('Public clients cannot use the client_credentials grant type');
@@ -168,10 +168,14 @@ class API extends \Piwik\Plugin\API
         return $clientId;
     }
 
-    private function validateRedirectUris(array $redirectUris): void
+    private function validateRedirectUris(array $redirectUris, array $grantTypes): void
     {
-        if (empty($redirectUris)) {
+        if (!in_array('authorization_code', $grantTypes, true)) {
             return;
+        }
+
+        if (empty($redirectUris)) {
+            throw new \InvalidArgumentException('Invalid redirect_uri');
         }
 
         $validator = new RedirectUriValidator($redirectUris);
