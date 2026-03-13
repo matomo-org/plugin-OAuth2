@@ -9,7 +9,7 @@ It supports standard OAuth2 flows including **Authorization Code (PKCE)**, **Cli
 # Features
 
 - OAuth2 Authorization Server integrated with Matomo
-- Manage OAuth clients via **Administration → Platform → OAuth2**
+- Manage OAuth clients via **Administration → Platform → OAuth2** (For Matomo Cloud it will be **Administration → Export → OAuth2**)
 - Supported grant types:
   - Authorization Code (with PKCE)
   - Client Credentials
@@ -49,7 +49,8 @@ Optional cleaner routes can be added:
 Navigate to:
 
 ```
-Administration → Platform → OAuth2
+Administration → Platform → OAuth2 (On-premise)
+dministration → Export → OAuth2 (Matomo Cloud)
 ```
 
 Create a client and configure:

@@ -146,7 +146,7 @@ if (typeof window !== 'undefined') {
 // EXTERNAL MODULE: external {"commonjs":"vue","commonjs2":"vue","root":"Vue"}
 var external_commonjs_vue_commonjs2_vue_root_Vue_ = __webpack_require__("8bbf");
 
-// CONCATENATED MODULE: ./node_modules/@vue/cli-plugin-babel/node_modules/cache-loader/dist/cjs.js??ref--13-0!./node_modules/@vue/cli-plugin-babel/node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist/templateLoader.js??ref--6!./node_modules/@vue/cli-service/node_modules/cache-loader/dist/cjs.js??ref--1-0!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist??ref--1-1!./plugins/OAuth2/vue/src/AdminApp.vue?vue&type=template&id=542b606d
+// CONCATENATED MODULE: ./node_modules/@vue/cli-plugin-babel/node_modules/cache-loader/dist/cjs.js??ref--13-0!./node_modules/@vue/cli-plugin-babel/node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist/templateLoader.js??ref--6!./node_modules/@vue/cli-service/node_modules/cache-loader/dist/cjs.js??ref--1-0!./node_modules/@vue/cli-service/node_modules/vue-loader-v16/dist??ref--1-1!./plugins/OAuth2/vue/src/AdminApp.vue?vue&type=template&id=f80da52a
 
 const _hoisted_1 = {
   class: "oauth2-admin"
@@ -278,7 +278,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       }
     }, null, 8, ["modelValue", "title", "inline-help", "options"])]), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("div", _hoisted_19, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])(_component_Field, {
       uicontrol: "checkbox",
-      options: _ctx.grant_options,
+      options: _ctx.visibleGrantOptions,
       "var-type": "array",
       name: "grant_types",
       modelValue: _ctx.form.grant_types,
@@ -291,7 +291,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       name: "scopes",
       modelValue: _ctx.form.scope,
       "onUpdate:modelValue": _cache[4] || (_cache[4] = $event => _ctx.form.scope = $event),
-      "inline-help": _ctx.translate('OAuth2_AdminScopesHelp'),
+      "inline-help": _ctx.translate('OAuth2_AdminScopeHelp', '<strong>', '</strong>'),
       title: _ctx.translate('OAuth2_AdminScope')
     }, null, 8, ["options", "modelValue", "inline-help", "title"])]), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createElementVNode"])("div", _hoisted_21, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])(_component_Field, {
       uicontrol: "textarea",
@@ -309,7 +309,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1
   }, 8, ["content-title"])]);
 }
-// CONCATENATED MODULE: ./plugins/OAuth2/vue/src/AdminApp.vue?vue&type=template&id=542b606d
+// CONCATENATED MODULE: ./plugins/OAuth2/vue/src/AdminApp.vue?vue&type=template&id=f80da52a
 
 // EXTERNAL MODULE: external "CorePluginsAdmin"
 var external_CorePluginsAdmin_ = __webpack_require__("a5a2");
@@ -321,6 +321,7 @@ var external_CoreHome_ = __webpack_require__("19dc");
 
 
 
+const notificationId = 'oauth2clientcreate';
 /* harmony default export */ var AdminAppvue_type_script_lang_ts = (Object(external_commonjs_vue_commonjs2_vue_root_Vue_["defineComponent"])({
   name: 'Oauth2AdminApp',
   props: {
@@ -404,7 +405,7 @@ var external_CoreHome_ = __webpack_require__("19dc");
     async fetchClients() {
       this.loading = true;
       try {
-        external_CoreHome_["AjaxHelper"].fetch({
+        await external_CoreHome_["AjaxHelper"].fetch({
           method: 'OAuth2.getClients',
           filter_limit: '-1'
         }).then(clients => {
@@ -415,6 +416,10 @@ var external_CoreHome_ = __webpack_require__("19dc");
       }
     },
     async createClient() {
+      this.removeAnyClientNotification();
+      if (!this.checkRequiredFieldsAreSet()) {
+        return;
+      }
       this.loading = true;
       this.secret = '';
       const params = {
@@ -428,7 +433,7 @@ var external_CoreHome_ = __webpack_require__("19dc");
         active: 1
       };
       try {
-        external_CoreHome_["AjaxHelper"].fetch(params).then(response => {
+        await external_CoreHome_["AjaxHelper"].fetch(params).then(response => {
           this.clients.push(response.client);
           const message = this.translate('OAuth2_AdminCreated', response.client.client_id);
           this.showSuccessNotification('createClient', message);
@@ -499,6 +504,49 @@ var external_CoreHome_ = __webpack_require__("19dc");
       this.form.scope = '';
       this.form.redirect_uris = '';
       this.form.active = true;
+    },
+    checkRequiredFieldsAreSet() {
+      let response = true;
+      let errorMessage = '';
+      if (!this.form.name.trim()) {
+        response = false;
+        errorMessage = this.translate('OAuth2_AdminName');
+      } else if (!this.form.type.trim()) {
+        response = false;
+        errorMessage = this.translate('OAuth2_AdminType');
+      } else if (!this.form.grant_types.length) {
+        response = false;
+        errorMessage = this.translate('OAuth2_AdminClientGrants');
+      } else if (!this.form.scope.trim()) {
+        response = false;
+        errorMessage = this.translate('OAuth2_AdminScope');
+      } else if (!this.form.redirect_uris.trim() && this.form.grant_types.includes('authorization_code')) {
+        response = false;
+        errorMessage = this.translate('OAuth2_AdminRedirectUris');
+      }
+      if (!response && errorMessage) {
+        this.showErrorFieldNotProvidedNotification(errorMessage);
+      }
+      return response;
+    },
+    removeAnyClientNotification() {
+      external_CoreHome_["NotificationsStore"].remove(notificationId);
+      external_CoreHome_["NotificationsStore"].remove('ajaxHelper');
+    },
+    showNotification(message, context, type = null) {
+      const notificationInstanceId = external_CoreHome_["NotificationsStore"].show({
+        message,
+        context,
+        id: notificationId,
+        type: type !== null ? type : 'toast'
+      });
+      setTimeout(() => {
+        external_CoreHome_["NotificationsStore"].scrollToNotification(notificationInstanceId);
+      }, 200);
+    },
+    showErrorFieldNotProvidedNotification(title) {
+      const message = this.translate('OAuth2_ErrorXNotProvided', [title]);
+      this.showNotification(message, 'error');
     }
   }
 }));

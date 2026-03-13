@@ -104,7 +104,7 @@
           </div>
           <div class="row">
             <Field
-              uicontrol="checkbox" :options="grant_options" var-type="array"
+              uicontrol="checkbox" :options="visibleGrantOptions" var-type="array"
               name="grant_types" v-model="form.grant_types"
               :inline-help="translate('OAuth2_AdminGrantTypesHelp')"
               :title="translate('OAuth2_AdminClientGrants')"/>
@@ -113,7 +113,7 @@
             <Field
               uicontrol="select" :options="scopes"
               name="scopes" v-model="form.scope"
-              :inline-help="translate('OAuth2_AdminScopesHelp')"
+              :inline-help="translate('OAuth2_AdminScopeHelp', '<strong>', '</strong>')"
               :title="translate('OAuth2_AdminScope')"/>
           </div>
           <div class="row">
@@ -141,6 +141,7 @@ import {
   ContentBlock,
   AjaxHelper,
   NotificationsStore,
+  NotificationType,
 } from 'CoreHome';
 
 type Client = {
@@ -152,6 +153,8 @@ type Client = {
   redirect_uris: string[];
   active: boolean;
 };
+
+const notificationId = 'oauth2clientcreate';
 
 export default defineComponent({
   name: 'Oauth2AdminApp',
@@ -174,6 +177,7 @@ export default defineComponent({
       confidential: this.translate('OAuth2_AdminConfidential'),
       public: this.translate('OAuth2_AdminPublic'),
     };
+
     const grantOptions = {
       authorization_code: this.translate('OAuth2_AdminGrantAuthorizationCode'),
       client_credentials: this.translate('OAuth2_AdminGrantClientCredentials'),
@@ -239,7 +243,7 @@ export default defineComponent({
     async fetchClients() {
       this.loading = true;
       try {
-        AjaxHelper.fetch({
+        await AjaxHelper.fetch({
           method: 'OAuth2.getClients',
           filter_limit: '-1',
         }).then((clients) => {
@@ -250,6 +254,10 @@ export default defineComponent({
       }
     },
     async createClient() {
+      this.removeAnyClientNotification();
+      if (!this.checkRequiredFieldsAreSet()) {
+        return;
+      }
       this.loading = true;
       this.secret = '';
       const params = {
@@ -263,7 +271,7 @@ export default defineComponent({
         active: 1,
       };
       try {
-        AjaxHelper.fetch(params).then((response) => {
+        await AjaxHelper.fetch(params).then((response) => {
           this.clients.push(response.client);
 
           const message = this.translate('OAuth2_AdminCreated', response.client.client_id);
@@ -342,6 +350,51 @@ export default defineComponent({
       this.form.scope = '';
       this.form.redirect_uris = '';
       this.form.active = true;
+    },
+    checkRequiredFieldsAreSet() {
+      let response = true;
+      let errorMessage = '';
+      if (!this.form.name.trim()) {
+        response = false;
+        errorMessage = this.translate('OAuth2_AdminName');
+      } else if (!this.form.type.trim()) {
+        response = false;
+        errorMessage = this.translate('OAuth2_AdminType');
+      } else if (!this.form.grant_types.length) {
+        response = false;
+        errorMessage = this.translate('OAuth2_AdminClientGrants');
+      } else if (!this.form.scope.trim()) {
+        response = false;
+        errorMessage = this.translate('OAuth2_AdminScope');
+      } else if (!this.form.redirect_uris.trim() && this.form.grant_types.includes('authorization_code')) {
+        response = false;
+        errorMessage = this.translate('OAuth2_AdminRedirectUris');
+      }
+      if (!response && errorMessage) {
+        this.showErrorFieldNotProvidedNotification(errorMessage);
+      }
+
+      return response;
+    },
+    removeAnyClientNotification() {
+      NotificationsStore.remove(notificationId);
+      NotificationsStore.remove('ajaxHelper');
+    },
+    showNotification(message: string, context: NotificationType['context'],
+      type: null|NotificationType['type'] = null) {
+      const notificationInstanceId = NotificationsStore.show({
+        message,
+        context,
+        id: notificationId,
+        type: type !== null ? type : 'toast',
+      });
+      setTimeout(() => {
+        NotificationsStore.scrollToNotification(notificationInstanceId);
+      }, 200);
+    },
+    showErrorFieldNotProvidedNotification(title: string) {
+      const message = this.translate('OAuth2_ErrorXNotProvided', [title]);
+      this.showNotification(message, 'error');
     },
   },
 });
