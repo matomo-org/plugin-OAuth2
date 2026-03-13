@@ -15,6 +15,7 @@ use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\RefreshTokenEntityI
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Grant\AuthCodeGrant;
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\AuthCodeRepositoryInterface;
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
+
 class MatomoAuthCodeGrant extends AuthCodeGrant
 {
     public function __construct(

@@ -19,6 +19,7 @@ use Piwik\Plugins\OAuth2\Service\ServerFactory;
 use Piwik\Plugins\UsersManager\Model as UserModel;
 use Matomo\Dependencies\Oauth2\Psr\Http\Message\ServerRequestInterface;
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Exception\OAuthServerException;
+
 class ResourceServerAuthenticator
 {
     public function __construct(

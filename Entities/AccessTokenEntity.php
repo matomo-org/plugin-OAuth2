@@ -13,6 +13,7 @@ use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\AccessTokenEntityIn
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\Traits\AccessTokenTrait;
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\Traits\EntityTrait;
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\Traits\TokenEntityTrait;
+
 class AccessTokenEntity implements AccessTokenEntityInterface
 {
     use EntityTrait;

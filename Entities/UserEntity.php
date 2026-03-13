@@ -11,6 +11,7 @@ namespace Piwik\Plugins\OAuth2\Entities;
 
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\UserEntityInterface;
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\Traits\EntityTrait;
+
 class UserEntity implements UserEntityInterface
 {
     use EntityTrait;

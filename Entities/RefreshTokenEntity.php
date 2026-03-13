@@ -12,6 +12,7 @@ namespace Piwik\Plugins\OAuth2\Entities;
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\RefreshTokenEntityInterface;
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\Traits\EntityTrait;
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\Traits\RefreshTokenTrait;
+
 class RefreshTokenEntity implements RefreshTokenEntityInterface
 {
     use EntityTrait;
