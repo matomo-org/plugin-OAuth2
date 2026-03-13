@@ -22,7 +22,6 @@ use Piwik\Plugins\OAuth2\Auth\ResourceServerAuthenticator;
 
 class OAuth2 extends Plugin
 {
-
     public const PRIVATE_KEY_FILE_NAME = 'oauth-private.key';
     public const PUBLIC_KEY_FILE_NAME = 'oauth-public.key';
     public const OAUTH2_PRIVATE_OPTION_KEY = 'oauth2_private';
@@ -39,8 +38,10 @@ class OAuth2 extends Plugin
         ];
     }
 
-    public function onApiAuthenticate($tokenAuth)
-    {
+    public function onApiAuthenticate(
+        #[\SensitiveParameter]
+        $tokenAuth
+    ) {
         // handled in Authentication listener class to keep plugin wiring contained
         $authorizationHeader = self::getAuthorizationHeader();
         $hasBearer = !empty($authorizationHeader) && strpos($authorizationHeader, 'Bearer ') === 0;

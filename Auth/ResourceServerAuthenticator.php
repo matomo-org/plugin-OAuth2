@@ -29,8 +29,10 @@ class ResourceServerAuthenticator
     ) {
     }
 
-    public function prepareAuthenticationFromToken(?string $tokenAuth): void
-    {
+    public function prepareAuthenticationFromToken(
+        #[\SensitiveParameter]
+        ?string $tokenAuth
+    ): void {
         $authorizationHeader = OAuth2::getAuthorizationHeader();
         $hasAuthorizationHeader = !empty($authorizationHeader) && strpos($authorizationHeader, 'Bearer ') === 0;
 
@@ -77,8 +79,10 @@ class ResourceServerAuthenticator
         Access::getInstance()->reloadAccess($auth);
     }
 
-    private function buildRequest(?string $tokenAuth): ServerRequestInterface
-    {
+    private function buildRequest(
+        #[\SensitiveParameter]
+        ?string $tokenAuth
+    ): ServerRequestInterface {
         $psr17Factory = new Psr17Factory();
         $creator = new ServerRequestCreator($psr17Factory, $psr17Factory, $psr17Factory, $psr17Factory);
 

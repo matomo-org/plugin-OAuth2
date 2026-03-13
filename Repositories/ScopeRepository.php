@@ -13,7 +13,6 @@ use League\OAuth2\Server\Entities\ClientEntityInterface;
 use League\OAuth2\Server\Entities\ScopeEntityInterface;
 use League\OAuth2\Server\Exception\OAuthServerException;
 use League\OAuth2\Server\Repositories\ScopeRepositoryInterface;
-use Piwik\Access;
 use Piwik\Plugins\OAuth2\Entities\ScopeEntity;
 use Piwik\Plugins\OAuth2\SystemSettings;
 
