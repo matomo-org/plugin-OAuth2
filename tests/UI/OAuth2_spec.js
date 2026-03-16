@@ -53,7 +53,7 @@ describe("OAuth2Admin", function () {
         await page.waitForTimeout(300);
     }
 
-    async function fillClientForm(name, redirectUri)
+    async function fillClientForm(name, typeTitle, redirectUri)
     {
         await page.evaluate(() => $('#name').val(name).change());
         await page.evaluate(() => $('#description').val(name + ' description').change());
