@@ -72,7 +72,7 @@ jobs:
           plugin-name: 'OAuth2'
           matomo-test-branch: 'maximum_supported_matomo'
           test-type: 'UI'
-          php-version: 'matomo5_min_php'
+          php-version: 'matomo5_max_php'
           node-version: '16'
           redis-service: true
           artifacts-pass: ${{ secrets.ARTIFACTS_PASS }}

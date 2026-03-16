@@ -193,7 +193,6 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             'Piwik\Access' => new FakeAccess(),
         ];
     }
-
 }
 
 OAuthFlowTest::$fixture = new OAuth2Fixture();
