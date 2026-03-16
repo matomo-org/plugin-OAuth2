@@ -15,7 +15,7 @@ describe("OAuth2Admin", function () {
 
     const adminUrl = '?module=OAuth2&action=index&idSite=1&period=day&date=2024-01-01';
     const settingsUrl = '?module=CoreAdminHome&action=generalSettings#/OAuth2';
-    const selectorNameInput = 'div[name="name"] input[name="name"]';
+    const selectorNameInput = 'input[name="name"]';
     const selectorDescriptionInput = 'textarea[name="description"]';
     const selectorRedirectUrisInput = 'textarea[name="redirect_uris"]';
 
@@ -33,12 +33,26 @@ describe("OAuth2Admin", function () {
 
     async function sendFieldValue(selector, text)
     {
+        await page.waitForSelector(selector, { visible: true });
+
+        const field = await page.$(selector);
+        if (!field) {
+            throw new Error('Field not found for selector: ' + selector);
+        }
+
         await page.evaluate((theSelector) => {
-            $(theSelector).val('').change();
+            const element = document.querySelector(theSelector);
+            if (!element) {
+                return;
+            }
+
+            element.value = '';
+            element.dispatchEvent(new Event('input', { bubbles: true }));
+            element.dispatchEvent(new Event('change', { bubbles: true }));
         }, selector);
 
         if (text) {
-            await (await page.jQuery(selector)).type(text);
+            await field.type(text);
         }
 
         await page.waitForTimeout(200);
@@ -46,6 +60,7 @@ describe("OAuth2Admin", function () {
 
     async function selectValue(field, title)
     {
+        await page.waitForSelector(field + ' input.select-dropdown', { visible: true });
         await page.evaluate((theField) => {
             $(theField + ' input.select-dropdown').click();
         }, field);
@@ -78,7 +93,9 @@ describe("OAuth2Admin", function () {
 
     it('should show the OAuth2 system settings page', async function () {
         await page.goto(settingsUrl);
-        await capturePage('system_settings');
+        await page.waitForNetworkIdle();
+        await page.waitForTimeout(250);
+        expect(await page.screenshotSelector('#OAuth2PluginSettings')).to.matchImage('system_settings');
     });
 
     it('should show the create client page', async function () {
@@ -87,12 +104,14 @@ describe("OAuth2Admin", function () {
     });
 
     it('should validate the create client form', async function () {
+        await page.goto(adminUrl);
         await fillClientForm('Validation client', null, '');
         await submitForm();
         await capturePage('create_client_validation');
     });
 
     it('should create a confidential client and show the secret once', async function () {
+        await page.goto(adminUrl);
         await fillClientForm('Confidential UI client', 'Confidential', 'https://confidential.example/callback');
         await submitForm();
         await capturePage('create_confidential_success');
