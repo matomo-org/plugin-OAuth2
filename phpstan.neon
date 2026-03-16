@@ -9,7 +9,9 @@ parameters:
         - github-action-tests
         - vendor
     bootstrapFiles:
-        - ../../bootstrap-phpstan.php
+        - phpstan/bootstrap.php
+    stubFiles:
+        - phpstan/stubs.php
     universalObjectCratesClasses:
         - Piwik\Config
         - Piwik\View
@@ -19,4 +21,3 @@ parameters:
         # that ../plugins/ does not, but including it for
         # completeness.  It does not seem to slow down performance.
         - .
-
