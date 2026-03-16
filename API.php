@@ -82,9 +82,13 @@ class API extends \Piwik\Plugin\API
         if ($redirects === false) {
             $redirects = [];
         }
-        $redirects = array_values(array_filter(array_map('trim', $redirects), static fn($v) => $v !== ''));
+        $redirects = array_values(array_filter(array_map('trim', $redirects), static function ($value) {
+            return $value !== '';
+        }));
 
-        $grantTypes = array_values(array_filter(array_map('trim', (array) $grantTypes), static fn($v) => $v !== ''));
+        $grantTypes = array_values(array_filter(array_map('trim', (array) $grantTypes), static function ($value) {
+            return $value !== '';
+        }));
         $grantTypes = $this->validateGrantTypes($grantTypes);
 
         $this->validateRedirectUris($redirects, $grantTypes);

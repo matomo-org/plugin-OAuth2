@@ -75,9 +75,7 @@ class SystemSettings extends BaseSystemSettings
 
         $scopes = ScopeRepository::DESCRIPTIONS;
         $defaultScopes = $scopes;
-        if (isset($defaultScopes['matomo:superuser'])) {
-            unset($defaultScopes['matomo:superuser']);
-        }
+        unset($defaultScopes['matomo:superuser']);
         $this->defaultScopes = $this->makeSetting('defaultScopes', array_keys($defaultScopes), FieldConfig::TYPE_ARRAY, function (FieldConfig $field) use ($scopes) {
             $field->title = Piwik::translate('OAuth2_SystemSettingOAuthScopeTitle');
             $field->description = Piwik::translate('OAuth2_SystemSettingOAuthScopeDescription');
