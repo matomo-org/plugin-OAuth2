@@ -9,9 +9,9 @@
 
 namespace Piwik\Plugins\OAuth2\Repositories;
 
-use League\OAuth2\Server\Entities\AuthCodeEntityInterface;
-use League\OAuth2\Server\Entities\ScopeEntityInterface;
-use League\OAuth2\Server\Repositories\AuthCodeRepositoryInterface;
+use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\AuthCodeEntityInterface;
+use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ScopeEntityInterface;
+use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\AuthCodeRepositoryInterface;
 use Piwik\Plugins\OAuth2\Entities\AuthCodeEntity;
 use Piwik\Plugins\OAuth2\Model\AuthCodeModel;
 

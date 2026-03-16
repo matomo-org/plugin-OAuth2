@@ -9,10 +9,10 @@
 
 namespace Piwik\Plugins\OAuth2\Entities;
 
-use League\OAuth2\Server\Entities\AccessTokenEntityInterface;
-use League\OAuth2\Server\Entities\Traits\AccessTokenTrait;
-use League\OAuth2\Server\Entities\Traits\EntityTrait;
-use League\OAuth2\Server\Entities\Traits\TokenEntityTrait;
+use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\AccessTokenEntityInterface;
+use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\Traits\AccessTokenTrait;
+use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\Traits\EntityTrait;
+use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\Traits\TokenEntityTrait;
 
 class AccessTokenEntity implements AccessTokenEntityInterface
 {

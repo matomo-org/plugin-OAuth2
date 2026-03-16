@@ -1,0 +1,13 @@
+#!/usr/bin/env php
+<?php 
+namespace Matomo\Dependencies\Oauth2;
+
+use Matomo\Dependencies\Oauth2\Defuse\Crypto\Key;
+foreach ([__DIR__ . '/../../../autoload.php', __DIR__ . '/../vendor/autoload.php'] as $file) {
+    if (\file_exists($file)) {
+        require $file;
+        break;
+    }
+}
+$key = Key::createNewRandomKey();
+echo $key->saveToAsciiSafeString(), "\n";
