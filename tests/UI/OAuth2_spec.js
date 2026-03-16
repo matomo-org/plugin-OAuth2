@@ -15,9 +15,9 @@ describe("OAuth2Admin", function () {
 
     const adminUrl = '?module=OAuth2&action=index&idSite=1&period=day&date=2024-01-01';
     const settingsUrl = '?module=CoreAdminHome&action=generalSettings#/OAuth2';
-    const selectorNameInput = 'input[name="name"]';
-    const selectorDescriptionInput = 'textarea[name="description"]';
-    const selectorRedirectUrisInput = 'textarea[name="redirect_uris"]';
+    const selectorNameInput = '#name';
+    const selectorDescriptionInput = '#description';
+    const selectorRedirectUrisInput = '#redirect_uris, textarea[name="redirect_uris"]';
 
     before(function () {
         testEnvironment.pluginsToLoad = ['OAuth2'];
@@ -73,7 +73,8 @@ describe("OAuth2Admin", function () {
 
     async function submitForm()
     {
-        await page.click('.oauth2-admin button[type="submit"]');
+        await page.waitForSelector('.oauth2-admin form button.btn', { visible: true });
+        await page.click('.oauth2-admin form button.btn');
         await page.waitForNetworkIdle();
         await page.waitForTimeout(300);
     }
@@ -87,7 +88,7 @@ describe("OAuth2Admin", function () {
             await selectValue('div[name="type"]', typeTitle);
         }
 
-        await selectValue('div[name="scopes"]', 'Matomo read level access.');
+        await selectValue('div[name="scope"]', 'Matomo read level access.');
         await sendFieldValue(selectorRedirectUrisInput, redirectUri);
     }
 
@@ -105,7 +106,6 @@ describe("OAuth2Admin", function () {
 
     it('should validate the create client form', async function () {
         await page.goto(adminUrl);
-        await fillClientForm('Validation client', null, '');
         await submitForm();
         await capturePage('create_client_validation');
     });
@@ -118,6 +118,7 @@ describe("OAuth2Admin", function () {
     });
 
     it('should create a public client successfully', async function () {
+        await page.goto(adminUrl);
         await fillClientForm('Public UI client', 'Public', 'https://public.example/callback');
         await submitForm();
         await capturePage('create_public_success');
