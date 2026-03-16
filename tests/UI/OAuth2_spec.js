@@ -15,9 +15,6 @@ describe("OAuth2Admin", function () {
 
     const adminUrl = '?module=OAuth2&action=index&idSite=1&period=day&date=2024-01-01';
     const settingsUrl = '?module=CoreAdminHome&action=generalSettings#/OAuth2';
-    const selectorNameInput = '#name';
-    const selectorDescriptionInput = '#description';
-    const selectorRedirectUrisInput = '#redirect_uris, textarea[name="redirect_uris"]';
 
     before(function () {
         testEnvironment.pluginsToLoad = ['OAuth2'];
@@ -55,8 +52,12 @@ describe("OAuth2Admin", function () {
 
     async function fillClientForm(name, typeTitle, redirectUri)
     {
-        await page.evaluate(() => $('#name').val(name).change());
-        await page.evaluate(() => $('#description').val(name + ' description').change());
+        await page.evaluate(function (name) {
+            $('#name').val(name).change();
+        }, name);
+        await page.evaluate(function (name) {
+            $('#description').val(name + ' description').change();
+        }, name);
 
         if (typeTitle) {
             await selectValue(page, 'div[name="type"]', typeTitle);
