@@ -31,44 +31,18 @@ describe("OAuth2Admin", function () {
         expect(await page.screenshotSelector('.pageWrap,#notificationContainer')).to.matchImage(name);
     }
 
-    async function sendFieldValue(selector, text)
+    async function selectValue(page, field, title)
     {
-        await page.waitForSelector(selector, { visible: true });
-
-        const field = await page.$(selector);
-        if (!field) {
-            throw new Error('Field not found for selector: ' + selector);
-        }
-
-        await page.evaluate((theSelector) => {
-            const element = document.querySelector(theSelector);
-            if (!element) {
-                return;
-            }
-
-            element.value = '';
-            element.dispatchEvent(new Event('input', { bubbles: true }));
-            element.dispatchEvent(new Event('change', { bubbles: true }));
-        }, selector);
-
-        if (text) {
-            await field.type(text);
-        }
-
-        await page.waitForTimeout(200);
-    }
-
-    async function selectValue(field, title)
-    {
-        await page.waitForSelector(field + ' input.select-dropdown', { visible: true });
-        await page.evaluate((theField) => {
-            $(theField + ' input.select-dropdown').click();
-        }, field);
-        await page.waitForTimeout(300);
-        await page.evaluate((theField, theTitle) => {
-            $(theField + ' .dropdown-content li:contains("' + theTitle + '"):first').click();
-        }, field, title);
-        await page.waitForTimeout(300);
+        await page.evaluate(function(field) {
+                $(field + ' input.select-dropdown').click()
+            }, field);
+        await page.waitForTimeout(800);
+        await page.evaluate(function(field, title) {
+                $(field + ' .dropdown-content li:contains("' + title + '"):first').click()
+            }, field, title);
+        await page.mouse.move(-10, -10);
+        await page.mouse.click(-10, -10);
+        await page.waitForTimeout(100);
     }
 
     async function submitForm()
@@ -79,17 +53,17 @@ describe("OAuth2Admin", function () {
         await page.waitForTimeout(300);
     }
 
-    async function fillClientForm(name, typeTitle, redirectUri)
+    async function fillClientForm(name, redirectUri)
     {
-        await sendFieldValue(selectorNameInput, name);
-        await sendFieldValue(selectorDescriptionInput, name + ' description');
+        await page.evaluate(() => $('#name').val(name).change());
+        await page.evaluate(() => $('#description').val(name + ' description').change());
 
         if (typeTitle) {
-            await selectValue('div[name="type"]', typeTitle);
+            await selectValue(page, 'div[name="type"]', typeTitle);
         }
 
-        await selectValue('div[name="scope"]', 'Matomo read level access.');
-        await sendFieldValue(selectorRedirectUrisInput, redirectUri);
+        await selectValue(page,'div[name="scopes"]', 'Matomo read level access.');
+        await page.evaluate(() => $('#redirect_uris').val(redirectUri).change());
     }
 
     it('should show the OAuth2 system settings page', async function () {

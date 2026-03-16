@@ -91,7 +91,7 @@
               :inline-help="translate('OAuth2_AdminDescriptionHelp')"
               :title="translate('OAuth2_AdminDescription')"/>
           </div>
-          <div class="row">
+          <div class="row" name="type">
             <Field
               uicontrol="select"
               name="type"
@@ -102,14 +102,14 @@
               public:translate('OAuth2_AdminPublic')}"
             />
           </div>
-          <div class="row">
+          <div class="row" name="grantType">
             <Field
               uicontrol="checkbox" :options="visibleGrantOptions" var-type="array"
               name="grant_types" v-model="form.grant_types"
               :inline-help="translate('OAuth2_AdminGrantTypesHelp')"
               :title="translate('OAuth2_AdminClientGrants')"/>
           </div>
-          <div class="row">
+          <div class="row" name="scopes">
             <Field
               uicontrol="select" :options="scopes"
               name="scopes" v-model="form.scope"
