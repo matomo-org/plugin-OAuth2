@@ -180,6 +180,29 @@ curl -X POST 'https://matomo.example.com/index.php?module=OAuth2&action=token' \
 
 ---
 
+# Client Credentials Flow (Server-to-Server)
+
+The **Client Credentials grant** is used when a backend service needs to access Matomo APIs **without user interaction**.
+
+Typical use cases:
+
+- Internal analytics dashboards
+- Scheduled data exports
+- Backend integrations
+
+## Token Request
+
+```
+curl -X POST 'https://matomo.example.com/index.php?module=OAuth2&action=token' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'grant_type=client_credentials' \
+  -d 'client_id=analytics_app' \
+  -d 'client_secret=7fa9c0f81b8b4a12' \
+  -d 'scope=matomo:read'
+```
+
+---
+
 # Example Token Response
 
 ```json
