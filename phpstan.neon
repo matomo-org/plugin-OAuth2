@@ -9,6 +9,7 @@ parameters:
         - github-action-tests
         - scoper.inc.php
         - vendor
+        - Activity/*
     bootstrapFiles:
         - phpstan/bootstrap.php
     stubFiles:

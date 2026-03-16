@@ -16,14 +16,14 @@ class RotateSecret extends BaseActivity
     public function extractParams($eventData)
     {
         if (!is_array($eventData) || count($eventData) < 2) {
-            return [];
+            return false;
         }
 
         list($result, $finalParameters) = $eventData;
 
         $clientId = $result['client_id'] ?? $finalParameters['parameters']['clientId'] ?? $finalParameters['parameters']['client_id'] ?? null;
         if (!$clientId) {
-            return [];
+            return false;
         }
 
         return [

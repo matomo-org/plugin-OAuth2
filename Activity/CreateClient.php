@@ -16,14 +16,14 @@ class CreateClient extends BaseActivity
     public function extractParams($eventData)
     {
         if (!is_array($eventData) || count($eventData) < 2) {
-            return [];
+            return false;
         }
 
         list($result) = $eventData;
         $client = $result['client'] ?? null;
 
         if (empty($client['client_id'])) {
-            return [];
+            return false;
         }
 
         return [
