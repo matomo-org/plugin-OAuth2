@@ -64,6 +64,9 @@ describe("OAuth2Admin", function () {
 
         await selectValue(page,'div[name="scopes"]', 'Matomo read level access.');
         await page.evaluate(() => $('#redirect_uris').val(redirectUri).change());
+        await page.evaluate(function (redirectUri) {
+            $('#redirect_uris').val(redirectUri).change();
+        }, redirectUri);
     }
 
     it('should show the OAuth2 system settings page', async function () {
