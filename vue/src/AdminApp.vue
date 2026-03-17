@@ -1,7 +1,7 @@
 <template>
   <div class="oauth2-admin" v-cloak>
     <div v-if="secret" class="alert alert-warning">
-      <strong>Client secret:</strong> <code>{{ secret }}</code>
+      <strong>Client secret:</strong> <code class="client-secret-code">{{ secret }}</code>
       <div class="form-help">Copy now; it will not be shown again.</div>
     </div>
     <div
@@ -57,7 +57,7 @@
           <td :title="client.description">
             <strong>{{ client.name }}</strong>
           </td>
-          <td><code>{{ client.client_id }}</code></td>
+          <td><code class="client-id-code">{{ client.client_id }}</code></td>
           <td >{{ client.created_at }}</td>
           <td>{{ type_options[client.type] }}</td>
           <td>{{ (client.grant_types || []).join(', ') }}</td>
@@ -229,11 +229,12 @@ export default defineComponent({
       }
     },
     showSuccessNotification(method: string, message: string) {
+      const messageBody = `<span class="success-msg-created">${message}</span>`;
       const instanceId = NotificationsStore.show({
         id: `OAuth2_${method}`,
         type: 'transient',
         context: 'success',
-        message,
+        message: messageBody,
       });
 
       setTimeout(() => {

@@ -99,6 +99,11 @@ describe("OAuth2Admin", function () {
     it('should create a confidential client and show the secret once', async function () {
         await page.goto(adminUrl);
         await fillClientForm('Confidential UI client', 'Confidential', 'https://confidential.example/callback');
+        await page.evaluate(function () {
+            $('.client-id-code').html('fixedValueForTest');
+            $('.client-secret-code').html('fixedSecretValueForTest');
+            $('.success-msg-created').html('Client fixedValueForTest created');
+        });
         await submitForm();
         await capturePage('create_confidential_success');
     });
@@ -106,12 +111,22 @@ describe("OAuth2Admin", function () {
     it('should create a public client successfully', async function () {
         await page.goto(adminUrl);
         await fillClientForm('Public UI client', 'Public', 'https://public.example/callback');
+        await page.evaluate(function () {
+            $('.client-id-code').html('fixedValueForTest');
+            $('.client-secret-code').html('fixedSecretValueForTest');
+            $('.success-msg-created').html('Client fixedValueForTest created');
+        });
         await submitForm();
         await capturePage('create_public_success');
     });
 
     it('should no longer show the client secret after reload', async function () {
         await page.reload();
+        await page.evaluate(function () {
+            $('.client-id-code').html('fixedValueForTest');
+            $('.client-secret-code').html('fixedSecretValueForTest');
+            $('.success-msg-created').html('Client fixedValueForTest created');
+        });
         await capturePage('secret_not_shown_again');
     });
 });
