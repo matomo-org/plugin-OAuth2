@@ -61,67 +61,19 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         $this->authCodeModel = new AuthCodeModel();
     }
 
-    public function test_authorizationCodeAndRefreshTokenFlow_workForConfidentialClient()
+    public function test_authorizationCodeFlow_returnsAccessAndRefreshTokensForConfidentialClient()
     {
-        $client = $this->api->createClient(
-            'Confidential auth code client',
-            ['authorization_code', 'refresh_token'],
-            'matomo:read',
-            ['https://confidential-client.example/callback'],
-            'Authorization code client',
-            'confidential'
-        );
+        $client = $this->createConfidentialAuthCodeClient();
+        $tokenPayload = $this->exchangeAuthorizationCodeForTokens($client);
 
-        $authorizationServer = $this->serverFactory->makeAuthorizationServer();
-
-        $authorizationRequest = $authorizationServer->validateAuthorizationRequest(
-            (new ServerRequest('GET', 'https://matomo.example/authorize'))->withQueryParams([
-                'response_type' => 'code',
-                'client_id' => $client['client']['client_id'],
-                'redirect_uri' => 'https://confidential-client.example/callback',
-                'scope' => 'matomo:read',
-                'state' => 'test-state',
-            ])
-        );
-
-        $user = new UserEntity();
-        $user->setIdentifier(Fixture::ADMIN_USER_LOGIN);
-        $authorizationRequest->setUser($user);
-        $authorizationRequest->setAuthorizationApproved(true);
-
-        $authorizationResponse = $authorizationServer->completeAuthorizationRequest($authorizationRequest, new Response());
-        $redirectLocation = $authorizationResponse->getHeaderLine('Location');
-
-        parse_str((string) parse_url($redirectLocation, PHP_URL_QUERY), $redirectParams);
-
-        $this->assertSame('test-state', $redirectParams['state']);
-        $this->assertNotEmpty($redirectParams['code']);
-
-        $persistedCode = Db::fetchRow(
-            'SELECT * FROM ' . \Piwik\Common::prefixTable('oauth2_auth_code') . ' WHERE client_id = ? ORDER BY created_at DESC LIMIT 1',
-            [$client['client']['client_id']]
-        );
-        $this->assertNotNull($persistedCode);
-
-        $tokenResponse = $authorizationServer->respondToAccessTokenRequest(
-            (new ServerRequest('POST', 'https://matomo.example/token'))->withParsedBody([
-                'grant_type' => 'authorization_code',
-                'client_id' => $client['client']['client_id'],
-                'client_secret' => $client['secret'],
-                'code' => $redirectParams['code'],
-                'redirect_uri' => 'https://confidential-client.example/callback',
-            ]),
-            new Response()
-        );
-
-        $tokenPayload = json_decode((string) $tokenResponse->getBody(), true);
-
-        $this->assertSame(200, $tokenResponse->getStatusCode());
-        $this->assertSame('Bearer', $tokenPayload['token_type']);
-        $this->assertNotEmpty($tokenPayload['access_token']);
         $this->assertNotEmpty($tokenPayload['refresh_token']);
-        $this->assertArrayHasKey('expires_in', $tokenPayload);
-        $this->assertTrue($this->authCodeModel->isRevoked($redirectParams['code']));
+    }
+
+    public function test_refreshTokenFlow_rotatesTokensForConfidentialClient()
+    {
+        $client = $this->createConfidentialAuthCodeClient();
+        $tokenPayload = $this->exchangeAuthorizationCodeForTokens($client);
+        $authorizationServer = $this->serverFactory->makeAuthorizationServer();
 
         $beforeRefreshAccessTokens = (int) Db::fetchOne('SELECT COUNT(*) FROM ' . \Piwik\Common::prefixTable('oauth2_access_token'));
         $beforeRefreshRefreshTokens = (int) Db::fetchOne('SELECT COUNT(*) FROM ' . \Piwik\Common::prefixTable('oauth2_refresh_token'));
@@ -185,6 +137,74 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         $this->assertArrayNotHasKey('refresh_token', $payload);
         $this->assertSame(Fixture::ADMIN_USER_LOGIN, $storedToken['user_login']);
         $this->assertSame($client['client']['client_id'], $storedToken['client_id']);
+    }
+
+    private function createConfidentialAuthCodeClient(): array
+    {
+        $client = $this->api->createClient(
+            'Confidential auth code client',
+            ['authorization_code', 'refresh_token'],
+            'matomo:read',
+            ['https://confidential-client.example/callback'],
+            'Authorization code client',
+            'confidential'
+        );
+        return $client;
+    }
+
+    private function exchangeAuthorizationCodeForTokens(array $client): array
+    {
+        $authorizationServer = $this->serverFactory->makeAuthorizationServer();
+        $authorizationRequest = $authorizationServer->validateAuthorizationRequest(
+            (new ServerRequest('GET', 'https://matomo.example/authorize'))->withQueryParams([
+                'response_type' => 'code',
+                'client_id' => $client['client']['client_id'],
+                'redirect_uri' => 'https://confidential-client.example/callback',
+                'scope' => 'matomo:read',
+                'state' => 'test-state',
+            ])
+        );
+
+        $user = new UserEntity();
+        $user->setIdentifier(Fixture::ADMIN_USER_LOGIN);
+        $authorizationRequest->setUser($user);
+        $authorizationRequest->setAuthorizationApproved(true);
+
+        $authorizationResponse = $authorizationServer->completeAuthorizationRequest($authorizationRequest, new Response());
+        $redirectLocation = $authorizationResponse->getHeaderLine('Location');
+
+        parse_str((string) parse_url($redirectLocation, PHP_URL_QUERY), $redirectParams);
+
+        $this->assertSame('test-state', $redirectParams['state']);
+        $this->assertNotEmpty($redirectParams['code']);
+
+        $persistedCode = Db::fetchRow(
+            'SELECT * FROM ' . \Piwik\Common::prefixTable('oauth2_auth_code') . ' WHERE client_id = ? ORDER BY created_at DESC LIMIT 1',
+            [$client['client']['client_id']]
+        );
+        $this->assertNotNull($persistedCode);
+
+        $tokenResponse = $authorizationServer->respondToAccessTokenRequest(
+            (new ServerRequest('POST', 'https://matomo.example/token'))->withParsedBody([
+                'grant_type' => 'authorization_code',
+                'client_id' => $client['client']['client_id'],
+                'client_secret' => $client['secret'],
+                'code' => $redirectParams['code'],
+                'redirect_uri' => 'https://confidential-client.example/callback',
+            ]),
+            new Response()
+        );
+
+        $tokenPayload = json_decode((string) $tokenResponse->getBody(), true);
+
+        $this->assertSame(200, $tokenResponse->getStatusCode());
+        $this->assertSame('Bearer', $tokenPayload['token_type']);
+        $this->assertNotEmpty($tokenPayload['access_token']);
+        $this->assertNotEmpty($tokenPayload['refresh_token']);
+        $this->assertArrayHasKey('expires_in', $tokenPayload);
+        $this->assertTrue($this->authCodeModel->isRevoked($redirectParams['code']));
+
+        return $tokenPayload;
     }
 
     public function provideContainerConfig()
