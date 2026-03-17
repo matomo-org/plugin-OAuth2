@@ -117,6 +117,11 @@ describe("OAuth2Admin", function () {
 
     it('should no longer show the client secret after reload', async function () {
         await page.reload();
+        await page.evaluate(function () {
+            $('.client-id-code').html('fixedValueForTest');
+            $('.client-secret-code').html('fixedSecretValueForTest');
+            $('.success-msg-created').html('Client fixedValueForTest created');
+        });
         await capturePage('secret_not_shown_again');
     });
 });
