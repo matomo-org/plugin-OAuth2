@@ -52,6 +52,7 @@ describe("OAuth2Admin", function () {
             $('.client-id-code').html('fixedValueForTest');
             $('.client-secret-code').html('fixedSecretValueForTest');
             $('.success-msg-created').html('Client fixedValueForTest created');
+            $('.created-at').html('2026-03-16 00:00:00');
         });
     }
 
@@ -121,6 +122,7 @@ describe("OAuth2Admin", function () {
             $('.client-id-code').html('fixedValueForTest');
             $('.client-secret-code').html('fixedSecretValueForTest');
             $('.success-msg-created').html('Client fixedValueForTest created');
+            $('.created-at').html('2026-03-16 00:00:00');
         });
         await capturePage('secret_not_shown_again');
     });

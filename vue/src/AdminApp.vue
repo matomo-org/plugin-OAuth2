@@ -58,7 +58,7 @@
             <strong>{{ client.name }}</strong>
           </td>
           <td><code class="client-id-code">{{ client.client_id }}</code></td>
-          <td >{{ client.created_at }}</td>
+          <td class="created-at">{{ client.created_at }}</td>
           <td>{{ type_options[client.type] }}</td>
           <td>{{ (client.grant_types || []).join(', ') }}</td>
           <td>
