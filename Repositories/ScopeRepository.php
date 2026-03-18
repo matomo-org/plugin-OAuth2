@@ -50,13 +50,12 @@ class ScopeRepository implements ScopeRepositoryInterface
     }
 
     public function finalizeScopes(
-        array                 $scopes,
-        string                $grantType,
+        array $scopes,
+        string $grantType,
         ClientEntityInterface $clientEntity,
-        string|null           $userIdentifier = null,
-        ?string               $authCodeId = null
-    ): array
-    {
+        string|null $userIdentifier = null,
+        ?string $authCodeId = null
+    ): array {
         if (count($scopes) > 1) {
             throw OAuthServerException::invalidScope(Piwik::translate('OAuth2_MultipleScopesNotAllowed'));
         }
