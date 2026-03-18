@@ -1,7 +1,7 @@
 <template>
   <div class="oauth2-admin" v-cloak>
     <div v-if="secret" class="alert alert-warning">
-      <strong>Client secret:</strong> <code>{{ secret }}</code>
+      <strong>Client secret:</strong> <code class="client-secret-code">{{ secret }}</code>
       <div class="form-help">Copy now; it will not be shown again.</div>
     </div>
     <div
@@ -57,8 +57,8 @@
           <td :title="client.description">
             <strong>{{ client.name }}</strong>
           </td>
-          <td><code>{{ client.client_id }}</code></td>
-          <td >{{ client.created_at }}</td>
+          <td><code class="client-id-code">{{ client.client_id }}</code></td>
+          <td class="created-at">{{ client.created_at }}</td>
           <td>{{ type_options[client.type] }}</td>
           <td>{{ (client.grant_types || []).join(', ') }}</td>
           <td>
@@ -91,7 +91,7 @@
               :inline-help="translate('OAuth2_AdminDescriptionHelp')"
               :title="translate('OAuth2_AdminDescription')"/>
           </div>
-          <div class="row">
+          <div class="row" name="type">
             <Field
               uicontrol="select"
               name="type"
@@ -102,14 +102,14 @@
               public:translate('OAuth2_AdminPublic')}"
             />
           </div>
-          <div class="row">
+          <div class="row" name="grantType">
             <Field
               uicontrol="checkbox" :options="visibleGrantOptions" var-type="array"
               name="grant_types" v-model="form.grant_types"
               :inline-help="translate('OAuth2_AdminGrantTypesHelp')"
               :title="translate('OAuth2_AdminClientGrants')"/>
           </div>
-          <div class="row">
+          <div class="row" name="scopes">
             <Field
               uicontrol="select" :options="scopes"
               name="scopes" v-model="form.scope"
@@ -229,11 +229,12 @@ export default defineComponent({
       }
     },
     showSuccessNotification(method: string, message: string) {
+      const messageBody = `<span class="success-msg-created">${message}</span>`;
       const instanceId = NotificationsStore.show({
         id: `OAuth2_${method}`,
         type: 'transient',
         context: 'success',
-        message,
+        message: messageBody,
       });
 
       setTimeout(() => {
