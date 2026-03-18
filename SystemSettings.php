@@ -27,7 +27,7 @@ class SystemSettings extends BaseSystemSettings
 
     protected function init()
     {
-        $this->title = 'OAuth 2.0';
+        $this->title = Piwik::translate('OAuth2_SystemSettingOauthTitle');
         $this->accessTokenTtl = $this->makeSetting('accessTokenTtl', 3600, FieldConfig::TYPE_INT, function (FieldConfig $field) {
             $field->title = Piwik::translate('OAuth2_SystemSettingOAuthAccessTokenLifetimeTitle');
             $field->description = Piwik::translate('OAuth2_SystemSettingOAuthAccessTokenLifetimeDescription');
@@ -73,7 +73,7 @@ class SystemSettings extends BaseSystemSettings
             $field->title = Piwik::translate('OAuth2_SystemSettingOAuthEnableRefreshTokenTitle');
         });
 
-        $scopes = ScopeRepository::DESCRIPTIONS;
+        $scopes = ScopeRepository::getScopeDescriptions();
         $defaultScopes = $scopes;
         unset($defaultScopes['matomo:superuser']);
         $this->defaultScopes = $this->makeSetting('defaultScopes', array_keys($defaultScopes), FieldConfig::TYPE_ARRAY, function (FieldConfig $field) use ($scopes) {

@@ -53,7 +53,7 @@ class Controller extends ControllerAdmin
     public function authorize()
     {
         if (!$this->settings->enableAuthorizationCode->getValue()) {
-            return $this->renderUnauthorized('Authorization code grant is disabled.');
+            return $this->renderUnauthorized(Piwik::translate('OAuth2_AuthorizationCodeGrantDisabled'));
         }
 
         if (Piwik::isUserIsAnonymous()) {
@@ -68,7 +68,7 @@ class Controller extends ControllerAdmin
         } catch (OAuthServerException $e) {
             return $this->emitResponse($e->generateHttpResponse(new Response()));
         } catch (\Throwable $e) {
-            return $this->renderUnauthorized('Invalid authorization request.');
+            return $this->renderUnauthorized(Piwik::translate('OAuth2_InvalidAuthorizationRequest'));
         }
 
         $login = Piwik::getCurrentUserLogin();
@@ -88,7 +88,7 @@ class Controller extends ControllerAdmin
         $scopes = array_values($scopes);
 
         if (count($scopes) !== 1 || count($clientScopes) !== 1 || $clientScopes[0] !== $scopes[0]) {
-            return $this->renderUnauthorized('Invalid scope, check the scope mapped to the requested client.');
+            return $this->renderUnauthorized(Piwik::translate('OAuth2_InvalidClientScope'));
         }
 
         $this->checkDoesUserHasAccessAsPerScope($scopes[0]);
@@ -98,7 +98,7 @@ class Controller extends ControllerAdmin
             $nonce = Request::fromRequest()->getStringParameter('nonce', '');
 
             if (!Nonce::verifyNonce('Oauth2.authorize', $nonce)) {
-                return $this->renderUnauthorized('Invalid authorization request.');
+                return $this->renderUnauthorized(Piwik::translate('OAuth2_InvalidAuthorizationRequest'));
             }
 
             $authRequest->setAuthorizationApproved($decision === 'allow');
@@ -108,7 +108,7 @@ class Controller extends ControllerAdmin
             } catch (OAuthServerException $e) {
                 $response = $e->generateHttpResponse(new Response());
             } catch (\Throwable $e) {
-                $response = (new Response())->withStatus(500)->withBody((new Psr17Factory())->createStream('Server error'));
+                $response = (new Response())->withStatus(500)->withBody((new Psr17Factory())->createStream(Piwik::translate('OAuth2_ServerError')));
             }
 
             return $this->emitResponse($response);
@@ -134,7 +134,7 @@ class Controller extends ControllerAdmin
             $response = (new Response())
                 ->withStatus(405, 'Method Not Allowed')
                 ->withHeader('Allow', 'POST')
-                ->withBody((new Psr17Factory())->createStream('Token endpoint only accepts POST'));
+                ->withBody((new Psr17Factory())->createStream(Piwik::translate('OAuth2_TokenEndpointException')));
 
             return $this->emitResponse($response);
         }
@@ -148,7 +148,7 @@ class Controller extends ControllerAdmin
         } catch (OAuthServerException $e) {
             $response = $e->generateHttpResponse($response);
         } catch (\Throwable $e) {
-            $response = $response->withStatus(500)->withBody((new Psr17Factory())->createStream('Server error'));
+            $response = $response->withStatus(500)->withBody((new Psr17Factory())->createStream(Piwik::translate('OAuth2_ServerError')));
         }
 
         return $this->emitResponse($response);

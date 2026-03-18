@@ -94,13 +94,13 @@ class API extends \Piwik\Plugin\API
         $this->validateRedirectUris($redirects, $grantTypes);
 
         if ($type === 'public' && in_array('client_credentials', $grantTypes, true)) {
-            throw new \InvalidArgumentException('Public clients cannot use the client_credentials grant type');
+            throw new \InvalidArgumentException(Piwik::translate('OAuth2_ClientCredentialsExceptionPublicClient'));
         }
 
         $scope = array_values(array_intersect([$scope], $this->scopeRepository->getAllowedScopeIds()));
 
         if (empty($scope)) {
-            throw new \InvalidArgumentException('Invalid scope value.');
+            throw new \InvalidArgumentException(Piwik::translate('OAuth2_InvalidScopeValue'));
         }
 
         $result = $this->clientManager->create([
@@ -166,7 +166,7 @@ class API extends \Piwik\Plugin\API
         $clientId = trim($clientId);
 
         if ($clientId === '' || strlen($clientId) !== 32 || !ctype_xdigit($clientId)) {
-            throw new \InvalidArgumentException('clientId must be a 32 character hexadecimal string');
+            throw new \InvalidArgumentException(Piwik::translate('OAuth2_ClientIdException'));
         }
 
         return $clientId;
@@ -179,14 +179,14 @@ class API extends \Piwik\Plugin\API
         }
 
         if (empty($redirectUris)) {
-            throw new \InvalidArgumentException('Invalid redirect_uri');
+            throw new \InvalidArgumentException(Piwik::translate('OAuth2_InvalidRedirectUri'));
         }
 
         $validator = new RedirectUriValidator($redirectUris);
 
         foreach ($redirectUris as $redirectUri) {
             if (!$validator->validateRedirectUri($redirectUri) || !UrlHelper::isLookLikeUrl($redirectUri)) {
-                throw new \InvalidArgumentException('Invalid redirect_uri: ' . $redirectUri);
+                throw new \InvalidArgumentException(Piwik::translate('OAuth2_InvalidRedirectUri') . ': ' . $redirectUri);
             }
         }
     }
@@ -201,7 +201,7 @@ class API extends \Piwik\Plugin\API
 
         $invalid = array_diff($grantTypes, $allowedGrantTypes);
         if (!empty($invalid)) {
-            throw new \InvalidArgumentException('Unsupported grant_types: ' . implode(', ', $invalid));
+            throw new \InvalidArgumentException(Piwik::translate('OAuth2_InvalidGrantTypes') . ': ' . implode(', ', $invalid));
         }
 
         return array_values(array_unique($grantTypes));

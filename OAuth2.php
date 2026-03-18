@@ -131,6 +131,8 @@ class OAuth2 extends Plugin
         $translationKeys[] = 'OAuth2_AdminRedirectUrisHelp';
         $translationKeys[] = 'OAuth2_AdminActiveHelp';
         $translationKeys[] = 'OAuth2_ErrorXNotProvided';
+        $translationKeys[] = 'OAuth2_ClientSecret';
+        $translationKeys[] = 'OAuth2_ClientSecretHelp';
     }
 
     public function getTablesInstalled(&$allTablesInstalled)
