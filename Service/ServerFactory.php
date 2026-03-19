@@ -15,6 +15,7 @@ use Matomo\Dependencies\Oauth2\League\OAuth2\Server\CryptKey;
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Grant\ClientCredentialsGrant;
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Grant\RefreshTokenGrant;
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\ResourceServer;
+use Piwik\Piwik;
 use Piwik\Plugins\OAuth2\OAuth2;
 use Piwik\Plugins\OAuth2\Repositories\AccessTokenRepository;
 use Piwik\Plugins\OAuth2\Repositories\AuthCodeRepository;
@@ -124,7 +125,7 @@ class ServerFactory
     {
         $key = (string) OAuth2::getEncryptionKey();
         if ($key === '') {
-            throw new \RuntimeException('OAuth2 encryption key is not configured.');
+            throw new \RuntimeException(Piwik::translate('OAuth2_EncryptionKeyNotConfigured'));
         }
 
         $decoded = base64_decode($key, true);

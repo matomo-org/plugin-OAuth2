@@ -13,24 +13,28 @@ use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ClientEntityInterfa
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ScopeEntityInterface;
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Exception\OAuthServerException;
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\ScopeRepositoryInterface;
+use Piwik\Piwik;
 use Piwik\Plugins\OAuth2\Entities\ClientEntity;
 use Piwik\Plugins\OAuth2\Entities\ScopeEntity;
 use Piwik\Plugins\OAuth2\SystemSettings;
 
 class ScopeRepository implements ScopeRepositoryInterface
 {
-    public const DESCRIPTIONS = [
-        'matomo:read' => 'Matomo read level access.',
-        'matomo:write' => 'Matomo write level access.',
-        'matomo:admin' => 'Matomo admin level access.',
-        'matomo:superuser' => 'Matomo superuser level operations.',
-    ];
-
     private SystemSettings $settings;
 
     public function __construct(SystemSettings $settings)
     {
         $this->settings = $settings;
+    }
+
+    public static function getScopeDescriptions(): array
+    {
+        return [
+            'matomo:read' => Piwik::translate('OAuth2_ScopeReadDescription'),
+            'matomo:write' => Piwik::translate('OAuth2_ScopeWriteDescription'),
+            'matomo:admin' => Piwik::translate('OAuth2_ScopeAdminDescription'),
+            'matomo:superuser' => Piwik::translate('OAuth2_ScopeSuperUserDescription'),
+        ];
     }
 
     public function getScopeEntityByIdentifier(string $identifier): ?ScopeEntityInterface
@@ -53,7 +57,7 @@ class ScopeRepository implements ScopeRepositoryInterface
         ?string $authCodeId = null
     ): array {
         if (count($scopes) > 1) {
-            throw OAuthServerException::invalidScope('Multiple scopes are not allowed.');
+            throw OAuthServerException::invalidScope(Piwik::translate('OAuth2_MultipleScopesNotAllowed'));
         }
 
         $allowed = $this->getAllowedScopeIds();
@@ -87,7 +91,7 @@ class ScopeRepository implements ScopeRepositoryInterface
         $configured = $this->settings->defaultScopes->getValue();
         $configured = is_array($configured) ? $configured : [];
 
-        return array_values(array_intersect(array_keys(self::DESCRIPTIONS), $configured));
+        return array_values(array_intersect(array_keys(self::getScopeDescriptions()), $configured));
     }
 
     public function describeScopes(): array
@@ -95,7 +99,7 @@ class ScopeRepository implements ScopeRepositoryInterface
         $allowed = $this->getAllowedScopeIds();
         $result = [];
         foreach ($allowed as $identifier) {
-            $result[$identifier] = self::DESCRIPTIONS[$identifier] ?? $identifier;
+            $result[$identifier] = self::getScopeDescriptions()[$identifier] ?? $identifier;
         }
 
         return $result;

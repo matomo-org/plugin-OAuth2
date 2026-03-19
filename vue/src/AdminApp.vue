@@ -1,8 +1,10 @@
 <template>
   <div class="oauth2-admin" v-cloak>
     <div v-if="secret" class="alert alert-warning">
-      <strong>Client secret:</strong> <code class="client-secret-code">{{ secret }}</code>
-      <div class="form-help">Copy now; it will not be shown again.</div>
+      <strong>
+        {{ translate('OAuth2_ClientSecret') }}:
+      </strong> <code class="client-secret-code">{{ secret }}</code>
+      <div class="form-help">{{ translate('OAuth2_ClientSecretHelp') }}</div>
     </div>
     <div
       class="ui-confirm"

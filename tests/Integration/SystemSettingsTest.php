@@ -98,8 +98,8 @@ class SystemSettingsTest extends \Piwik\Tests\Framework\TestCase\IntegrationTest
 
         $this->assertSame(
             [
-                'matomo:write' => ScopeRepository::DESCRIPTIONS['matomo:write'],
-                'matomo:superuser' => ScopeRepository::DESCRIPTIONS['matomo:superuser'],
+                'matomo:write' => ScopeRepository::getScopeDescriptions()['matomo:write'],
+                'matomo:superuser' => ScopeRepository::getScopeDescriptions()['matomo:superuser'],
             ],
             $repository->describeScopes()
         );

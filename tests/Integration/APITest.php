@@ -14,6 +14,7 @@ use Piwik\Plugins\OAuth2\API;
 use Piwik\Plugins\OAuth2\Model\ClientModel;
 use Piwik\Plugins\OAuth2\Repositories\ClientRepository;
 use Piwik\Plugins\OAuth2\tests\Fixtures\OAuth2Fixture;
+use Piwik\Tests\Framework\Fixture;
 use Piwik\Tests\Framework\Mock\FakeAccess;
 
 /**
@@ -37,6 +38,7 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         $this->clientModel = new ClientModel();
         $this->clientRepository = StaticContainer::get(ClientRepository::class);
         $this->setSuperUser();
+        Fixture::loadAllTranslations();
     }
 
     /**
