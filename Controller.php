@@ -16,6 +16,7 @@ use Piwik\Common;
 use Piwik\Nonce;
 use Piwik\Piwik;
 use Piwik\Plugin\ControllerAdmin;
+use Piwik\Plugin\Manager;
 use Piwik\Plugins\OAuth2\Entities\ClientEntity;
 use Piwik\Plugins\OAuth2\Entities\UserEntity;
 use Piwik\Plugins\OAuth2\Model\ClientModel;
@@ -117,6 +118,14 @@ class Controller extends ControllerAdmin
         $client = $authRequest->getClient();
         $user = $this->userModel->getUser($login);
 
+        $termsAndConditionUrl = '';
+        $privacyPolicyUrl = '';
+        if (Manager::getInstance()->isPluginActivated('PrivacyManager')) {
+            $coreSettings = new \Piwik\Plugins\PrivacyManager\SystemSettings();
+            $termsAndConditionUrl = $coreSettings->termsAndConditionUrl->getValue();
+            $privacyPolicyUrl = $coreSettings->privacyPolicyUrl->getValue();
+        }
+
         return $this->renderTemplate('authorize', [
             'clientName' => $client->getName(),
             'clientId' => $client->getIdentifier(),
@@ -125,6 +134,8 @@ class Controller extends ControllerAdmin
             'scopes' => $scopes,
             'scopeDescriptions' => $this->scopeRepository->describeScopes(),
             'nonce' => Nonce::getNonce('Oauth2.authorize'),
+            'termsAndCondition' => $termsAndConditionUrl,
+            'privacyPolicyUrl' => $privacyPolicyUrl,
         ]);
     }
 

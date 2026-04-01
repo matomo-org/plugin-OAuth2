@@ -4,31 +4,52 @@
     {{ parent() }}
 {% endblock %}
 
+{% set bodyId = 'oauth2AuthorizePage' %}
+
 {% block body %}
-    <div class="card">
+    <div class="card card-authorize">
         <div class="card-content">
-            <h2>{{ 'OAuth2_AuthorizeTitle'|translate(clientName) }}</h2>
-            <p>{{ 'OAuth2_AuthorizeIntro'|translate(clientName) }}</p>
-
-            <div class="form-group">
-                <strong>{{ userLogin }}</strong>
-                {% if userEmail %}<div class="form-help">{{ userEmail }}</div>{% endif %}
+            <div class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60" fill="none">
+                    <circle cx="30" cy="30" r="29.5" stroke="#E0E0E0"/>
+                    <path d="M50.2566 31.8761L50.1488 31.7067C50.1488 31.7067 50.1129 31.6605 50.0974 31.6348L42.6076 20.2383L32.9308 27.4253L40.0408 38.3393L40.1281 38.4779L40.1691 38.5343C42.0737 41.2859 45.8469 41.9738 48.5984 40.0693C51.2628 38.2263 52.0071 34.6071 50.2771 31.8607" fill="#95C748"/>
+                    <path d="M21.2262 35.0488C21.2262 31.7017 18.5157 28.9912 15.1686 28.9912C11.8215 28.9912 9.11096 31.7017 9.11096 35.0488C9.11096 38.3959 11.8215 41.1064 15.1686 41.1064C18.5157 41.1064 21.2262 38.3959 21.2262 35.0488Z" fill="#35BFC0"/>
+                    <path d="M43.5162 23.4109C43.5162 20.0638 40.8056 17.3533 37.4586 17.3533C34.1115 17.3533 31.4009 20.0638 31.4009 23.4109C31.4009 26.758 34.1115 29.4685 37.4586 29.4685C37.4586 29.4685 37.4688 29.4685 37.474 29.4685C40.821 29.4685 43.5316 26.758 43.5316 23.4109" fill="#F38334"/>
+                    <path d="M37.3345 29.4678C35.2965 29.4678 33.3919 28.4411 32.2728 26.7368L27.6526 20.2377C25.9072 17.3937 22.1905 16.5004 19.3413 18.2458C18.5302 18.7438 17.8475 19.4266 17.3495 20.2377L10.0085 31.6547C11.8771 28.8826 15.64 28.1536 18.4122 30.0223C19.1411 30.5151 19.7572 31.1619 20.2089 31.9165L25.0139 38.6364C26.9852 41.3315 30.7635 41.9167 33.4587 39.9454C33.9617 39.581 34.4032 39.1395 34.7677 38.6364L34.8139 38.5594L35.163 38.046L42.35 26.8343C41.2206 28.4873 39.3417 29.4781 37.3345 29.4678Z" fill="#3152A0"/>
+                </svg>
             </div>
 
-            <div class="form-group">
-                <h3>{{ 'OAuth2_RequestedScopes'|translate }}</h3>
-                <ul>
-                    {% for scope in scopes %}
-                        <li><strong>{{ scope }}</strong>{% if scopeDescriptions[scope] %}: {{ scopeDescriptions[scope] }}{% endif %}</li>
-                    {% endfor %}
-                </ul>
+            <div class="access-text">
+                <span class="client-name">{{ clientName }}</span>{{ 'OAuth2_AuthorizeTextTitle'|translate('') }}
             </div>
+
+            <div class="user-info">
+                <div class="user-login">{{ userLogin }}</div>
+                {% if userEmail %}<div class="user-email">{{ userEmail }}</div>{% endif %}
+            </div>
+
+            <div class="permissions">
+                {{ 'OAuth2_RequestedScopes'|translate }}
+            </div>
+            <div class="alert alert-warning">
+                {% for scope in scopes %}
+                    <div class="scope">{{ scope }}</div>
+                    {% if scopeDescriptions[scope] %} <div class="scope-help">{{ scopeDescriptions[scope] }}</div>{% endif %}
+                {% endfor %}
+            </div>
+
+            <div class="form-help"><span class="text">{{ 'OAuth2_AuthorizeHelpText'|translate }}</span></div>
 
             <form method="post">
                 <input type="hidden" name="nonce" value="{{ nonce|e('html_attr') }}" />
-                <button type="submit" class="btn" name="decision" value="allow">{{ 'OAuth2_Allow'|translate }}</button>
-                <button type="submit" class="btn" name="decision" value="deny">{{ 'OAuth2_Deny'|translate }}</button>
+                <button type="submit" class="btn btn-primary" name="decision" value="allow">{{ 'OAuth2_Allow'|translate }}</button>
+                <button type="submit" class="btn btn-secondary" name="decision" value="deny">{{ 'OAuth2_Deny'|translate }}</button>
             </form>
+            <div id="footerLinks">
+                {% if privacyPolicyUrl|default('') is not empty %}<a target="_blank" rel="noreferrer noopener" href="{{ privacyPolicyUrl|safelink|e('html_attr') }}">{{ 'PrivacyManager_PrivacyPolicy'|translate }}</a>{% endif %}
+                {% if privacyPolicyUrl|default('') is not empty and termsAndCondition|default('') is not empty %}|{% endif %}
+                {% if termsAndCondition|default('') is not empty %}<a target="_blank" rel="noreferrer noopener" href="{{ termsAndCondition|safelink|e('html_attr') }}">{{ 'PrivacyManager_TermsAndConditions'|translate|rawSafeDecoded }}</a>{% endif %}
+            </div>
         </div>
     </div>
 {% endblock %}

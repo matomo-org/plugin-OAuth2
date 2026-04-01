@@ -3,6 +3,8 @@
     "PlatformMenu": "OAuth2",
     "AuthorizeTitle": "Authorise %s",
     "AuthorizeIntro": "%s is requesting access to your Matomo account.",
+    "AuthorizeTextTitle": "%1$s is requesting access to your Matomo account",
+    "AuthorizeHelpText": "You can revoke access at any time from your Matomo account settings.",
     "RequestedScopes": "Requested scopes",
     "Allow": "Allow",
     "Deny": "Deny",
