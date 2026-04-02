@@ -41,7 +41,7 @@ class OAuth2 extends Plugin
 
     public function getStylesheetFiles(&$stylesheets)
     {
-        $stylesheets[] = "plugins/OAuth2/stylesheets/ouath2.less";
+        $stylesheets[] = "plugins/OAuth2/stylesheets/oauth2.less";
     }
 
     public function onApiAuthenticate(
