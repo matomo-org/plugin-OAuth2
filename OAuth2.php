@@ -35,7 +35,13 @@ class OAuth2 extends Plugin
             'Db.getTablesInstalled' => 'getTablesInstalled',
             'Vue.getComponents' => 'registerVueComponents',
             'Translate.getClientSideTranslationKeys' => 'getClientSideTranslationKeys',
+            'AssetManager.getStylesheetFiles' => 'getStylesheetFiles',
         ];
+    }
+
+    public function getStylesheetFiles(&$stylesheets)
+    {
+        $stylesheets[] = "plugins/OAuth2/stylesheets/oauth2.less";
     }
 
     public function onApiAuthenticate(
