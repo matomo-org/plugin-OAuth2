@@ -44,7 +44,10 @@ class Controller extends ControllerAdmin
         Piwik::checkUserHasSuperUserAccess();
 
         $viewData = [
-            'clients' => $this->clientModel->all(),
+            'clients' => array_map(static function (array $client) {
+                unset($client['secret_hash']);
+                return $client;
+            }, $this->clientModel->all()),
             'scopes' => $this->scopeRepository->describeScopes(),
         ];
 

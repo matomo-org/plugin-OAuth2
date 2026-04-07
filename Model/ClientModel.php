@@ -24,7 +24,7 @@ class ClientModel
 
     public function all(): array
     {
-        $rows = Db::fetchAll('SELECT * FROM ' . $this->table . ' ORDER BY name ASC');
+        $rows = Db::fetchAll('SELECT * FROM ' . $this->table . ' ORDER BY updated_at DESC');
         return array_map([$this, 'hydrate'], $rows);
     }
 
@@ -70,10 +70,11 @@ class ClientModel
         $now = Date::now()->getDatetime();
 
         Db::query(
-            'UPDATE ' . $this->table . ' SET name = ?, description = ?, redirect_uris = ?, grant_types = ?, scopes = ?, type = ?, active = ?, owner_login = ?, updated_at = ? WHERE client_id = ?',
+            'UPDATE ' . $this->table . ' SET name = ?, description = ?, secret_hash = ?, redirect_uris = ?, grant_types = ?, scopes = ?, type = ?, active = ?, owner_login = ?, updated_at = ? WHERE client_id = ?',
             [
                 $data['name'],
                 $data['description'] ?? '',
+                $data['secret_hash'] ?? null,
                 $this->encodeList($data['redirect_uris'] ?? []),
                 $this->encodeList($data['grant_types'] ?? []),
                 $this->encodeList($data['scopes'] ?? []),
@@ -92,6 +93,15 @@ class ClientModel
         Db::query(
             'UPDATE ' . $this->table . ' SET secret_hash = ?, updated_at = ? WHERE client_id = ?',
             [$secretHash, $now, $clientId]
+        );
+    }
+
+    public function setActive(string $clientId, bool $active): void
+    {
+        $now = Date::now()->getDatetime();
+        Db::query(
+            'UPDATE ' . $this->table . ' SET active = ?, updated_at = ? WHERE client_id = ?',
+            [$active ? 1 : 0, $now, $clientId]
         );
     }
 

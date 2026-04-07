@@ -9,6 +9,7 @@
 
 namespace Piwik\Plugins\OAuth2\Service;
 
+use Piwik\Date;
 use Piwik\Plugins\OAuth2\Model\AccessTokenModel;
 use Piwik\Plugins\OAuth2\Model\AuthCodeModel;
 use Piwik\Plugins\OAuth2\Model\ClientModel;
@@ -33,6 +34,7 @@ class ClientManager
         $type = $this->normalizeType($data['type'] ?? null);
         $grantTypes = $this->normalizeGrantTypes($data['grant_types'] ?? []);
         $this->assertGrantTypesAreAllowed($grantTypes, $type);
+        $now = Date::now()->getDatetime();
 
         $client = $this->clientModel->create([
             'client_id' => $clientId,
@@ -44,17 +46,35 @@ class ClientManager
             'scopes' => $data['scopes'] ?? [],
             'type' => $type,
             'active' => $data['active'] ?? true,
+            'created_at' => $now,
+            'updated_at' => $now,
             'owner_login' => $ownerLogin,
         ]);
 
         return ['client' => $client, 'secret' => $secret];
     }
 
-    public function update(string $clientId, array $data, ?string $ownerLogin = null): void
+    public function update(string $clientId, array $data, ?string $ownerLogin = null): array
     {
+        $existingClient = $this->clientModel->find($clientId);
+        if (empty($existingClient)) {
+            throw new \InvalidArgumentException('Client not found');
+        }
+
         $type = $this->normalizeType($data['type'] ?? null);
         $grantTypes = $this->normalizeGrantTypes($data['grant_types'] ?? []);
         $this->assertGrantTypesAreAllowed($grantTypes, $type);
+
+        $secret = null;
+        $secretHash = $existingClient['secret_hash'] ?? null;
+        $existingType = $this->normalizeType($existingClient['type'] ?? null);
+
+        if ($existingType === 'public' && $type === 'confidential') {
+            $secret = $this->generateSecret();
+            $secretHash = password_hash($secret, PASSWORD_DEFAULT);
+        } elseif ($type === 'public') {
+            $secretHash = null;
+        }
 
         $this->clientModel->update($clientId, [
             'name' => $data['name'],
@@ -62,10 +82,15 @@ class ClientManager
             'redirect_uris' => $data['redirect_uris'] ?? [],
             'grant_types' => $grantTypes,
             'scopes' => $data['scopes'] ?? [],
+            'secret_hash' => $secretHash,
             'type' => $type,
             'active' => $data['active'] ?? true,
             'owner_login' => $ownerLogin ?? $data['owner_login'],
         ]);
+
+        $client = $this->clientModel->find($clientId);
+
+        return ['client' => $client, 'secret' => $secret];
     }
 
     public function rotateSecret(string $clientId): ?string
@@ -74,6 +99,18 @@ class ClientManager
         $this->clientModel->rotateSecret($clientId, password_hash($secret, PASSWORD_DEFAULT));
 
         return $secret;
+    }
+
+    public function setActive(string $clientId, bool $active): array
+    {
+        $existingClient = $this->clientModel->find($clientId);
+        if (empty($existingClient)) {
+            throw new \InvalidArgumentException('Client not found');
+        }
+
+        $this->clientModel->setActive($clientId, $active);
+
+        return $this->clientModel->find($clientId);
     }
 
     public function delete(string $clientId): void

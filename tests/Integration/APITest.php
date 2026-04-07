@@ -57,6 +57,7 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
     {
         return [
             ['getClients'],
+            ['getClient', ['0123456789abcdef0123456789abcdef']],
             ['getScopes'],
         ];
     }
@@ -97,6 +98,17 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         $this->api->deleteClient($client['client']['client_id']);
     }
 
+    public function test_setClientActive_failsForNonSuperUsers()
+    {
+        $client = $this->createConfidentialClient();
+
+        $this->expectException(\Piwik\NoAccessException::class);
+        $this->expectExceptionMessage('checkUserHasSuperUserAccess');
+
+        $this->setRegularUser();
+        $this->api->setClientActive($client['client']['client_id'], '0');
+    }
+
     public function test_getClients_returnsPersistedClientsForSuperUsers()
     {
         $created = $this->createConfidentialClient();
@@ -107,6 +119,16 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         $this->assertSame($created['client']['client_id'], $clients[0]['client_id']);
         $this->assertSame('Test confidential client', $clients[0]['name']);
         $this->assertSame(['authorization_code', 'refresh_token'], $clients[0]['grant_types']);
+    }
+
+    public function test_getClient_returnsPersistedClientForSuperUsers()
+    {
+        $created = $this->createConfidentialClient();
+
+        $client = $this->api->getClient($created['client']['client_id']);
+
+        $this->assertSame($created['client']['client_id'], $client['client_id']);
+        $this->assertSame('Test confidential client', $client['name']);
     }
 
     public function test_getScopes_returnsConfiguredScopesForSuperUsers()
@@ -202,6 +224,94 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
 
         $this->assertSame(['deleted' => true], $deleted);
         $this->assertNull($this->clientModel->find($result['client']['client_id']));
+    }
+
+    public function test_setClientActive_updatesPersistedClientStatus()
+    {
+        $result = $this->createConfidentialClient();
+
+        $paused = $this->api->setClientActive($result['client']['client_id'], '0');
+        $this->assertFalse($paused['client']['active']);
+
+        $resumed = $this->api->setClientActive($result['client']['client_id'], '1');
+        $this->assertTrue($resumed['client']['active']);
+    }
+
+    public function test_updateClient_updatesPersistedClient()
+    {
+        $result = $this->createConfidentialClient();
+
+        $updated = $this->api->updateClient(
+            $result['client']['client_id'],
+            'Updated client',
+            ['authorization_code', 'refresh_token'],
+            'matomo:write',
+            ['https://updated.example/callback'],
+            'Updated description',
+            'confidential',
+            '0'
+        );
+
+        $this->assertSame('Updated client', $updated['client']['name']);
+        $this->assertSame('Updated description', $updated['client']['description']);
+        $this->assertSame(['matomo:write'], $updated['client']['scopes']);
+        $this->assertSame(['https://updated.example/callback'], $updated['client']['redirect_uris']);
+        $this->assertFalse($updated['client']['active']);
+        $this->assertNull($updated['secret']);
+    }
+
+    public function test_updateClient_generatesSecretWhenChangingPublicClientToConfidential()
+    {
+        $result = $this->api->createClient(
+            'Test public client',
+            ['authorization_code', 'refresh_token'],
+            'matomo:read',
+            ['https://public-client.example/callback'],
+            'Public client description',
+            'public'
+        );
+
+        $updated = $this->api->updateClient(
+            $result['client']['client_id'],
+            'Updated public client',
+            ['authorization_code', 'refresh_token'],
+            'matomo:read',
+            ['https://public-client.example/callback'],
+            'Updated public client description',
+            'confidential'
+        );
+
+        $this->assertSame('confidential', $updated['client']['type']);
+        $this->assertNotEmpty($updated['secret']);
+        $this->assertTrue(
+            $this->clientRepository->validateClient(
+                $result['client']['client_id'],
+                $updated['secret'],
+                'authorization_code'
+            )
+        );
+    }
+
+    public function test_updateClient_clearsSecretWhenChangingConfidentialClientToPublic()
+    {
+        $result = $this->createConfidentialClient();
+
+        $updated = $this->api->updateClient(
+            $result['client']['client_id'],
+            'Now public client',
+            ['authorization_code', 'refresh_token'],
+            'matomo:read',
+            ['https://client.example/callback'],
+            'Now public client description',
+            'public'
+        );
+
+        $stored = $this->clientModel->find($result['client']['client_id']);
+
+        $this->assertSame('public', $updated['client']['type']);
+        $this->assertNull($updated['secret']);
+        $this->assertNotNull($stored);
+        $this->assertNull($stored['secret_hash']);
     }
 
     public function provideContainerConfig()
