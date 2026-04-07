@@ -28,6 +28,7 @@ describe("OAuth2Admin", function () {
         await page.waitForTimeout(250);
         await page.evaluate(function () {
             $('.client-id-code').html('fixedValueForTest');
+            $('#client_id').html('fixedValueForTest');
             $('.client-secret-code').html('fixedSecretValueForTest');
             $('.created-at').html('2026-03-16 00:00:00');
         });
