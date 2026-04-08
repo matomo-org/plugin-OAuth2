@@ -153,6 +153,7 @@ class OAuth2 extends Plugin
         $translationKeys[] = 'OAuth2_AdminResumeConfirm';
         $translationKeys[] = 'OAuth2_ClientSecretMaskedHelp';
         $translationKeys[] = 'OAuth2_ClientSecretVisibleHelp';
+        $translationKeys[] = 'OAuth2_AdminDescriptionPlaceholder';
     }
 
     public function getTablesInstalled(&$allTablesInstalled)

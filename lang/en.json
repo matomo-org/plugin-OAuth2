@@ -32,6 +32,7 @@
     "AdminNameHelp": "Displayed to users when they authorise the application and in the OAuth client list.",
     "AdminDescription": "Description",
     "AdminDescriptionHelp": "Optional description that explains what this client is used for.",
+    "AdminDescriptionPlaceholder": "The description of the client",
     "AdminType": "Type",
     "AdminConfidential": "Confidential",
     "AdminPublic": "Public",

@@ -45,6 +45,7 @@
               :ui-control-attributes="{ style: 'min-height: auto;' }"
               :inline-help="translate('OAuth2_AdminDescriptionHelp')"
               :title="translate('OAuth2_AdminDescription')"
+              :placeholder="translate('OAuth2_AdminDescriptionPlaceholder')"
           />
         </div>
         <div
