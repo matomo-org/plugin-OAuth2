@@ -27,6 +27,26 @@
         v-else
         @submit.prevent="submit"
       >
+        <div class="row">
+          <Field
+              uicontrol="text"
+              name="name"
+              v-model="form.name"
+              :inline-help="translate('OAuth2_AdminNameHelp')"
+              :title="translate('OAuth2_AdminName')"
+          />
+        </div>
+        <div class="row">
+          <Field
+              uicontrol="textarea"
+              name="description"
+              v-model="form.description"
+              :rows="1"
+              :ui-control-attributes="{ style: 'min-height: auto;' }"
+              :inline-help="translate('OAuth2_AdminDescriptionHelp')"
+              :title="translate('OAuth2_AdminDescription')"
+          />
+        </div>
         <div
             class="row"
             v-if="isEditMode"
@@ -71,31 +91,8 @@
             </div>
           </div>
           <div class="col s12 m6">
-            <div
-              v-if="visibleSecret"
-              class="form-help"
-            >
-              {{ translate('OAuth2_ClientSecretHelp') }}
-            </div>
+            <div class="form-help" v-html="$sanitize(secretInlineHelp)" />
           </div>
-        </div>
-        <div class="row">
-          <Field
-            uicontrol="text"
-            name="name"
-            v-model="form.name"
-            :inline-help="translate('OAuth2_AdminNameHelp')"
-            :title="translate('OAuth2_AdminName')"
-          />
-        </div>
-        <div class="row">
-          <Field
-            uicontrol="textarea"
-            name="description"
-            v-model="form.description"
-            :inline-help="translate('OAuth2_AdminDescriptionHelp')"
-            :title="translate('OAuth2_AdminDescription')"
-          />
         </div>
         <div class="row" name="type">
           <template v-if="!isEditMode">
@@ -309,6 +306,13 @@ export default defineComponent({
     displayedSecret(): string {
       return this.visibleSecret || '*************';
     },
+    secretInlineHelp(): string {
+      if (this.visibleSecret) {
+        return this.translate('OAuth2_ClientSecretVisibleHelp');
+      }
+
+      return this.translate('OAuth2_ClientSecretMaskedHelp');
+    },
   },
   methods: {
     init() {
@@ -393,13 +397,13 @@ export default defineComponent({
 
       AjaxHelper.fetch(params).then((response) => {
         this.visibleSecret = response.secret || '';
-        let message = this.isEditMode
+        const clientMessage = this.isEditMode
           ? this.translate('OAuth2_AdminUpdated', response.client.name)
           : this.translate('OAuth2_AdminCreated', response.client.name);
-
-        if (response.secret) {
-          message += ` ${this.translate('OAuth2_ClientSecretHelp')}`;
-        }
+        const secretMessage = response.secret
+          ? this.translate('OAuth2_ClientSecretHelp')
+          : '';
+        const message = [clientMessage, secretMessage].filter(Boolean).join(' ');
 
         this.$emit('saved', {
           client: response.client,

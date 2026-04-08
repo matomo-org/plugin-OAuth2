@@ -44,12 +44,12 @@
         <thead>
           <tr>
             <th>{{ translate('OAuth2_AdminName') }}</th>
-            <th>{{ translate('OAuth2_AdminClientId') }}</th>
-            <th>{{ translate('OAuth2_AdminClientCreatedAt') }}</th>
             <th>{{ translate('OAuth2_AdminClientType') }}</th>
             <th>{{ translate('OAuth2_AdminClientGrants') }}</th>
             <th>{{ translate('OAuth2_AdminClientStatus') }}</th>
+            <th>{{ translate('OAuth2_AdminClientId') }}</th>
             <th>{{ translate('OAuth2_AdminClientRedirects') }}</th>
+            <th>{{ translate('OAuth2_AdminClientCreatedAt') }}</th>
             <th style="width: 220px;">{{ translate('OAuth2_AdminClientActions') }}</th>
           </tr>
         </thead>
@@ -58,25 +58,22 @@
             v-for="client in clients"
             :key="client.client_id"
           >
-            <td :title="client.description">
-              <strong>{{ client.name }}</strong>
+            <td :title="$sanitize(client.description)">
+              {{ client.name }}
             </td>
-            <td>
-              <code class="client-id-code">{{ client.client_id }}</code>
-            </td>
-            <td class="created-at">{{ client.created_at }}</td>
             <td>{{ typeOptions[client.type] }}</td>
             <td>{{ (client.grant_types || []).join(', ') }}</td>
             <td>
-              <span
-                :class="client.active ? 'status-active' : 'status-paused'"
-              >
+              <span>
                 {{
                   client.active
                     ? translate('OAuth2_AdminActive')
                     : translate('OAuth2_AdminDisabled')
                 }}
               </span>
+            </td>
+            <td>
+              <code class="client-id-code">{{ client.client_id }}</code>
             </td>
             <td>
               <div
@@ -86,12 +83,8 @@
                 <code class="redirect-uri">{{ uri }}</code>
               </div>
             </td>
+            <td class="created-at">{{ client.created_at }}</td>
             <td>
-              <button
-                class="table-action icon-edit"
-                @click.prevent="$emit('edit', client.client_id)"
-                :title="translate('OAuth2_AdminEdit')"
-              />
               <button
                 :class="`table-action ${client.active ? 'icon-pause' : 'icon-play'}`"
                 @click.prevent="toggleClientStatus(client)"
@@ -100,6 +93,11 @@
                     ? translate('OAuth2_AdminPause')
                     : translate('OAuth2_AdminResume')
                 "
+              />
+              <button
+                class="table-action icon-edit"
+                @click.prevent="$emit('edit', client.client_id)"
+                :title="translate('OAuth2_AdminEdit')"
               />
               <button
                 class="table-action icon-delete"
@@ -128,11 +126,6 @@
   max-width: 250px;
   display: inline-block;
   word-wrap: break-word;
-}
-
-.status-active,
-.status-paused {
-  font-weight: 600;
 }
 </style>
 
