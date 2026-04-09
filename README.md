@@ -1,15 +1,25 @@
 # OAuth 2.0 Plugin for Matomo
 
-This plugin adds a **first-party OAuth2 Authorization Server** to Matomo, allowing external applications to securely access Matomo APIs using OAuth2 access tokens instead of `token_auth`.
+This plugin adds a **first-party OAuth 2.0 Authorization Server** to Matomo, allowing external applications to securely access Matomo APIs using OAuth2 access tokens instead of `token_auth`.
 
 It supports standard OAuth 2.0 flows including **Authorization Code (PKCE)**, **Client Credentials**, and **Refresh Token**.
+
+[![Build Status](https://github.com/matomo-org/plugin-OAuth2/actions/workflows/matomo-tests.yml/badge.svg)](https://github.com/matomo-org/plugin-OAuth2/actions/workflows/matomo-tests.yml)
+
+## Description
+
+The OAuth 2.0 plugin replaces static authentication with a token-based flow tied to your existing login system. Each application requests permission, receives scoped access, and operates within defined limits. No need to distribute or manage long-lived credentials across tools and services.
+
+Tokens expire by default, can be refreshed when needed, and revoked instantly without affecting other integrations. This reduces exposure and simplifies access management.
+
+For teams running multiple integrations, OAuth 2.0 is the practical choice for secure, maintainable access to Matomo data. Every connection is authorised, bounded, and straightforward to control.
 
 ---
 
 # Features
 
 - OAuth 2.0 Authorization Server integrated with Matomo
-- Manage OAuth clients via **Administration → Platform → OAuth2** (For Matomo Cloud it will be **Administration → Export → OAuth2**)
+- Manage OAuth clients via **Administration → Platform → OAuth 2.0** (For Matomo Cloud it will be **Administration → Export → OAuth 2.0**)
 - Supported grant types:
   - Authorization Code (with PKCE)
   - Client Credentials
@@ -243,7 +253,7 @@ curl -X POST 'https://matomo.example.com/index.php?module=OAuth2&action=token' \
 
 ---
 
-# Calling Matomo APIs with OAuth2
+# Calling Matomo APIs with OAuth 2.0
 
 Once an access token is obtained, call Matomo APIs using the **Bearer token**.
 

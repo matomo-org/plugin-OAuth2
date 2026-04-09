@@ -39,7 +39,6 @@
       <p>{{ translate('OAuth2_AdminClientsDescriptions') }}</p>
       <table
         v-content-table
-        v-if="clients.length"
       >
         <thead>
           <tr>
@@ -53,7 +52,7 @@
             <th style="width: 220px;">{{ translate('OAuth2_AdminClientActions') }}</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody v-if="clients.length">
           <tr
             v-for="client in clients"
             :key="client.client_id"
@@ -107,10 +106,12 @@
             </td>
           </tr>
         </tbody>
+        <tbody v-else>
+          <tr>
+            <td colspan="8">{{ translate('OAuth2_AdminNoClients') }}</td>
+          </tr>
+        </tbody>
       </table>
-      <div v-else>
-        {{ translate('OAuth2_AdminNoClients') }}
-      </div>
       <div class="tableActionBar">
         <a
           class="createNewClient"
@@ -187,9 +188,10 @@ export default defineComponent({
       NotificationsStore.remove('ajaxHelper');
     },
     toggleClientStatus(client: Client) {
+      const safeClientName = Matomo.helper.htmlEntities(client.name || client.client_id);
       this.confirmToggleLabel = client.active
-        ? this.translate('OAuth2_AdminPauseConfirm', client.name || client.client_id)
-        : this.translate('OAuth2_AdminResumeConfirm', client.name || client.client_id);
+        ? this.translate('OAuth2_AdminPauseConfirm', safeClientName)
+        : this.translate('OAuth2_AdminResumeConfirm', safeClientName);
 
       Matomo.helper.modalConfirm(this.$refs.confirmToggleClient as HTMLElement, {
         yes: () => {
@@ -200,10 +202,13 @@ export default defineComponent({
           }).then((response) => {
             if (response?.client) {
               this.removeNotifications();
+              const safeUpdatedClientName = Matomo.helper.htmlEntities(
+                response.client.name || response.client.client_id,
+              );
               this.showNotification(
                 response.client.active
-                  ? this.translate('OAuth2_AdminResumed', response.client.name || response.client.client_id)
-                  : this.translate('OAuth2_AdminPaused', response.client.name || response.client.client_id),
+                  ? this.translate('OAuth2_AdminResumed', safeUpdatedClientName)
+                  : this.translate('OAuth2_AdminPaused', safeUpdatedClientName),
                 'success',
               );
               this.$emit('updated', response.client);
@@ -213,7 +218,8 @@ export default defineComponent({
       });
     },
     deleteClient(client: Client) {
-      this.confirmDeleteLabel = this.translate('OAuth2_AdminDeleteConfirm', client.name || client.client_id);
+      const safeClientName = Matomo.helper.htmlEntities(client.name || client.client_id);
+      this.confirmDeleteLabel = this.translate('OAuth2_AdminDeleteConfirm', safeClientName);
 
       Matomo.helper.modalConfirm(this.$refs.confirmDeleteClient as HTMLElement, {
         yes: () => {
@@ -223,7 +229,7 @@ export default defineComponent({
           }).then((response) => {
             if (response?.deleted) {
               this.removeNotifications();
-              this.showNotification(this.translate('OAuth2_AdminDeleted', client.name), 'success');
+              this.showNotification(this.translate('OAuth2_AdminDeleted', safeClientName), 'success');
               this.$emit('deleted', client.client_id);
             }
           });

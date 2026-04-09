@@ -10,7 +10,7 @@
     "Deny": "Deny",
     "AdminHeading": "OAuth 2.0 Clients",
     "AdminClients": "Clients",
-    "AdminNoClients": "No clients configured yet.",
+    "AdminNoClients": "No clients configured yet, click the \"Create Client\" button to create an OAuth2 client.",
     "AdminClientId": "Client ID",
     "AdminClientCreatedAt": "Creation date",
     "AdminClientType": "Type",

@@ -398,9 +398,10 @@ export default defineComponent({
 
       AjaxHelper.fetch(params).then((response) => {
         this.visibleSecret = response.secret || '';
+        const safeClientName = Matomo.helper.htmlEntities(response.client.name || '');
         const clientMessage = this.isEditMode
-          ? this.translate('OAuth2_AdminUpdated', response.client.name)
-          : this.translate('OAuth2_AdminCreated', response.client.name);
+          ? this.translate('OAuth2_AdminUpdated', safeClientName)
+          : this.translate('OAuth2_AdminCreated', safeClientName);
         const secretMessage = response.secret
           ? this.translate('OAuth2_ClientSecretHelp')
           : '';
