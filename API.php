@@ -162,7 +162,7 @@ class API extends \Piwik\Plugin\API
             'scopes' => $data['scopes'],
             'type' => $data['type'],
             'active' => $data['active'],
-        ], Piwik::getCurrentUserLogin());
+        ]);
 
         $result['client'] = $this->sanitizeClient($result['client']);
 

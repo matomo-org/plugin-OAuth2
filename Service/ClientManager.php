@@ -54,7 +54,7 @@ class ClientManager
         return ['client' => $client, 'secret' => $secret];
     }
 
-    public function update(string $clientId, array $data, ?string $ownerLogin = null): array
+    public function update(string $clientId, array $data): array
     {
         $existingClient = $this->clientModel->find($clientId);
         if (empty($existingClient)) {
@@ -85,7 +85,7 @@ class ClientManager
             'secret_hash' => $secretHash,
             'type' => $type,
             'active' => $data['active'] ?? true,
-            'owner_login' => $ownerLogin ?? $data['owner_login'],
+            'owner_login' => $data['owner_login'] ?? ($existingClient['owner_login'] ?? null),
         ]);
 
         $client = $this->clientModel->find($clientId);

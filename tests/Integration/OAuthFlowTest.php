@@ -11,7 +11,9 @@ namespace Piwik\Plugins\OAuth2\tests\Integration;
 
 use Matomo\Dependencies\Oauth2\Nyholm\Psr7\Response;
 use Matomo\Dependencies\Oauth2\Nyholm\Psr7\ServerRequest;
+use Piwik\Auth\Password;
 use Piwik\Container\StaticContainer;
+use Piwik\Date;
 use Piwik\Db;
 use Piwik\Plugins\OAuth2\API;
 use Piwik\Plugins\OAuth2\Entities\UserEntity;
@@ -25,6 +27,8 @@ use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
 use Piwik\Plugins\OAuth2\Service\ServerFactory;
 use Piwik\Plugins\OAuth2\SystemSettings;
 use Piwik\Plugins\OAuth2\tests\Fixtures\OAuth2Fixture;
+use Piwik\Plugins\UsersManager\Model as UserModel;
+use Piwik\Plugins\UsersManager\UsersManager;
 use Piwik\Tests\Framework\Fixture;
 use Piwik\Tests\Framework\Mock\FakeAccess;
 
@@ -139,6 +143,51 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         $this->assertSame($client['client']['client_id'], $storedToken['client_id']);
     }
 
+    public function test_clientCredentialsFlow_preservesOriginalOwnerAfterAnotherSuperUserEditsClient()
+    {
+        $client = $this->api->createClient(
+            'Machine client',
+            ['client_credentials'],
+            'matomo:write',
+            [],
+            'Server to server client',
+            'confidential'
+        );
+        $this->createSuperUser('otherSuperUser');
+
+        FakeAccess::clearAccess(true, [], [], 'otherSuperUser');
+        $this->api->updateClient(
+            $client['client']['client_id'],
+            'Machine client edited',
+            ['client_credentials'],
+            'matomo:write',
+            [],
+            'Edited by another superuser',
+            'confidential',
+            '1'
+        );
+
+        FakeAccess::clearAccess(true);
+
+        $response = $this->serverFactory->makeAuthorizationServer()->respondToAccessTokenRequest(
+            (new ServerRequest('POST', 'https://matomo.example/token'))->withParsedBody([
+                'grant_type' => 'client_credentials',
+                'client_id' => $client['client']['client_id'],
+                'client_secret' => $client['secret'],
+                'scope' => 'matomo:write',
+            ]),
+            new Response()
+        );
+
+        $storedToken = Db::fetchRow(
+            'SELECT * FROM ' . \Piwik\Common::prefixTable('oauth2_access_token') . ' ORDER BY created_at DESC LIMIT 1'
+        );
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(Fixture::ADMIN_USER_LOGIN, $storedToken['user_login']);
+        $this->assertSame($client['client']['client_id'], $storedToken['client_id']);
+    }
+
     private function createConfidentialAuthCodeClient(): array
     {
         $client = $this->api->createClient(
@@ -205,6 +254,21 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         $this->assertTrue($this->authCodeModel->isRevoked($redirectParams['code']));
 
         return $tokenPayload;
+    }
+
+    private function createSuperUser(string $login): void
+    {
+        $userModel = new UserModel();
+        $passwordHelper = new Password();
+        $hashedPassword = $passwordHelper->hash(UsersManager::getPasswordHash('test-password'));
+
+        if (empty($userModel->getUser($login))) {
+            $userModel->addUser($login, $hashedPassword, $login . '@example.org', Date::now()->getDatetime());
+        } else {
+            $userModel->updateUser($login, $hashedPassword, $login . '@example.org');
+        }
+
+        $userModel->setSuperUserAccess($login, true);
     }
 
     public function provideContainerConfig()
