@@ -37,7 +37,27 @@ class API extends \Piwik\Plugin\API
     public function getClients(): array
     {
         Piwik::checkUserHasSuperUserAccess();
-        return $this->clientModel->all();
+        return array_map([$this, 'sanitizeClient'], $this->clientModel->all());
+    }
+
+    /**
+     * Returns one OAuth2 client configured in Matomo (super users only).
+     *
+     * @param string $clientId 32-character hexadecimal client identifier.
+     * @return array
+     */
+    public function getClient(string $clientId): array
+    {
+        Piwik::checkUserHasSuperUserAccess();
+
+        $clientId = $this->assertValidClientId($clientId);
+        $client = $this->clientModel->find($clientId);
+
+        if (empty($client)) {
+            throw new \InvalidArgumentException(Piwik::translate('OAuth2_ClientNotFound'));
+        }
+
+        return $this->sanitizeClient($client);
     }
 
     /**
@@ -76,42 +96,75 @@ class API extends \Piwik\Plugin\API
     {
         Piwik::checkUserHasSuperUserAccess();
 
-        $type = $type === 'public' ? 'public' : 'confidential';
-
-        $redirects = is_array($redirectUris) ? $redirectUris : preg_split('/[\r\n]+/', (string) $redirectUris);
-        if ($redirects === false) {
-            $redirects = [];
-        }
-        $redirects = array_values(array_filter(array_map('trim', $redirects), static function ($value) {
-            return $value !== '';
-        }));
-
-        $grantTypes = array_values(array_filter(array_map('trim', (array) $grantTypes), static function ($value) {
-            return $value !== '';
-        }));
-        $grantTypes = $this->validateGrantTypes($grantTypes);
-
-        $this->validateRedirectUris($redirects, $grantTypes);
-
-        if ($type === 'public' && in_array('client_credentials', $grantTypes, true)) {
-            throw new \InvalidArgumentException(Piwik::translate('OAuth2_ClientCredentialsExceptionPublicClient'));
-        }
-
-        $scope = array_values(array_intersect([$scope], $this->scopeRepository->getAllowedScopeIds()));
-
-        if (empty($scope)) {
-            throw new \InvalidArgumentException(Piwik::translate('OAuth2_InvalidScopeValue'));
-        }
+        $data = $this->buildValidatedClientData(
+            $name,
+            $grantTypes,
+            $scope,
+            $redirectUris,
+            $description,
+            $type,
+            $active
+        );
 
         $result = $this->clientManager->create([
-            'name' => $name,
-            'description' => $description,
-            'redirect_uris' => $redirects,
-            'grant_types' => $grantTypes,
-            'scopes' => $scope,
-            'type' => $type,
-            'active' => $active,
+            'name' => $data['name'],
+            'description' => $data['description'],
+            'redirect_uris' => $data['redirect_uris'],
+            'grant_types' => $data['grant_types'],
+            'scopes' => $data['scopes'],
+            'type' => $data['type'],
+            'active' => $data['active'],
         ], Piwik::getCurrentUserLogin());
+
+        $result['client'] = $this->sanitizeClient($result['client']);
+
+        return $result;
+    }
+
+    /**
+     * Updates an OAuth2 client and optionally returns a newly generated secret.
+     *
+     * @param string          $clientId 32-character hexadecimal client identifier.
+     * @param string          $name Display name shown in the Matomo UI.
+     * @param string[]        $grantTypes Grant types to enable.
+     * @param string          $scope Scope identifier to allow.
+     * @param string|string[] $redirectUris Allowed redirect URIs.
+     * @param string          $description Optional description for administrators.
+     * @param string          $type `confidential` or `public`.
+     * @param string          $active `'1'` to enable the client or `'0'` to disable it.
+     * @return array{client: array, secret: string|null}
+     */
+    public function updateClient(string $clientId, string $name, array $grantTypes, string $scope, $redirectUris = [], string $description = '', string $type = 'confidential', string $active = '1'): array
+    {
+        Piwik::checkUserHasSuperUserAccess();
+
+        $clientId = $this->assertValidClientId($clientId);
+
+        if (empty($this->clientModel->find($clientId))) {
+            throw new \InvalidArgumentException(Piwik::translate('OAuth2_ClientNotFound'));
+        }
+
+        $data = $this->buildValidatedClientData(
+            $name,
+            $grantTypes,
+            $scope,
+            $redirectUris,
+            $description,
+            $type,
+            $active
+        );
+
+        $result = $this->clientManager->update($clientId, [
+            'name' => $data['name'],
+            'description' => $data['description'],
+            'redirect_uris' => $data['redirect_uris'],
+            'grant_types' => $data['grant_types'],
+            'scopes' => $data['scopes'],
+            'type' => $data['type'],
+            'active' => $data['active'],
+        ]);
+
+        $result['client'] = $this->sanitizeClient($result['client']);
 
         return $result;
     }
@@ -132,12 +185,35 @@ class API extends \Piwik\Plugin\API
         Piwik::checkUserHasSuperUserAccess();
 
         $clientId = $this->assertValidClientId($clientId);
+        $client = $this->getClient($clientId);
+        if (empty($clientId) || empty($client['type']) || $client['type'] != 'confidential') {
+            throw new \InvalidArgumentException(Piwik::translate('OAuth2_InvalidClientToRotateSecretExceptionMessage'));
+        }
 
         $secret = $this->clientManager->rotateSecret($clientId);
 
         return [
             'client_id' => $clientId,
             'secret' => $secret,
+        ];
+    }
+
+    /**
+     * Updates whether an OAuth2 client is active (super users only).
+     *
+     * @param string $clientId 32-character hexadecimal client identifier.
+     * @param string $active `'1'` to enable the client or `'0'` to disable it.
+     * @return array{client: array}
+     */
+    public function setClientActive(string $clientId, string $active): array
+    {
+        Piwik::checkUserHasSuperUserAccess();
+
+        $clientId = $this->assertValidClientId($clientId);
+        $client = $this->clientManager->setActive($clientId, $active === '1');
+
+        return [
+            'client' => $this->sanitizeClient($client),
         ];
     }
 
@@ -170,6 +246,53 @@ class API extends \Piwik\Plugin\API
         }
 
         return $clientId;
+    }
+
+    private function buildValidatedClientData(
+        string $name,
+        array $grantTypes,
+        string $scope,
+        $redirectUris,
+        string $description,
+        string $type,
+        string $active
+    ): array {
+        $type = $type === 'public' ? 'public' : 'confidential';
+
+        $redirects = is_array($redirectUris) ? $redirectUris : preg_split('/[\r\n]+/', (string) $redirectUris);
+        if ($redirects === false) {
+            $redirects = [];
+        }
+        $redirects = array_values(array_filter(array_map('trim', $redirects), static function ($value) {
+            return $value !== '';
+        }));
+
+        $grantTypes = array_values(array_filter(array_map('trim', (array) $grantTypes), static function ($value) {
+            return $value !== '';
+        }));
+        $grantTypes = $this->validateGrantTypes($grantTypes);
+
+        $this->validateRedirectUris($redirects, $grantTypes);
+
+        if ($type === 'public' && in_array('client_credentials', $grantTypes, true)) {
+            throw new \InvalidArgumentException(Piwik::translate('OAuth2_ClientCredentialsExceptionPublicClient'));
+        }
+
+        $scope = array_values(array_intersect([$scope], $this->scopeRepository->getAllowedScopeIds()));
+
+        if (empty($scope)) {
+            throw new \InvalidArgumentException(Piwik::translate('OAuth2_InvalidScopeValue'));
+        }
+
+        return [
+            'name' => trim($name),
+            'description' => $description,
+            'redirect_uris' => $redirects,
+            'grant_types' => $grantTypes,
+            'scopes' => $scope,
+            'type' => $type,
+            'active' => $active,
+        ];
     }
 
     private function validateRedirectUris(array $redirectUris, array $grantTypes): void
@@ -205,5 +328,12 @@ class API extends \Piwik\Plugin\API
         }
 
         return array_values(array_unique($grantTypes));
+    }
+
+    private function sanitizeClient(array $client): array
+    {
+        unset($client['secret_hash']);
+
+        return $client;
     }
 }

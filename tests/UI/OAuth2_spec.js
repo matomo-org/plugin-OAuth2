@@ -14,6 +14,7 @@ describe("OAuth2Admin", function () {
     };
 
     const adminUrl = '?module=OAuth2&action=index&idSite=1&period=day&date=2024-01-01';
+    const createUrl = `${adminUrl}#?idClient=0`;
     const settingsUrl = '?module=CoreAdminHome&action=generalSettings#/OAuth2';
 
     before(function () {
@@ -25,6 +26,12 @@ describe("OAuth2Admin", function () {
     {
         await page.waitForNetworkIdle();
         await page.waitForTimeout(250);
+        await page.evaluate(function () {
+            $('.client-id-code').html('fixedValueForTest');
+            $('#client_id').val('fixedValueForTest');
+            $('.client-secret-code').html('fixedSecretValueForTest');
+            $('.created-at').html('2026-03-16 00:00:00');
+        });
         expect(await page.screenshotSelector('.pageWrap,#notificationContainer')).to.matchImage(name);
     }
 
@@ -49,10 +56,7 @@ describe("OAuth2Admin", function () {
         await page.waitForNetworkIdle();
         await page.waitForTimeout(300);
         await page.evaluate(function () {
-            $('.client-id-code').html('fixedValueForTest');
-            $('.client-secret-code').html('fixedSecretValueForTest');
             $('.success-msg-created').html('Client fixedValueForTest created');
-            $('.created-at').html('2026-03-16 00:00:00');
         });
     }
 
@@ -84,6 +88,14 @@ describe("OAuth2Admin", function () {
         await page.waitForTimeout(100);
     }
 
+    async function editFirstClient()
+    {
+        await page.waitForSelector('.icon-edit', { visible: true });
+        await page.click('.icon-edit');
+        await page.waitForNetworkIdle();
+        await page.waitForTimeout(300);
+    }
+
     it('should show the OAuth2 system settings page', async function () {
         await page.goto(settingsUrl);
         await page.waitForNetworkIdle();
@@ -91,38 +103,49 @@ describe("OAuth2Admin", function () {
         expect(await page.screenshotSelector('#OAuth2PluginSettings')).to.matchImage('system_settings');
     });
 
-    it('should show the create client page', async function () {
+    it('should show the OAuth2 clients list page', async function () {
         await page.goto(adminUrl);
         await capturePage('admin_page');
     });
 
+    it('should show the create client page', async function () {
+        await page.goto(createUrl);
+        await capturePage('create_client_page');
+    });
+
     it('should validate the create client form', async function () {
-        await page.goto(adminUrl);
+        await page.goto(createUrl);
         await submitForm();
         await capturePage('create_client_validation');
     });
 
     it('should create a confidential client and show the secret once', async function () {
-        await page.goto(adminUrl);
+        await page.goto(createUrl);
         await fillClientForm('Confidential UI client', 'Confidential', 'https://confidential.example/callback');
         await submitForm();
         await capturePage('create_confidential_success');
     });
 
     it('should create a public client successfully', async function () {
-        await page.goto(adminUrl);
+        await page.goto(createUrl);
         await fillClientForm('Public UI client', 'Public', 'https://public.example/callback');
         await submitForm();
         await capturePage('create_public_success');
     });
 
+    it('should show the edit client page', async function () {
+        await page.goto(createUrl);
+        await fillClientForm('Editable UI client', 'Confidential', 'https://editable.example/callback');
+        await submitForm();
+        await page.goto(adminUrl);
+        await editFirstClient();
+        await capturePage('edit_client_page');
+    });
+
     it('should no longer show the client secret after reload', async function () {
         await page.reload();
         await page.evaluate(function () {
-            $('.client-id-code').html('fixedValueForTest');
-            $('.client-secret-code').html('fixedSecretValueForTest');
             $('.success-msg-created').html('Client fixedValueForTest created');
-            $('.created-at').html('2026-03-16 00:00:00');
         });
         await capturePage('secret_not_shown_again');
     });

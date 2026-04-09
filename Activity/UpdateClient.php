@@ -9,9 +9,9 @@
 
 namespace Piwik\Plugins\OAuth2\Activity;
 
-class CreateClient extends BaseActivity
+class UpdateClient extends BaseActivity
 {
-    protected $eventName = 'API.OAuth2.createClient.end';
+    protected $eventName = 'API.OAuth2.updateClient.end';
 
     public function extractParams($eventData)
     {
@@ -29,7 +29,7 @@ class CreateClient extends BaseActivity
         return [
             'version' => 'v1',
             'client' => $this->formatClientData($client),
-            'action' => 'created',
+            'action' => 'updated',
         ];
     }
 
@@ -37,6 +37,6 @@ class CreateClient extends BaseActivity
     {
         $client = $activityData['client'] ?? [];
 
-        return sprintf('created OAuth 2.0 client "%s"', $this->getClientLabel($client));
+        return sprintf('updated OAuth 2.0 client "%s"', $this->getClientLabel($client));
     }
 }

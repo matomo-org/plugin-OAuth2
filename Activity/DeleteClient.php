@@ -40,6 +40,6 @@ class DeleteClient extends BaseActivity
     {
         $client = $activityData['client'] ?? [];
 
-        return sprintf('deleted OAuth2 client "%s"', $this->getClientLabel($client));
+        return sprintf('deleted OAuth 2.0 client "%s"', $this->getClientLabel($client));
     }
 }

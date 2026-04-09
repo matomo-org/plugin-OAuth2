@@ -9,9 +9,9 @@
 
 namespace Piwik\Plugins\OAuth2\Activity;
 
-class CreateClient extends BaseActivity
+class SetClientActive extends BaseActivity
 {
-    protected $eventName = 'API.OAuth2.createClient.end';
+    protected $eventName = 'API.OAuth2.setClientActive.end';
 
     public function extractParams($eventData)
     {
@@ -29,14 +29,19 @@ class CreateClient extends BaseActivity
         return [
             'version' => 'v1',
             'client' => $this->formatClientData($client),
-            'action' => 'created',
+            'action' => !empty($client['active']) ? 'resumed' : 'paused',
         ];
     }
 
     public function getTranslatedDescription($activityData, $performingUser)
     {
         $client = $activityData['client'] ?? [];
+        $isActive = !empty($client['active']);
 
-        return sprintf('created OAuth 2.0 client "%s"', $this->getClientLabel($client));
+        if ($isActive) {
+            return sprintf('resumed OAuth 2.0 client "%s"', $this->getClientLabel($client));
+        }
+
+        return sprintf('paused OAuth 2.0 client "%s"', $this->getClientLabel($client));
     }
 }

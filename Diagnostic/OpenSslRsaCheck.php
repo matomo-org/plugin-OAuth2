@@ -31,11 +31,11 @@ class OpenSslRsaCheck implements Diagnostic
             $missing[] = 'openssl_pkey_get_details()';
         }
 
-        $label = 'OAuth2 OpenSSL RSA support';
+        $label = 'OAuth 2.0 OpenSSL RSA support';
 
         if (!empty($missing)) {
             $comment = 'Missing OpenSSL RSA constant/function(s): ' . implode(', ', $missing)
-                . '. Enable the PHP OpenSSL extension to generate OAuth2 RSA keys.';
+                . '. Enable the PHP OpenSSL extension to generate OAuth 2.0 RSA keys.';
             return [DiagnosticResult::singleResult($label, DiagnosticResult::STATUS_ERROR, $comment)];
         }
 

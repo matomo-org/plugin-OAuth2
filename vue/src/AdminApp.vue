@@ -335,7 +335,7 @@ export default defineComponent({
               if (response.deleted) {
                 this.clients = this.clients.filter((c) => c.client_id !== client.client_id);
 
-                const message = this.translate('OAuth2_AdminDeleted', client.client_id);
+                const message = this.translate('OAuth2_AdminDeleted', client.name);
                 this.showSuccessNotification('deleteClient', message);
               }
             });

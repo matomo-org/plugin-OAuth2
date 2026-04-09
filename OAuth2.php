@@ -106,7 +106,10 @@ class OAuth2 extends Plugin
         $translationKeys[] = 'OAuth2_AdminDisabled';
         $translationKeys[] = 'OAuth2_AdminRotateSecret';
         $translationKeys[] = 'OAuth2_AdminDelete';
+        $translationKeys[] = 'OAuth2_AdminEdit';
         $translationKeys[] = 'OAuth2_AdminCreateTitle';
+        $translationKeys[] = 'OAuth2_AdminEditTitle';
+        $translationKeys[] = 'OAuth2_AdminBackToClients';
         $translationKeys[] = 'OAuth2_AdminName';
         $translationKeys[] = 'OAuth2_AdminDescription';
         $translationKeys[] = 'OAuth2_AdminType';
@@ -120,9 +123,11 @@ class OAuth2 extends Plugin
         $translationKeys[] = 'OAuth2_AdminRedirectUris';
         $translationKeys[] = 'OAuth2_AdminActiveLabel';
         $translationKeys[] = 'OAuth2_AdminSave';
+        $translationKeys[] = 'OAuth2_AdminUpdate';
         $translationKeys[] = 'OAuth2_AdminSecretMessage';
         $translationKeys[] = 'OAuth2_AdminSecretHelp';
         $translationKeys[] = 'OAuth2_AdminCreated';
+        $translationKeys[] = 'OAuth2_AdminUpdated';
         $translationKeys[] = 'OAuth2_AdminRotated';
         $translationKeys[] = 'OAuth2_AdminDeleted';
         $translationKeys[] = 'OAuth2_AdminLoading';
@@ -139,6 +144,16 @@ class OAuth2 extends Plugin
         $translationKeys[] = 'OAuth2_ErrorXNotProvided';
         $translationKeys[] = 'OAuth2_ClientSecret';
         $translationKeys[] = 'OAuth2_ClientSecretHelp';
+        $translationKeys[] = 'OAuth2_ClientNotFound';
+        $translationKeys[] = 'OAuth2_AdminPause';
+        $translationKeys[] = 'OAuth2_AdminResume';
+        $translationKeys[] = 'OAuth2_AdminResumed';
+        $translationKeys[] = 'OAuth2_AdminPaused';
+        $translationKeys[] = 'OAuth2_AdminPauseConfirm';
+        $translationKeys[] = 'OAuth2_AdminResumeConfirm';
+        $translationKeys[] = 'OAuth2_ClientSecretMaskedHelp';
+        $translationKeys[] = 'OAuth2_ClientSecretVisibleHelp';
+        $translationKeys[] = 'OAuth2_AdminDescriptionPlaceholder';
     }
 
     public function getTablesInstalled(&$allTablesInstalled)

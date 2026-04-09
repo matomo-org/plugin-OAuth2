@@ -39,6 +39,6 @@ class RotateSecret extends BaseActivity
     {
         $client = $activityData['client'] ?? [];
 
-        return sprintf('rotated secret for OAuth2 client "%s"', $this->getClientLabel($client));
+        return sprintf('rotated secret for OAuth 2.0 client "%s"', $this->getClientLabel($client));
     }
 }
