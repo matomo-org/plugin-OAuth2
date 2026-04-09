@@ -37,6 +37,6 @@ class CreateClient extends BaseActivity
     {
         $client = $activityData['client'] ?? [];
 
-        return sprintf('created OAuth2 client "%s"', $this->getClientLabel($client));
+        return sprintf('created OAuth 2.0 client "%s"', $this->getClientLabel($client));
     }
 }

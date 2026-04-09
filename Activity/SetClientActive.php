@@ -39,9 +39,9 @@ class SetClientActive extends BaseActivity
         $isActive = !empty($client['active']);
 
         if ($isActive) {
-            return sprintf('resumed OAuth2 client "%s"', $this->getClientLabel($client));
+            return sprintf('resumed OAuth 2.0 client "%s"', $this->getClientLabel($client));
         }
 
-        return sprintf('paused OAuth2 client "%s"', $this->getClientLabel($client));
+        return sprintf('paused OAuth 2.0 client "%s"', $this->getClientLabel($client));
     }
 }

@@ -1,9 +1,10 @@
 {
-  "name": "Oauth2",
-  "description": "First-party OAuth2 server for Matomo (authorisation code with PKCE, client credentials, refresh tokens).",
+  "name": "OAuth2",
+  "description": "Provide secure access to the Matomo API using scoped permissions. No static credentials.",
   "version": "0.1.0",
   "theme": false,
   "require": {
+    "php": ">=8.1.0",
     "matomo": ">=5.0.0-b1,<6.0.0-b1"
   },
   "authors": [
@@ -13,9 +14,20 @@
       "homepage": "https://matomo.org"
     }
   ],
-  "license": "GPL-3.0+",
+  "support": {
+    "email": "hello@matomo.org",
+    "issues": "https://github.com/matomo-org/plugin-MicrosoftTeams/issues",
+    "forum": "https://forum.matomo.org",
+    "source": "https://github.com/matomo-org/plugin-MicrosoftTeams",
+    "wiki": "https://github.com/matomo-org/plugin-MicrosoftTeams/wiki"
+  },
+  "homepage": "",
+  "license": "GPL v3+",
   "keywords": [
     "oauth2",
-    "authorization"
-  ]
+    "authorization",
+    "token",
+    "bearer token"
+  ],
+  "category": "security"
 }

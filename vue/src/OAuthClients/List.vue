@@ -223,7 +223,7 @@ export default defineComponent({
           }).then((response) => {
             if (response?.deleted) {
               this.removeNotifications();
-              this.showNotification(this.translate('OAuth2_AdminDeleted', client.client_id), 'success');
+              this.showNotification(this.translate('OAuth2_AdminDeleted', client.name), 'success');
               this.$emit('deleted', client.client_id);
             }
           });

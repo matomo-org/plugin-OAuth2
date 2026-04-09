@@ -1,14 +1,14 @@
-# OAuth2 Plugin for Matomo
+# OAuth 2.0 Plugin for Matomo
 
 This plugin adds a **first-party OAuth2 Authorization Server** to Matomo, allowing external applications to securely access Matomo APIs using OAuth2 access tokens instead of `token_auth`.
 
-It supports standard OAuth2 flows including **Authorization Code (PKCE)**, **Client Credentials**, and **Refresh Token**.
+It supports standard OAuth 2.0 flows including **Authorization Code (PKCE)**, **Client Credentials**, and **Refresh Token**.
 
 ---
 
 # Features
 
-- OAuth2 Authorization Server integrated with Matomo
+- OAuth 2.0 Authorization Server integrated with Matomo
 - Manage OAuth clients via **Administration → Platform → OAuth2** (For Matomo Cloud it will be **Administration → Export → OAuth2**)
 - Supported grant types:
   - Authorization Code (with PKCE)
@@ -49,8 +49,8 @@ Optional cleaner routes can be added:
 Navigate to:
 
 ```
-Administration → Platform → OAuth2 (On-premise)
-dministration → Export → OAuth2 (Matomo Cloud)
+Administration → Platform → OAuth 2.0 (On-premise)
+dministration → Export → OAuth 2.0 (Matomo Cloud)
 ```
 
 Create a client and configure:

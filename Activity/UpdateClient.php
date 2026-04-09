@@ -37,6 +37,6 @@ class UpdateClient extends BaseActivity
     {
         $client = $activityData['client'] ?? [];
 
-        return sprintf('updated OAuth2 client "%s"', $this->getClientLabel($client));
+        return sprintf('updated OAuth 2.0 client "%s"', $this->getClientLabel($client));
     }
 }
