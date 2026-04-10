@@ -139,9 +139,9 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
     {
         $this->assertSame(
             [
-                'matomo:read' => 'Matomo read level access.',
-                'matomo:write' => 'Matomo write level access.',
-                'matomo:admin' => 'Matomo admin level access.',
+                'matomo:read' => 'Matomo read level access',
+                'matomo:write' => 'Matomo write level access',
+                'matomo:admin' => 'Matomo admin level access',
             ],
             $this->api->getScopes()
         );

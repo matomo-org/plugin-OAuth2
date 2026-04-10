@@ -1,7 +1,7 @@
 {
   "name": "OAuth2",
   "description": "Provide secure access to the Matomo API using scoped permissions. No static credentials.",
-  "version": "0.1.0",
+  "version": "5.0.0",
   "theme": false,
   "require": {
     "php": ">=8.1.0",
@@ -16,15 +16,17 @@
   ],
   "support": {
     "email": "hello@matomo.org",
-    "issues": "https://github.com/matomo-org/plugin-MicrosoftTeams/issues",
+    "issues": "https://github.com/matomo-org/plugin-OAuth2/issues",
     "forum": "https://forum.matomo.org",
-    "source": "https://github.com/matomo-org/plugin-MicrosoftTeams",
-    "wiki": "https://github.com/matomo-org/plugin-MicrosoftTeams/wiki"
+    "source": "https://github.com/matomo-org/plugin-OAuth2",
+    "wiki": "https://github.com/matomo-org/plugin-OAuth2/wiki"
   },
   "homepage": "",
   "license": "GPL v3+",
   "keywords": [
     "oauth2",
+    "oauth 2",
+    "oauth 2.0",
     "authorization",
     "token",
     "bearer token"
