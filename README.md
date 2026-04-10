@@ -60,7 +60,7 @@ Navigate to:
 
 ```
 Administration → Platform → OAuth 2.0 (On-premise)
-dministration → Export → OAuth 2.0 (Matomo Cloud)
+Administration → Export → OAuth 2.0 (Matomo Cloud)
 ```
 
 Create a client and configure:
