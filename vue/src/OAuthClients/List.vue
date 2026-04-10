@@ -49,7 +49,7 @@
             <th>{{ translate('OAuth2_AdminClientId') }}</th>
             <th>{{ translate('OAuth2_AdminClientRedirects') }}</th>
             <th>{{ translate('OAuth2_AdminClientCreatedAt') }}</th>
-            <th style="width: 220px;">{{ translate('OAuth2_AdminClientActions') }}</th>
+            <th style="width: 180px;">{{ translate('OAuth2_AdminClientActions') }}</th>
           </tr>
         </thead>
         <tbody v-if="clients.length">
@@ -123,6 +123,11 @@
 </template>
 
 <style scoped>
+.client-id-code {
+  max-width: 125px;
+  display: inline-block;
+  word-wrap: break-word;
+}
 .redirect-uri {
   max-width: 250px;
   display: inline-block;
