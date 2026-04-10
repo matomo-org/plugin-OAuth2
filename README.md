@@ -32,7 +32,7 @@ For teams running multiple integrations, OAuth 2.0 is the practical choice for s
 - RSA signing keys for JWT tokens
 - Built using **league/oauth2-server**
 - Bearer token authentication for Matomo APIs
-- Client management UI with secret rotation
+- Client management UI with create, edit, pause/resume, delete, and secret rotation for confidential clients
 
 ---
 
@@ -71,6 +71,10 @@ Create a client and configure:
 - Allowed grant types
 - Allowed scopes
 - Redirect URI (required for Authorization Code flow)
+
+From the client list, you can pause or resume a client, open it for editing, or delete it. For confidential clients, secret rotation is available from the edit screen.
+
+Client secrets are shown in full only when a confidential client is created or when its secret is rotated. After that, the secret is masked and must be rotated again if you need a new value.
 
 Example client:
 
