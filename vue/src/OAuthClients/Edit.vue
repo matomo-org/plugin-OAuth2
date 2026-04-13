@@ -367,10 +367,7 @@ export default defineComponent({
           }).then((response) => {
             if (response?.secret) {
               this.visibleSecret = response.secret;
-              const safeClientName = Matomo.helper.htmlEntities(this.form.name || this.clientId);
-              const rotatedMessage = this.translate('OAuth2_AdminRotated', safeClientName);
-              const secretMessage = this.translate('OAuth2_ClientSecretHelp');
-              const message = [rotatedMessage, secretMessage].filter(Boolean).join(' ');
+              const message = this.translate('OAuth2_AdminRotatedNotification');
               this.showNotification(`<span class="success-msg-created">${message}</span>`, 'success', 'transient');
             }
           }).finally(() => {
