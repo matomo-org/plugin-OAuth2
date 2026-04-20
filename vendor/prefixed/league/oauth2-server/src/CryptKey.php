@@ -58,7 +58,7 @@ class CryptKey implements CryptKeyInterface
                 throw new LogicException('Unable to read key from file ' . $keyPath);
             }
         } else {
-            throw new LogicException('Invalid crypt key supplied');
+            throw new LogicException('Invalid key supplied');
         }
         if ($keyPermissionsCheck === \true && \PHP_OS_FAMILY !== 'Windows') {
             // Verify the permissions of the key

@@ -6,6 +6,7 @@ namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Key;
 use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\InvalidKeyProvided;
 use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Key;
 use Matomo\Dependencies\Oauth2\Lcobucci\JWT\SodiumBase64Polyfill;
+use SensitiveParameter;
 use SplFileObject;
 use Throwable;
 use function assert;
@@ -13,17 +14,17 @@ use function is_string;
 final class InMemory implements Key
 {
     /** @param non-empty-string $contents */
-    private function __construct(public readonly string $contents, public readonly string $passphrase)
+    private function __construct(#[SensitiveParameter] public readonly string $contents, #[SensitiveParameter] public readonly string $passphrase)
     {
     }
     /** @param non-empty-string $contents */
-    public static function plainText(string $contents, string $passphrase = '') : self
+    public static function plainText(#[SensitiveParameter] string $contents, #[SensitiveParameter] string $passphrase = '') : self
     {
         self::guardAgainstEmptyKey($contents);
         return new self($contents, $passphrase);
     }
     /** @param non-empty-string $contents */
-    public static function base64Encoded(string $contents, string $passphrase = '') : self
+    public static function base64Encoded(#[SensitiveParameter] string $contents, #[SensitiveParameter] string $passphrase = '') : self
     {
         $decoded = SodiumBase64Polyfill::base642bin($contents, SodiumBase64Polyfill::SODIUM_BASE64_VARIANT_ORIGINAL);
         self::guardAgainstEmptyKey($decoded);
@@ -34,7 +35,7 @@ final class InMemory implements Key
      *
      * @throws FileCouldNotBeRead
      */
-    public static function file(string $path, string $passphrase = '') : self
+    public static function file(string $path, #[SensitiveParameter] string $passphrase = '') : self
     {
         try {
             $file = new SplFileObject($path);

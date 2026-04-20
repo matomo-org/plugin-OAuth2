@@ -30,7 +30,7 @@ final class JwtFacade
     /** @param Closure(Builder, DateTimeImmutable):Builder $customiseBuilder */
     public function issue(Signer $signer, Key $signingKey, Closure $customiseBuilder) : UnencryptedToken
     {
-        $builder = new Token\Builder(new JoseEncoder(), ChainedFormatter::withUnixTimestampDates());
+        $builder = Token\Builder::new(new JoseEncoder(), ChainedFormatter::withUnixTimestampDates());
         $now = $this->clock->now();
         $builder = $builder->issuedAt($now)->canOnlyBeUsedAfter($now)->expiresAt($now->modify('+5 minutes'));
         return $customiseBuilder($builder, $now)->getToken($signer, $signingKey);
