@@ -155,6 +155,10 @@ class OAuth2 extends Plugin
         $translationKeys[] = 'OAuth2_ClientSecretVisibleHelp';
         $translationKeys[] = 'OAuth2_AdminDescriptionPlaceholder';
         $translationKeys[] = 'OAuth2_AdminRotatedNotification';
+        $translationKeys[] = 'OAuth2_ScopeReadShort';
+        $translationKeys[] = 'OAuth2_ScopeWriteShort';
+        $translationKeys[] = 'OAuth2_ScopeAdminShort';
+        $translationKeys[] = 'OAuth2_ScopeSuperUserShort';
     }
 
     public function getTablesInstalled(&$allTablesInstalled)
