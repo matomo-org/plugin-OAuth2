@@ -10,7 +10,6 @@
 namespace Piwik\Plugins\OAuth2;
 
 use Piwik\Piwik;
-use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
 use Piwik\Settings\FieldConfig;
 use Piwik\Settings\Plugin\SystemSettings as BaseSystemSettings;
 use Piwik\Settings\Setting;
@@ -73,7 +72,7 @@ class SystemSettings extends BaseSystemSettings
             $field->title = Piwik::translate('OAuth2_SystemSettingOAuthEnableRefreshTokenTitle');
         });
 
-        $scopes = ScopeRepository::getScopeDescriptions();
+        $scopes = OAuth2::getScopeDescriptions();
         $defaultScopes = $scopes;
         unset($defaultScopes['matomo:superuser']);
         $this->defaultScopes = $this->makeSetting('defaultScopes', array_keys($defaultScopes), FieldConfig::TYPE_ARRAY, function (FieldConfig $field) use ($scopes) {
