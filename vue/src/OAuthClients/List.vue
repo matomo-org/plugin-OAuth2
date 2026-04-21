@@ -195,9 +195,9 @@ export default defineComponent({
   methods: {
     getShortScopeLabel(scope: string) {
       const shortScopeLabels = {
-        'matomo:read': this.translate('OAuth2_ScopeReadShort'),
-        'matomo:write': this.translate('OAuth2_ScopeWriteShort'),
-        'matomo:admin': this.translate('OAuth2_ScopeAdminShort'),
+        'matomo:read': this.translate('UsersManager_PrivView'),
+        'matomo:write': this.translate('UsersManager_PrivWrite'),
+        'matomo:admin': this.translate('UsersManager_PrivAdmin'),
         'matomo:superuser': this.translate('OAuth2_ScopeSuperUserShort'),
       } as Record<string, string>;
 
