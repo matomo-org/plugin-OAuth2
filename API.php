@@ -16,6 +16,11 @@ use Piwik\Plugins\OAuth2\Service\ClientManager;
 use Piwik\Plugins\OAuth2\Model\ClientModel;
 use Piwik\UrlHelper;
 
+/**
+ * Exposes super-user OAuth2 client management endpoints for Matomo.
+ *
+ * This API lists configured scopes and lets administrators create, inspect, update, rotate, activate, and delete OAuth2 clients.
+ */
 class API extends \Piwik\Plugin\API
 {
     public function __construct(
@@ -32,7 +37,7 @@ class API extends \Piwik\Plugin\API
      * `grant_types` (array), `scopes` (array), `type` (`confidential` or `public`),
      * `active` (bool), `owner_login`, `created_at`, `updated_at`, and `last_used_at`.
      *
-     * @return array[]
+     * @return array<int, array<string, mixed>> OAuth2 clients ordered by most recently updated first.
      */
     public function getClients(): array
     {
@@ -44,7 +49,7 @@ class API extends \Piwik\Plugin\API
      * Returns one OAuth2 client configured in Matomo (super users only).
      *
      * @param string $clientId 32-character hexadecimal client identifier.
-     * @return array
+     * @return array<string, mixed> Sanitized OAuth2 client details for the requested client.
      */
     public function getClient(string $clientId): array
     {
@@ -61,12 +66,12 @@ class API extends \Piwik\Plugin\API
     }
 
     /**
-     * Returns the configured OAuth2 scopes (super users only).
+     * Returns the OAuth2 scopes enabled for client configuration (super users only).
      *
      * The array keys are scope identifiers (for example `matomo:read`, `matomo:write`,
      * `matomo:admin`, `matomo:superuser`) and the values are human-readable descriptions.
      *
-     * @return array<string, string>
+     * @return array<string, string> Enabled scope identifiers mapped to their translated descriptions.
      */
     public function getScopes(): array
     {
@@ -83,14 +88,13 @@ class API extends \Piwik\Plugin\API
      *
      * @param string          $name          Display name shown in the Matomo UI.
      * @param string[]        $grantTypes    Grant types to enable (`authorization_code`, `client_credentials`, `refresh_token`).
-     * @param string          $scope         Scope identifier to allow; filtered against configured scopes.
+     * @param string          $scope         Single scope identifier to allow for the client. Must match one of the enabled OAuth2 scopes.
      * @param string|string[] $redirectUris Allowed redirect URIs (array or newline-separated string).
      * @param string          $description   Optional description for administrators.
      * @param string          $type          `confidential` (default, requires secret) or `public` (no client secret).
      * @param string          $active        `'1'` to enable the client or `'0'` to disable it.
-     * @return array{client: array, secret: string|null}
-     *
-     * @throws \InvalidArgumentException When redirect URIs or grant types are invalid.
+     * @return array{client: array<string, mixed>, secret: string|null} The sanitized client record and the generated plaintext
+     *                                                                  secret when the created client is confidential.
      */
     public function createClient(string $name, array $grantTypes, string $scope, $redirectUris = [], string $description = '', string $type = 'confidential', string $active = '1'): array
     {
@@ -124,15 +128,18 @@ class API extends \Piwik\Plugin\API
     /**
      * Updates an OAuth2 client and optionally returns a newly generated secret.
      *
-     * @param string          $clientId 32-character hexadecimal client identifier.
-     * @param string          $name Display name shown in the Matomo UI.
-     * @param string[]        $grantTypes Grant types to enable.
-     * @param string          $scope Scope identifier to allow.
-     * @param string|string[] $redirectUris Allowed redirect URIs.
-     * @param string          $description Optional description for administrators.
-     * @param string          $type `confidential` or `public`.
-     * @param string          $active `'1'` to enable the client or `'0'` to disable it.
-     * @return array{client: array, secret: string|null}
+     * If a public client is converted to a confidential client, this endpoint returns the new plaintext `secret` once.
+     *
+     * @param string          $clientId     32-character hexadecimal client identifier.
+     * @param string          $name         Display name shown in the Matomo UI.
+     * @param string[]        $grantTypes   Grant types to enable (`authorization_code`, `client_credentials`, `refresh_token`).
+     * @param string          $scope        Single scope identifier to allow for the client. Must match one of the enabled OAuth2 scopes.
+     * @param string|string[] $redirectUris Allowed redirect URIs (array or newline-separated string).
+     * @param string          $description  Optional description for administrators.
+     * @param string          $type         `confidential` (default, requires secret) or `public` (no client secret).
+     * @param string          $active       `'1'` to enable the client or `'0'` to disable it.
+     * @return array{client: array<string, mixed>, secret: string|null} The sanitized updated client record and a newly generated
+     *                                                                  plaintext secret when the client becomes confidential.
      */
     public function updateClient(string $clientId, string $name, array $grantTypes, string $scope, $redirectUris = [], string $description = '', string $type = 'confidential', string $active = '1'): array
     {
@@ -176,9 +183,7 @@ class API extends \Piwik\Plugin\API
      * The previous secret stops working immediately. The new plaintext secret is returned once and must be saved by the caller.
      *
      * @param string $clientId 32-character hexadecimal client identifier.
-     * @return array{client_id: string, secret: string}
-     *
-     * @throws \InvalidArgumentException When the client ID is not a 32-character hexadecimal string.
+     * @return array{client_id: string, secret: string} The client ID and the newly generated plaintext secret.
      */
     public function rotateSecret(string $clientId): array
     {
@@ -203,7 +208,7 @@ class API extends \Piwik\Plugin\API
      *
      * @param string $clientId 32-character hexadecimal client identifier.
      * @param string $active `'1'` to enable the client or `'0'` to disable it.
-     * @return array{client: array}
+     * @return array{client: array<string, mixed>} The sanitized client record after the active flag is updated.
      */
     public function setClientActive(string $clientId, string $active): array
     {
@@ -222,9 +227,7 @@ class API extends \Piwik\Plugin\API
      * Deletes an OAuth2 client and its related access tokens, refresh tokens, and auth codes (super users only).
      *
      * @param string $clientId 32-character hexadecimal client identifier.
-     * @return array{deleted: true}
-     *
-     * @throws \InvalidArgumentException When the client ID is not a 32-character hexadecimal string.
+     * @return array{deleted: true} Confirmation that the client and its related OAuth2 records were deleted.
      */
     public function deleteClient(string $clientId): array
     {
