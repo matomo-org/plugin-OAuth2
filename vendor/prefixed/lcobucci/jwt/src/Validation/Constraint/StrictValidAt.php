@@ -12,9 +12,19 @@ use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\ValidAt as ValidAtInterfa
 use Matomo\Dependencies\Oauth2\Psr\Clock\ClockInterface as Clock;
 final class StrictValidAt implements ValidAtInterface
 {
-    private readonly DateInterval $leeway;
-    public function __construct(private readonly Clock $clock, ?DateInterval $leeway = null)
+    /**
+     * @readonly
+     * @var Clock
+     */
+    private $clock;
+    /**
+     * @readonly
+     * @var \DateInterval
+     */
+    private $leeway;
+    public function __construct(Clock $clock, ?DateInterval $leeway = null)
     {
+        $this->clock = $clock;
         $this->leeway = $this->guardLeeway($leeway);
     }
     private function guardLeeway(?DateInterval $leeway) : DateInterval

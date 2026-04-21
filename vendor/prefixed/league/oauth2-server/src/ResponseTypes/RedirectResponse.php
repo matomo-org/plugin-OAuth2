@@ -15,7 +15,10 @@ namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\ResponseTypes;
 use Matomo\Dependencies\Oauth2\Psr\Http\Message\ResponseInterface;
 class RedirectResponse extends AbstractResponseType
 {
-    private string $redirectUri;
+    /**
+     * @var string
+     */
+    private $redirectUri;
     public function setRedirectUri(string $redirectUri) : void
     {
         $this->redirectUri = $redirectUri;

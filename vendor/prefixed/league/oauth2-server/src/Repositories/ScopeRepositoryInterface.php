@@ -31,5 +31,5 @@ interface ScopeRepositoryInterface extends RepositoryInterface
      *
      * @return ScopeEntityInterface[]
      */
-    public function finalizeScopes(array $scopes, string $grantType, ClientEntityInterface $clientEntity, string|null $userIdentifier = null, ?string $authCodeId = null) : array;
+    public function finalizeScopes(array $scopes, string $grantType, ClientEntityInterface $clientEntity, ?string $userIdentifier = null, ?string $authCodeId = null) : array;
 }

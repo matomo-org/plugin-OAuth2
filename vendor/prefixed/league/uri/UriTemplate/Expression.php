@@ -25,24 +25,46 @@ use function implode;
  */
 final class Expression
 {
-    /** @var array<VarSpecifier> */
-    private readonly array $varSpecifiers;
-    /** @var array<string> */
-    public readonly array $variableNames;
-    public readonly string $value;
-    private function __construct(public readonly Operator $operator, VarSpecifier ...$varSpecifiers)
+    /**
+     * @readonly
+     * @var \Matomo\Dependencies\Oauth2\League\Uri\UriTemplate\Operator
+     */
+    public $operator;
+    /** @var array<VarSpecifier>
+     * @readonly */
+    private $varSpecifiers;
+    /** @var array<string>
+     * @readonly */
+    public $variableNames;
+    /**
+     * @readonly
+     * @var string
+     */
+    public $value;
+    /**
+     * @param \Matomo\Dependencies\Oauth2\League\Uri\UriTemplate\Operator::* $operator
+     */
+    private function __construct(string $operator, VarSpecifier ...$varSpecifiers)
     {
+        $this->operator = $operator;
         $this->varSpecifiers = $varSpecifiers;
-        $this->variableNames = array_unique(array_map(static fn(VarSpecifier $varSpecifier): string => $varSpecifier->name, $varSpecifiers));
-        $this->value = '{' . $operator->value . implode(',', array_map(static fn(VarSpecifier $varSpecifier): string => $varSpecifier->toString(), $varSpecifiers)) . '}';
+        $this->variableNames = array_unique(array_map(static function (VarSpecifier $varSpecifier) : string {
+            return $varSpecifier->name;
+        }, $varSpecifiers));
+        $this->value = '{' . $operator->value . implode(',', array_map(static function (VarSpecifier $varSpecifier) : string {
+            return $varSpecifier->toString();
+        }, $varSpecifiers)) . '}';
     }
     /**
      * @throws SyntaxError if the expression is invalid
+     * @param \Stringable|string $expression
      */
-    public static function new(Stringable|string $expression) : self
+    public static function new($expression) : self
     {
         $parts = Operator::parseExpression($expression);
-        return new Expression($parts['operator'], ...array_map(static fn(string $varSpec): VarSpecifier => VarSpecifier::new($varSpec), explode(',', $parts['variables'])));
+        return new Expression($parts['operator'], ...array_map(static function (string $varSpec) : VarSpecifier {
+            return VarSpecifier::new($varSpec);
+        }, explode(',', $parts['variables'])));
     }
     /**
      * DEPRECATION WARNING! This method will be removed in the next major point release.
@@ -52,18 +74,25 @@ final class Expression
      *
      * @deprecated Since version 7.0.0
      * @codeCoverageIgnore
+     * @param \Stringable|string $expression
      */
     #[Deprecated(message: 'use League\\Uri\\UriTemplate\\Exppression::new() instead', since: 'league/uri:7.0.0')]
-    public static function createFromString(Stringable|string $expression) : self
+    public static function createFromString($expression) : self
     {
         return self::new($expression);
     }
     public function expand(VariableBag $variables) : string
     {
-        $expanded = implode($this->operator->separator(), array_filter(array_map(fn(VarSpecifier $varSpecifier): string => $this->operator->expand($varSpecifier, $variables), $this->varSpecifiers), static fn($value): bool => '' !== $value));
-        return match ('') {
-            $expanded => '',
-            default => $this->operator->first() . $expanded,
-        };
+        $expanded = implode($this->operator->separator(), array_filter(array_map(function (VarSpecifier $varSpecifier) use ($variables) : string {
+            return $this->operator->expand($varSpecifier, $variables);
+        }, $this->varSpecifiers), static function ($value) : bool {
+            return '' !== $value;
+        }));
+        switch ('') {
+            case $expanded:
+                return '';
+            default:
+                return $this->operator->first() . $expanded;
+        }
     }
 }

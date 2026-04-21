@@ -16,15 +16,51 @@ use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\Constraint;
  */
 final class Configuration
 {
-    private Parser $parser;
-    private Validator $validator;
+    /**
+     * @readonly
+     * @var \Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer
+     */
+    private $signer;
+    /**
+     * @readonly
+     * @var \Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Key
+     */
+    private $signingKey;
+    /**
+     * @readonly
+     * @var \Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Key
+     */
+    private $verificationKey;
+    /**
+     * @readonly
+     * @var \Matomo\Dependencies\Oauth2\Lcobucci\JWT\Encoder
+     */
+    private $encoder;
+    /**
+     * @readonly
+     * @var \Matomo\Dependencies\Oauth2\Lcobucci\JWT\Decoder
+     */
+    private $decoder;
+    /**
+     * @var \Matomo\Dependencies\Oauth2\Lcobucci\JWT\Parser
+     */
+    private $parser;
+    /**
+     * @var \Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validator
+     */
+    private $validator;
     /** @var Closure(ClaimsFormatter $claimFormatter): Builder */
-    private Closure $builderFactory;
+    private $builderFactory;
     /** @var Constraint[] */
-    private array $validationConstraints;
+    private $validationConstraints;
     /** @param Closure(ClaimsFormatter $claimFormatter): Builder|null $builderFactory */
-    private function __construct(private readonly Signer $signer, private readonly Key $signingKey, private readonly Key $verificationKey, private readonly Encoder $encoder, private readonly Decoder $decoder, ?Parser $parser, ?Validator $validator, ?Closure $builderFactory, Constraint ...$validationConstraints)
+    private function __construct(Signer $signer, Key $signingKey, Key $verificationKey, Encoder $encoder, Decoder $decoder, ?Parser $parser, ?Validator $validator, ?Closure $builderFactory, Constraint ...$validationConstraints)
     {
+        $this->signer = $signer;
+        $this->signingKey = $signingKey;
+        $this->verificationKey = $verificationKey;
+        $this->encoder = $encoder;
+        $this->decoder = $decoder;
         $this->parser = $parser ?? new Token\Parser($decoder);
         $this->validator = $validator ?? new Validation\Validator();
         $this->builderFactory = $builderFactory ?? static function (ClaimsFormatter $claimFormatter) use($encoder) : Builder {
@@ -32,12 +68,16 @@ final class Configuration
         };
         $this->validationConstraints = $validationConstraints;
     }
-    public static function forAsymmetricSigner(Signer $signer, Key $signingKey, Key $verificationKey, Encoder $encoder = new JoseEncoder(), Decoder $decoder = new JoseEncoder()) : self
+    public static function forAsymmetricSigner(Signer $signer, Key $signingKey, Key $verificationKey, Encoder $encoder = null, Decoder $decoder = null) : self
     {
+        $encoder = $encoder ?? new JoseEncoder();
+        $decoder = $decoder ?? new JoseEncoder();
         return new self($signer, $signingKey, $verificationKey, $encoder, $decoder, null, null, null);
     }
-    public static function forSymmetricSigner(Signer $signer, Key $key, Encoder $encoder = new JoseEncoder(), Decoder $decoder = new JoseEncoder()) : self
+    public static function forSymmetricSigner(Signer $signer, Key $key, Encoder $encoder = null, Decoder $decoder = null) : self
     {
+        $encoder = $encoder ?? new JoseEncoder();
+        $decoder = $decoder ?? new JoseEncoder();
         return new self($signer, $key, $key, $encoder, $decoder, null, null, null);
     }
     /**
@@ -47,12 +87,12 @@ final class Configuration
      */
     public function setBuilderFactory(callable $builderFactory) : void
     {
-        $this->builderFactory = $builderFactory(...);
+        $this->builderFactory = \Closure::fromCallable($builderFactory);
     }
     /** @param callable(ClaimsFormatter): Builder $builderFactory */
     public function withBuilderFactory(callable $builderFactory) : self
     {
-        return new self($this->signer, $this->signingKey, $this->verificationKey, $this->encoder, $this->decoder, $this->parser, $this->validator, $builderFactory(...), ...$this->validationConstraints);
+        return new self($this->signer, $this->signingKey, $this->verificationKey, $this->encoder, $this->decoder, $this->parser, $this->validator, \Closure::fromCallable($builderFactory), ...$this->validationConstraints);
     }
     public function builder(?ClaimsFormatter $claimFormatter = null) : Builder
     {

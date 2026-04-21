@@ -47,16 +47,24 @@ use function sprintf;
 use function time;
 class AuthCodeGrant extends AbstractAuthorizeGrant
 {
-    private bool $requireCodeChallengeForPublicClients = \true;
+    /**
+     * @var \DateInterval
+     */
+    private $authCodeTTL;
+    /**
+     * @var bool
+     */
+    private $requireCodeChallengeForPublicClients = \true;
     /**
      * @var CodeChallengeVerifierInterface[]
      */
-    private array $codeChallengeVerifiers = [];
+    private $codeChallengeVerifiers = [];
     /**
      * @throws Exception
      */
-    public function __construct(AuthCodeRepositoryInterface $authCodeRepository, RefreshTokenRepositoryInterface $refreshTokenRepository, private DateInterval $authCodeTTL)
+    public function __construct(AuthCodeRepositoryInterface $authCodeRepository, RefreshTokenRepositoryInterface $refreshTokenRepository, DateInterval $authCodeTTL)
     {
+        $this->authCodeTTL = $authCodeTTL;
         $this->setAuthCodeRepository($authCodeRepository);
         $this->setRefreshTokenRepository($refreshTokenRepository);
         $this->refreshTokenTTL = new DateInterval('P1M');

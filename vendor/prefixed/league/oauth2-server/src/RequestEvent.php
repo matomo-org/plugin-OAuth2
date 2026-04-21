@@ -14,13 +14,18 @@ use Matomo\Dependencies\Oauth2\League\OAuth2\Server\EventEmitting\AbstractEvent;
 use Matomo\Dependencies\Oauth2\Psr\Http\Message\ServerRequestInterface;
 class RequestEvent extends AbstractEvent
 {
+    /**
+     * @var \Matomo\Dependencies\Oauth2\Psr\Http\Message\ServerRequestInterface
+     */
+    private $request;
     public const CLIENT_AUTHENTICATION_FAILED = 'client.authentication.failed';
     public const USER_AUTHENTICATION_FAILED = 'user.authentication.failed';
     public const REFRESH_TOKEN_CLIENT_FAILED = 'refresh_token.client.failed';
     public const REFRESH_TOKEN_ISSUED = 'refresh_token.issued';
     public const ACCESS_TOKEN_ISSUED = 'access_token.issued';
-    public function __construct(string $name, private ServerRequestInterface $request)
+    public function __construct(string $name, ServerRequestInterface $request)
     {
+        $this->request = $request;
         parent::__construct($name);
     }
     /**

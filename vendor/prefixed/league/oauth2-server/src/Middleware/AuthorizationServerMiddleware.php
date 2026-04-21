@@ -16,8 +16,13 @@ use Matomo\Dependencies\Oauth2\Psr\Http\Message\ResponseInterface;
 use Matomo\Dependencies\Oauth2\Psr\Http\Message\ServerRequestInterface;
 class AuthorizationServerMiddleware
 {
-    public function __construct(private AuthorizationServer $server)
+    /**
+     * @var \Matomo\Dependencies\Oauth2\League\OAuth2\Server\AuthorizationServer
+     */
+    private $server;
+    public function __construct(AuthorizationServer $server)
     {
+        $this->server = $server;
     }
     public function __invoke(ServerRequestInterface $request, ResponseInterface $response, callable $next) : ResponseInterface
     {

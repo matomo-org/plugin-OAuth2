@@ -13,9 +13,26 @@ use function assert;
 use function is_string;
 final class InMemory implements Key
 {
+    /**
+     * @var non-empty-string
+     * @readonly
+     */
+    public $contents;
+    /**
+     * @readonly
+     * @var string
+     */
+    public $passphrase;
     /** @param non-empty-string $contents */
-    private function __construct(#[SensitiveParameter] public readonly string $contents, #[SensitiveParameter] public readonly string $passphrase)
+    private function __construct(
+        #[\SensitiveParameter]
+        string $contents,
+        #[\SensitiveParameter]
+        string $passphrase
+    )
     {
+        $this->contents = $contents;
+        $this->passphrase = $passphrase;
     }
     /** @param non-empty-string $contents */
     public static function plainText(#[SensitiveParameter] string $contents, #[SensitiveParameter] string $passphrase = '') : self

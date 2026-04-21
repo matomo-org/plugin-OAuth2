@@ -7,9 +7,17 @@ use Matomo\Dependencies\Oauth2\League\Event\HasEventName;
 use Matomo\Dependencies\Oauth2\Psr\EventDispatcher\StoppableEventInterface;
 class AbstractEvent implements StoppableEventInterface, HasEventName
 {
-    private bool $propagationStopped = \false;
-    public function __construct(private string $name)
+    /**
+     * @var string
+     */
+    private $name;
+    /**
+     * @var bool
+     */
+    private $propagationStopped = \false;
+    public function __construct(string $name)
     {
+        $this->name = $name;
     }
     public function eventName() : string
     {

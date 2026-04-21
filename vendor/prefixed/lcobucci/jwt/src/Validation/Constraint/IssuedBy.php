@@ -8,8 +8,9 @@ use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\Constraint;
 use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\ConstraintViolation;
 final class IssuedBy implements Constraint
 {
-    /** @var non-empty-string[] */
-    private readonly array $issuers;
+    /** @var non-empty-string[]
+     * @readonly */
+    private $issuers;
     /** @param non-empty-string ...$issuers */
     public function __construct(string ...$issuers)
     {

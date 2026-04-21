@@ -21,5 +21,8 @@ interface ResponseTypeInterface
     public function setAccessToken(AccessTokenEntityInterface $accessToken) : void;
     public function setRefreshToken(RefreshTokenEntityInterface $refreshToken) : void;
     public function generateHttpResponse(ResponseInterface $response) : ResponseInterface;
-    public function setEncryptionKey(Key|string|null $key = null) : void;
+    /**
+     * @param \Matomo\Dependencies\Oauth2\Defuse\Crypto\Key|string|null $key
+     */
+    public function setEncryptionKey($key = null) : void;
 }

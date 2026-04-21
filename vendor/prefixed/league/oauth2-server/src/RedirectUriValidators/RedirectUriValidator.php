@@ -19,13 +19,13 @@ class RedirectUriValidator implements RedirectUriValidatorInterface
     /**
      * @var string[]
      */
-    private array $allowedRedirectUris;
+    private $allowedRedirectUris;
     /**
      * New validator instance for the given uri
      *
      * @param string[]|string $allowedRedirectUris
      */
-    public function __construct(array|string $allowedRedirectUris)
+    public function __construct($allowedRedirectUris)
     {
         if (is_string($allowedRedirectUris)) {
             $this->allowedRedirectUris = [$allowedRedirectUris];

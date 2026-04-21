@@ -11,8 +11,8 @@
 declare (strict_types=1);
 namespace Matomo\Dependencies\Oauth2\League\Uri;
 
-enum UriComparisonMode
+class UriComparisonMode
 {
-    case IncludeFragment;
-    case ExcludeFragment;
+    public const IncludeFragment = 'includefragment';
+    public const ExcludeFragment = 'excludefragment';
 }

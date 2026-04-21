@@ -23,7 +23,10 @@ final class BCMathCalculator implements Calculator
 {
     private const SCALE = 0;
     private const CONVERSION_TABLE = ['0' => '0', '1' => '1', '2' => '2', '3' => '3', '4' => '4', '5' => '5', '6' => '6', '7' => '7', '8' => '8', '9' => '9', 'a' => '10', 'b' => '11', 'c' => '12', 'd' => '13', 'e' => '14', 'f' => '15'];
-    public function baseConvert(mixed $value, int $base) : string
+    /**
+     * @param mixed $value
+     */
+    public function baseConvert($value, int $base) : string
     {
         $value = (string) $value;
         if (10 === $base) {
@@ -36,31 +39,58 @@ final class BCMathCalculator implements Calculator
         }
         return $decimal;
     }
-    public function pow(mixed $value, int $exponent) : string
+    /**
+     * @param mixed $value
+     */
+    public function pow($value, int $exponent) : string
     {
         return bcpow((string) $value, (string) $exponent, self::SCALE);
     }
-    public function compare(mixed $value1, mixed $value2) : int
+    /**
+     * @param mixed $value1
+     * @param mixed $value2
+     */
+    public function compare($value1, $value2) : int
     {
         return bccomp((string) $value1, (string) $value2, self::SCALE);
     }
-    public function multiply(mixed $value1, mixed $value2) : string
+    /**
+     * @param mixed $value1
+     * @param mixed $value2
+     */
+    public function multiply($value1, $value2) : string
     {
         return bcmul((string) $value1, (string) $value2, self::SCALE);
     }
-    public function div(mixed $value, mixed $base) : string
+    /**
+     * @param mixed $value
+     * @param mixed $base
+     */
+    public function div($value, $base) : string
     {
         return bcdiv((string) $value, (string) $base, self::SCALE);
     }
-    public function mod(mixed $value, mixed $base) : string
+    /**
+     * @param mixed $value
+     * @param mixed $base
+     */
+    public function mod($value, $base) : string
     {
         return bcmod((string) $value, (string) $base, self::SCALE);
     }
-    public function add(mixed $value1, mixed $value2) : string
+    /**
+     * @param mixed $value1
+     * @param mixed $value2
+     */
+    public function add($value1, $value2) : string
     {
         return bcadd((string) $value1, (string) $value2, self::SCALE);
     }
-    public function sub(mixed $value1, mixed $value2) : string
+    /**
+     * @param mixed $value1
+     * @param mixed $value2
+     */
+    public function sub($value1, $value2) : string
     {
         return bcsub((string) $value1, (string) $value2, self::SCALE);
     }

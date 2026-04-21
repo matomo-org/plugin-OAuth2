@@ -15,12 +15,30 @@ use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ClientEntityInterfa
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ScopeEntityInterface;
 trait DeviceCodeTrait
 {
-    private bool $userApproved = \false;
-    private bool $includeVerificationUriComplete = \false;
-    private int $interval = 5;
-    private string $userCode;
-    private string $verificationUri;
-    private ?DateTimeImmutable $lastPolledAt = null;
+    /**
+     * @var bool
+     */
+    private $userApproved = \false;
+    /**
+     * @var bool
+     */
+    private $includeVerificationUriComplete = \false;
+    /**
+     * @var int
+     */
+    private $interval = 5;
+    /**
+     * @var string
+     */
+    private $userCode;
+    /**
+     * @var string
+     */
+    private $verificationUri;
+    /**
+     * @var \DateTimeImmutable|null
+     */
+    private $lastPolledAt;
     public function getUserCode() : string
     {
         return $this->userCode;

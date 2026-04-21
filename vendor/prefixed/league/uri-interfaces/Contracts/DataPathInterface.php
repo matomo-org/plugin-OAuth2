@@ -79,6 +79,7 @@ interface DataPathInterface extends PathInterface
      * Users must provide encoded characters.
      *
      * An empty parameters value is equivalent to removing the parameter.
+     * @param \Stringable|string $parameters
      */
-    public function withParameters(Stringable|string $parameters) : self;
+    public function withParameters($parameters) : self;
 }

@@ -7,7 +7,7 @@ use Matomo\Dependencies\Oauth2\Lcobucci\JWT\ClaimsFormatter;
 final class ChainedFormatter implements ClaimsFormatter
 {
     /** @var array<ClaimsFormatter> */
-    private array $formatters;
+    private $formatters;
     public function __construct(ClaimsFormatter ...$formatters)
     {
         $this->formatters = $formatters;

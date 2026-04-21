@@ -16,9 +16,20 @@ use Matomo\Dependencies\Oauth2\Psr\Clock\ClockInterface as Clock;
 use function assert;
 final class JwtFacade
 {
-    private readonly Clock $clock;
-    public function __construct(private readonly Parser $parser = new Token\Parser(new JoseEncoder()), ?Clock $clock = null)
+    /**
+     * @readonly
+     * @var \Matomo\Dependencies\Oauth2\Lcobucci\JWT\Parser
+     */
+    private $parser;
+    /**
+     * @readonly
+     * @var Clock
+     */
+    private $clock;
+    public function __construct(Parser $parser = null, ?Clock $clock = null)
     {
+        $parser = $parser ?? new Token\Parser(new JoseEncoder());
+        $this->parser = $parser;
         $this->clock = $clock ?? new class implements Clock
         {
             public function now() : DateTimeImmutable

@@ -174,8 +174,9 @@ final class UriString
      *
      * @link https://tools.ietf.org/html/rfc3986#section-5.3
      * @link https://tools.ietf.org/html/rfc3986#section-7.5
+     * @param \Stringable|string $uri
      */
-    public static function toIriString(Stringable|string $uri) : string
+    public static function toIriString($uri) : string
     {
         $components = UriString::parse($uri);
         $port = null;
@@ -191,10 +192,15 @@ final class UriString
         $components['pass'] = Encoder::decodeNecessary($components['pass']);
         $components['query'] = Encoder::decodeQuery($components['query']);
         $components['fragment'] = Encoder::decodeFragment($components['fragment']);
-        return self::build([...array_map(fn(?string $value) => match (\true) {
-            null === $value, !str_contains($value, '%20') => $value,
-            default => str_replace('%20', ' ', $value),
-        }, $components), ...['port' => $port]]);
+        return self::build(array_merge(array_map(function (?string $value) {
+            switch (\true) {
+                case null === $value:
+                case strpos($value, '%20') === false:
+                    return $value;
+                default:
+                    return str_replace('%20', ' ', $value);
+            }
+        }, $components), ['port' => $port]));
     }
     /**
      * Generate a URI string representation from its parsed representation
@@ -270,8 +276,9 @@ final class UriString
      * @throws SyntaxError if the URI is not parsable
      *
      * @return ComponentMap
+     * @param \Stringable|string $uri
      */
-    public static function parseNormalized(Stringable|string $uri) : array
+    public static function parseNormalized($uri) : array
     {
         $components = self::parse($uri);
         if (null !== $components['scheme']) {
@@ -303,8 +310,9 @@ final class UriString
      * Parses and normalizes the URI following RFC3986 destructive and non-destructive constraints.
      *
      * @throws SyntaxError if the URI is not parsable
+     * @param \Stringable|string $uri
      */
-    public static function normalize(Stringable|string $uri) : string
+    public static function normalize($uri) : string
     {
         return self::build(self::parseNormalized($uri));
     }
@@ -312,8 +320,9 @@ final class UriString
      * Parses and normalizes the URI following RFC3986 destructive and non-destructive constraints.
      *
      * @throws SyntaxError if the URI is not parsable
+     * @param \Stringable|string|null $authority
      */
-    public static function normalizeAuthority(Stringable|string|null $authority) : ?string
+    public static function normalizeAuthority($authority) : ?string
     {
         if (null === $authority) {
             return null;
@@ -336,19 +345,24 @@ final class UriString
      * @see https://www.rfc-editor.org/rfc/rfc3986.html#section-5
      *
      * @throws SyntaxError if the BaseUri is not absolute or in absence of a BaseUri if the uri is not absolute
+     * @param \Stringable|string $uri
+     * @param \Stringable|string|null $baseUri
      */
-    public static function resolve(Stringable|string $uri, Stringable|string|null $baseUri = null) : string
+    public static function resolve($uri, $baseUri = null) : string
     {
         $uri = (string) $uri;
         if ('' === $uri) {
-            $uri = $baseUri ?? throw new SyntaxError('The uri can not be the empty string when there\'s no base URI.');
+            if (!isset($baseUri)) {
+                throw new SyntaxError('The uri can not be the empty string when there\'s no base URI.');
+            }
+            $uri = $baseUri;
         }
         $uriComponents = self::parse($uri);
         $baseUriComponents = $uriComponents;
         if (null !== $baseUri && (string) $uri !== (string) $baseUri) {
             $baseUriComponents = self::parse($baseUri);
         }
-        $hasLeadingSlash = str_starts_with($baseUriComponents['path'], '/');
+        $hasLeadingSlash = strncmp($baseUriComponents['path'], '/', strlen('/')) === 0;
         if (null === $baseUriComponents['scheme']) {
             throw new SyntaxError('The base URI must be an absolute URI or null; If the base URI is null the URI must be an absolute URI.');
         }
@@ -375,11 +389,12 @@ final class UriString
      * Filter Dot segment according to RFC3986.
      *
      * @see http://tools.ietf.org/html/rfc3986#section-5.2.4
+     * @param \Stringable|string $path
      */
-    public static function removeDotSegments(Stringable|string $path) : string
+    public static function removeDotSegments($path) : string
     {
         $path = (string) $path;
-        if (!str_contains($path, '.')) {
+        if (strpos($path, '.') === false) {
             return $path;
         }
         $reducer = function (array $carry, string $segment) : array {
@@ -393,7 +408,7 @@ final class UriString
             return $carry;
         };
         $oldSegments = explode('/', $path);
-        $newPath = implode('/', array_reduce($oldSegments, $reducer(...), []));
+        $newPath = implode('/', array_reduce($oldSegments, \Closure::fromCallable($reducer), []));
         if (isset(self::DOT_SEGMENTS[$oldSegments[array_key_last($oldSegments)]])) {
             $newPath .= '/';
         }
@@ -409,7 +424,7 @@ final class UriString
      */
     private static function resolvePathAndQuery(array $uri, array $baseUri) : array
     {
-        if (str_starts_with($uri['path'], '/')) {
+        if (strncmp($uri['path'], '/', strlen('/')) === 0) {
             return [$uri['path'], $uri['query']];
         }
         if ('' === $uri['path']) {
@@ -428,11 +443,17 @@ final class UriString
         }
         return [$targetPath, $uri['query']];
     }
-    public static function containsRfc3986Chars(Stringable|string $uri) : bool
+    /**
+     * @param \Stringable|string $uri
+     */
+    public static function containsRfc3986Chars($uri) : bool
     {
         return 1 === preg_match(self::REGEXP_VALID_URI_RFC3986_CHARS, (string) $uri);
     }
-    public static function containsRfc3987Chars(Stringable|string $uri) : bool
+    /**
+     * @param \Stringable|string $uri
+     */
+    public static function containsRfc3987Chars($uri) : bool
     {
         return 1 !== preg_match(self::REGEXP_INVALID_URI_RFC3987_CHARS, (string) $uri);
     }
@@ -477,13 +498,14 @@ final class UriString
      * @throws SyntaxError if the URI contains an invalid path
      *
      * @return ComponentMap
+     * @param \Stringable|string|int $uri
      */
-    public static function parse(Stringable|string|int $uri) : array
+    public static function parse($uri) : array
     {
         $uri = (string) $uri;
         if (isset(self::URI_SHORTCUTS[$uri])) {
             /** @var ComponentMap $components */
-            $components = [...self::URI_COMPONENTS, ...self::URI_SHORTCUTS[$uri]];
+            $components = array_merge(self::URI_COMPONENTS, is_array(self::URI_SHORTCUTS[$uri]) ? self::URI_SHORTCUTS[$uri] : iterator_to_array(self::URI_SHORTCUTS[$uri]));
             return $components;
         }
         self::containsRfc3987Chars($uri) || throw new SyntaxError(sprintf('The uri `%s` contains invalid characters', $uri));
@@ -537,13 +559,13 @@ final class UriString
         if (null === $path || '' === $path) {
             return;
         }
-        if (str_starts_with($path, '//')) {
+        if (strncmp($path, '//', strlen('//')) === 0) {
             throw new SyntaxError('If there is no authority the path `' . $path . '` cannot start with a `//`.');
         }
         if (null !== $scheme || \false === ($pos = strpos($path, ':'))) {
             return;
         }
-        if (!str_contains(substr($path, 0, $pos), '/')) {
+        if (strpos(substr($path, 0, $pos), '/') === false) {
             throw new SyntaxError('In absence of a scheme and an authority the first path segment cannot contain a colon (":") character.');
         }
     }
@@ -555,8 +577,9 @@ final class UriString
      * @throws SyntaxError If the port component is invalid
      *
      * @return AuthorityMap
+     * @param \Stringable|string|null $authority
      */
-    public static function parseAuthority(Stringable|string|null $authority) : array
+    public static function parseAuthority($authority) : array
     {
         $components = ['user' => null, 'pass' => null, 'host' => null, 'port' => null];
         if (null === $authority) {
@@ -586,11 +609,14 @@ final class UriString
      */
     private static function filterPort(string $port) : ?int
     {
-        return match (\true) {
-            '' === $port => null,
-            1 === preg_match('/^\\d*$/', $port) => (int) $port,
-            default => throw new SyntaxError(sprintf('The port `%s` is invalid', $port)),
-        };
+        switch (\true) {
+            case '' === $port:
+                return null;
+            case 1 === preg_match('/^\\d*$/', $port):
+                return (int) $port;
+            default:
+                throw new SyntaxError(sprintf('The port `%s` is invalid', $port));
+        }
     }
     /**
      * Returns whether a hostname is valid.
@@ -598,8 +624,9 @@ final class UriString
      * @link https://tools.ietf.org/html/rfc3986#section-3.2.2
      *
      * @throws SyntaxError if the registered name is invalid
+     * @param \Stringable|string|null $host
      */
-    private static function filterHost(Stringable|string|null $host) : ?string
+    private static function filterHost($host) : ?string
     {
         if (null !== $host) {
             $host = (string) $host;
@@ -615,7 +642,7 @@ final class UriString
         if (self::MAXIMUM_HOST_CACHED < count($hostCache)) {
             array_shift($hostCache);
         }
-        if ('[' !== $host[0] || !str_ends_with($host, ']')) {
+        if ('[' !== $host[0] || substr_compare($host, ']', -strlen(']')) !== 0) {
             self::filterRegisteredName($host);
             $hostCache[$host] = 1;
             return $host;
@@ -628,20 +655,22 @@ final class UriString
     }
     /**
      * Tells whether the scheme component is valid.
+     * @param \Stringable|string|null $scheme
      */
-    public static function isValidScheme(Stringable|string|null $scheme) : bool
+    public static function isValidScheme($scheme) : bool
     {
         return null === $scheme || 1 === preg_match('/^[A-Za-z]([-A-Za-z\\d+.]+)?$/', (string) $scheme);
     }
     /**
      * Tells whether the host component is valid.
+     * @param \Stringable|string|null $host
      */
-    public static function isValidHost(Stringable|string|null $host) : bool
+    public static function isValidHost($host) : bool
     {
         try {
             self::filterHost($host);
             return \true;
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
             return \false;
         }
     }
@@ -692,7 +721,7 @@ final class UriString
             return \false;
         }
         $ipHost = substr($ipHost, 0, $pos);
-        return \false !== filter_var($ipHost, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) && str_starts_with((string) inet_pton($ipHost), self::ZONE_ID_ADDRESS_BLOCK);
+        return \false !== filter_var($ipHost, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) && strncmp((string) inet_pton($ipHost), self::ZONE_ID_ADDRESS_BLOCK, strlen(self::ZONE_ID_ADDRESS_BLOCK)) === 0;
     }
     private static function normalizeHost(?string $host) : ?string
     {
@@ -701,7 +730,7 @@ final class UriString
         }
         $host = (string) Encoder::normalizeHost($host);
         static $isSupported = null;
-        $isSupported ??= function_exists('\\idn_to_ascii') && defined('\\INTL_IDNA_VARIANT_UTS46');
+        $isSupported = $isSupported ?? function_exists('\\idn_to_ascii') && defined('\\INTL_IDNA_VARIANT_UTS46');
         if (!$isSupported) {
             return $host;
         }

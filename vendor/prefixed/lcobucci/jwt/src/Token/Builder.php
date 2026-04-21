@@ -17,13 +17,25 @@ use function in_array;
 /** @immutable */
 final class Builder implements BuilderInterface
 {
+    /**
+     * @readonly
+     * @var \Matomo\Dependencies\Oauth2\Lcobucci\JWT\Encoder
+     */
+    private $encoder;
+    /**
+     * @readonly
+     * @var \Matomo\Dependencies\Oauth2\Lcobucci\JWT\ClaimsFormatter
+     */
+    private $claimFormatter;
     /** @var array<non-empty-string, mixed> */
-    private array $headers = ['typ' => 'JWT', 'alg' => null];
+    private $headers = ['typ' => 'JWT', 'alg' => null];
     /** @var array<non-empty-string, mixed> */
-    private array $claims = [];
+    private $claims = [];
     /** @deprecated Deprecated since v5.5, please use {@see self::new()} instead */
-    public function __construct(private readonly Encoder $encoder, private readonly ClaimsFormatter $claimFormatter)
+    public function __construct(Encoder $encoder, ClaimsFormatter $claimFormatter)
     {
+        $this->encoder = $encoder;
+        $this->claimFormatter = $claimFormatter;
     }
     public static function new(Encoder $encoder, ClaimsFormatter $claimFormatter) : self
     {
@@ -90,8 +102,9 @@ final class Builder implements BuilderInterface
     /**
      * @inheritDoc
      * @pure
+     * @param mixed $value
      */
-    public function withHeader(string $name, mixed $value) : BuilderInterface
+    public function withHeader(string $name, $value) : BuilderInterface
     {
         $new = clone $this;
         $new->headers[$name] = $value;
@@ -100,16 +113,18 @@ final class Builder implements BuilderInterface
     /**
      * @inheritDoc
      * @pure
+     * @param mixed $value
      */
-    public function withClaim(string $name, mixed $value) : BuilderInterface
+    public function withClaim(string $name, $value) : BuilderInterface
     {
         if (in_array($name, RegisteredClaims::ALL, \true)) {
             throw RegisteredClaimGiven::forClaim($name);
         }
         return $this->setClaim($name, $value);
     }
-    /** @param non-empty-string $name */
-    private function setClaim(string $name, mixed $value) : BuilderInterface
+    /** @param non-empty-string $name
+     * @param mixed $value */
+    private function setClaim(string $name, $value) : BuilderInterface
     {
         $new = clone $this;
         $new->claims[$name] = $value;

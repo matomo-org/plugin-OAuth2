@@ -21,7 +21,7 @@ interface Calculator
      *
      * @return mixed the addition result
      */
-    public function add(mixed $value1, mixed $value2);
+    public function add($value1, $value2);
     /**
      * Subtract one number from another.
      *
@@ -30,7 +30,7 @@ interface Calculator
      *
      * @return mixed the subtraction result
      */
-    public function sub(mixed $value1, mixed $value2);
+    public function sub($value1, $value2);
     /**
      * Multiply numbers.
      *
@@ -39,7 +39,7 @@ interface Calculator
      *
      * @return mixed the multiplication result
      */
-    public function multiply(mixed $value1, mixed $value2);
+    public function multiply($value1, $value2);
     /**
      * Divide numbers.
      *
@@ -48,7 +48,7 @@ interface Calculator
      *
      * @return mixed the result of the division
      */
-    public function div(mixed $value, mixed $base);
+    public function div($value, $base);
     /**
      * Raise an number to the power of exponent.
      *
@@ -56,7 +56,7 @@ interface Calculator
      *
      * @return mixed the value raised to the power of exp.
      */
-    public function pow(mixed $value, int $exponent);
+    public function pow($value, int $exponent);
     /**
      * Returns the int point remainder (modulo) of the division of the arguments.
      *
@@ -65,7 +65,7 @@ interface Calculator
      *
      * @return mixed the remainder
      */
-    public function mod(mixed $value, mixed $base);
+    public function mod($value, $base);
     /**
      * Number comparison.
      *
@@ -74,7 +74,7 @@ interface Calculator
      *
      * @return int Returns < 0 if value1 is less than value2; > 0 if value1 is greater than value2, and 0 if they are equal.
      */
-    public function compare(mixed $value1, mixed $value2) : int;
+    public function compare($value1, $value2) : int;
     /**
      * Get the decimal integer value of a variable.
      *
@@ -82,5 +82,5 @@ interface Calculator
      *
      * @return mixed the integer value
      */
-    public function baseConvert(mixed $value, int $base);
+    public function baseConvert($value, int $base);
 }

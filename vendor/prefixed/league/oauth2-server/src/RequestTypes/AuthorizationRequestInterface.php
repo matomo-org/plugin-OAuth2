@@ -15,7 +15,7 @@ use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ScopeEntityInterfac
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\UserEntityInterface;
 interface AuthorizationRequestInterface
 {
-    public function getUser() : UserEntityInterface|null;
+    public function getUser() : ?\Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\UserEntityInterface;
     public function setState(string $state) : void;
     public function getClient() : ClientEntityInterface;
     public function setAuthorizationApproved(bool $authorizationApproved) : void;

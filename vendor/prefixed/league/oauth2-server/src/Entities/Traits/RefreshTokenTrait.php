@@ -14,8 +14,14 @@ use DateTimeImmutable;
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\AccessTokenEntityInterface;
 trait RefreshTokenTrait
 {
-    protected AccessTokenEntityInterface $accessToken;
-    protected DateTimeImmutable $expiryDateTime;
+    /**
+     * @var \Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\AccessTokenEntityInterface
+     */
+    protected $accessToken;
+    /**
+     * @var \DateTimeImmutable
+     */
+    protected $expiryDateTime;
     /**
      * {@inheritdoc}
      */

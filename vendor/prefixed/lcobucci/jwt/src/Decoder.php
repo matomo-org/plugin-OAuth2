@@ -12,8 +12,9 @@ interface Decoder
      * @param non-empty-string $json
      *
      * @throws CannotDecodeContent When something goes wrong while decoding.
+     * @return mixed
      */
-    public function jsonDecode(string $json) : mixed;
+    public function jsonDecode(string $json);
     /**
      * Decodes from Base64URL
      *

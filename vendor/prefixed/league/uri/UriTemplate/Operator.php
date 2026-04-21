@@ -20,15 +20,7 @@ use function preg_match;
 use function rawurlencode;
 use function str_contains;
 use function substr;
-/**
- * Processing behavior according to the expression type operator.
- *
- * @internal The class exposes the internal representation of an Operator and its usage
- *
- * @link https://www.rfc-editor.org/rfc/rfc6570#section-2.2
- * @link https://tools.ietf.org/html/rfc6570#appendix-A
- */
-enum Operator : string
+class Operator
 {
     /**
      * Expression regular expression pattern.
@@ -42,45 +34,61 @@ enum Operator : string
      * @link https://tools.ietf.org/html/rfc6570#section-2.2
      */
     private const RESERVED_OPERATOR = '=,!@|';
-    case None = '';
-    case ReservedChars = '+';
-    case Label = '.';
-    case Path = '/';
-    case PathParam = ';';
-    case Query = '?';
-    case QueryPair = '&';
-    case Fragment = '#';
+    public const None = '';
+    public const ReservedChars = '+';
+    public const Label = '.';
+    public const Path = '/';
+    public const PathParam = ';';
+    public const Query = '?';
+    public const QueryPair = '&';
+    public const Fragment = '#';
     public function first() : string
     {
-        return match ($this) {
-            self::None, self::ReservedChars => '',
-            default => $this->value,
-        };
+        switch ($this) {
+            case self::None:
+            case self::ReservedChars:
+                return '';
+            default:
+                return $this->value;
+        }
     }
     public function separator() : string
     {
-        return match ($this) {
-            self::None, self::ReservedChars, self::Fragment => ',',
-            self::Query, self::QueryPair => '&',
-            default => $this->value,
-        };
+        switch ($this) {
+            case self::None:
+            case self::ReservedChars:
+            case self::Fragment:
+                return ',';
+            case self::Query:
+            case self::QueryPair:
+                return '&';
+            default:
+                return $this->value;
+        }
     }
     public function isNamed() : bool
     {
-        return match ($this) {
-            self::Query, self::PathParam, self::QueryPair => \true,
-            default => \false,
-        };
+        switch ($this) {
+            case self::Query:
+            case self::PathParam:
+            case self::QueryPair:
+                return \true;
+            default:
+                return \false;
+        }
     }
     /**
      * Removes percent encoding on reserved characters (used with + and # modifiers).
      */
     public function decode(string $var) : string
     {
-        return match ($this) {
-            Operator::ReservedChars, Operator::Fragment => (string) Encoder::encodeQueryOrFragment($var),
-            default => rawurlencode($var),
-        };
+        switch ($this) {
+            case Operator::ReservedChars:
+            case Operator::Fragment:
+                return (string) Encoder::encodeQueryOrFragment($var);
+            default:
+                return rawurlencode($var);
+        }
     }
     /**
      * @throws SyntaxError if the expression is invalid
@@ -88,8 +96,9 @@ enum Operator : string
      * @throws SyntaxError if the contained variable specifiers are invalid
      *
      * @return array{operator:Operator, variables:string}
+     * @param \Stringable|string $expression
      */
-    public static function parseExpression(Stringable|string $expression) : array
+    public static function parseExpression($expression) : array
     {
         $expression = (string) $expression;
         if (1 !== preg_match(self::REGEXP_EXPRESSION, $expression, $parts)) {
@@ -97,7 +106,7 @@ enum Operator : string
         }
         /** @var array{operator:string, variables:string} $parts */
         $parts = $parts + ['operator' => ''];
-        if ('' !== $parts['operator'] && str_contains(self::RESERVED_OPERATOR, $parts['operator'])) {
+        if ('' !== $parts['operator'] && strpos(self::RESERVED_OPERATOR, $parts['operator']) !== false) {
             throw new SyntaxError('The operator used in the expression "' . $expression . '" is reserved.');
         }
         return ['operator' => self::from($parts['operator']), 'variables' => $parts['variables']];
@@ -128,7 +137,7 @@ enum Operator : string
      *
      * @return array{0:string, 1:bool}
      */
-    private function inject(array|string $value, VarSpecifier $varSpec) : array
+    private function inject($value, VarSpecifier $varSpec) : array
     {
         if (is_array($value)) {
             return $this->replaceList($value, $varSpec);
@@ -156,7 +165,23 @@ enum Operator : string
             return ['', \false];
         }
         $pairs = [];
-        $isList = array_is_list($value);
+        $arrayIsListFunction = function (array $array) : bool {
+            if (function_exists('array_is_list')) {
+                return array_is_list($array);
+            }
+            if ($array === []) {
+                return true;
+            }
+            $current_key = 0;
+            foreach ($array as $key => $noop) {
+                if ($key !== $current_key) {
+                    return false;
+                }
+                ++$current_key;
+            }
+            return true;
+        };
+        $isList = $arrayIsListFunction($value);
         $useQuery = $this->isNamed();
         foreach ($value as $key => $var) {
             if (!$isList) {

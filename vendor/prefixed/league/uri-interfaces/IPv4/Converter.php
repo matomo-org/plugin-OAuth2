@@ -29,6 +29,11 @@ use const FILTER_FLAG_IPV6;
 use const FILTER_VALIDATE_IP;
 final class Converter
 {
+    /**
+     * @readonly
+     * @var \Matomo\Dependencies\Oauth2\League\Uri\IPv4\Calculator
+     */
+    private $calculator;
     private const REGEXP_IPV4_HOST = '/
         (?(DEFINE) # . is missing as it is used to separate labels
             (?<hexadecimal>0x[[:xdigit:]]*)
@@ -41,9 +46,14 @@ final class Converter
     private const REGEXP_IPV4_NUMBER_PER_BASE = ['/^0x(?<number>[[:xdigit:]]*)$/' => 16, '/^0(?<number>[0-7]*)$/' => 8, '/^(?<number>\\d+)$/' => 10];
     private const IPV6_6TO4_PREFIX = '2002:';
     private const IPV4_MAPPED_PREFIX = '::ffff:';
-    private readonly mixed $maxIPv4Number;
-    public function __construct(private readonly Calculator $calculator)
+    /**
+     * @readonly
+     * @var mixed
+     */
+    private $maxIPv4Number;
+    public function __construct(Calculator $calculator)
     {
+        $this->calculator = $calculator;
         $this->maxIPv4Number = $calculator->sub($calculator->pow(2, 32), 1);
     }
     /**
@@ -77,13 +87,19 @@ final class Converter
     public static function fromEnvironment() : self
     {
         FeatureDetection::supportsIPv4Conversion();
-        return match (\true) {
-            extension_loaded('gmp') => self::fromGMP(),
-            extension_loaded('bcmath') => self::fromBCMath(),
-            default => self::fromNative(),
-        };
+        switch (\true) {
+            case extension_loaded('gmp'):
+                return self::fromGMP();
+            case extension_loaded('bcmath'):
+                return self::fromBCMath();
+            default:
+                return self::fromNative();
+        }
     }
-    public function isIpv4(Stringable|string|null $host) : bool
+    /**
+     * @param \Stringable|string|null $host
+     */
+    public function isIpv4($host) : bool
     {
         if (null === $host) {
             return \false;
@@ -96,10 +112,10 @@ final class Converter
             return \false;
         }
         $ipAddress = strtolower((string) inet_ntop((string) inet_pton($host)));
-        if (str_starts_with($ipAddress, self::IPV4_MAPPED_PREFIX)) {
+        if (strncmp($ipAddress, self::IPV4_MAPPED_PREFIX, strlen(self::IPV4_MAPPED_PREFIX)) === 0) {
             return \false !== filter_var(substr($ipAddress, 7), FILTER_VALIDATE_IP, FILTER_FLAG_IPV4);
         }
-        if (!str_starts_with($ipAddress, self::IPV6_6TO4_PREFIX)) {
+        if (strncmp($ipAddress, self::IPV6_6TO4_PREFIX, strlen(self::IPV6_6TO4_PREFIX)) !== 0) {
             return \false;
         }
         $hexParts = explode(':', substr($ipAddress, 5, 9));
@@ -109,17 +125,25 @@ final class Converter
         $ipAddress = long2ip((int) hexdec($hexParts[0]) * 65536 + (int) hexdec($hexParts[1]));
         return '' !== '' . $ipAddress;
     }
-    public function toIPv6Using6to4(Stringable|string|null $host) : ?string
+    /**
+     * @param \Stringable|string|null $host
+     */
+    public function toIPv6Using6to4($host) : ?string
     {
         $host = $this->toDecimal($host);
         if (null === $host) {
             return null;
         }
         /** @var array<string> $parts */
-        $parts = array_map(fn(string $part): string => sprintf('%02x', $part), explode('.', $host));
+        $parts = array_map(function (string $part) : string {
+            return sprintf('%02x', $part);
+        }, explode('.', $host));
         return '[' . self::IPV6_6TO4_PREFIX . $parts[0] . $parts[1] . ':' . $parts[2] . $parts[3] . '::]';
     }
-    public function toIPv6UsingMapping(Stringable|string|null $host) : ?string
+    /**
+     * @param \Stringable|string|null $host
+     */
+    public function toIPv6UsingMapping($host) : ?string
     {
         $host = $this->toDecimal($host);
         if (null === $host) {
@@ -127,53 +151,70 @@ final class Converter
         }
         return '[' . self::IPV4_MAPPED_PREFIX . $host . ']';
     }
-    public function toOctal(Stringable|string|null $host) : ?string
+    /**
+     * @param \Stringable|string|null $host
+     */
+    public function toOctal($host) : ?string
     {
         $host = $this->toDecimal($host);
-        return match (null) {
-            $host => null,
-            default => implode('.', array_map(fn($value) => str_pad(decoct((int) $value), 4, '0', \STR_PAD_LEFT), explode('.', $host))),
-        };
+        switch (null) {
+            case $host:
+                return null;
+            default:
+                return implode('.', array_map(function ($value) {
+                    return str_pad(decoct((int) $value), 4, '0', \STR_PAD_LEFT);
+                }, explode('.', $host)));
+        }
     }
-    public function toHexadecimal(Stringable|string|null $host) : ?string
+    /**
+     * @param \Stringable|string|null $host
+     */
+    public function toHexadecimal($host) : ?string
     {
         $host = $this->toDecimal($host);
-        return match (null) {
-            $host => null,
-            default => '0x' . implode('', array_map(fn($value) => dechex((int) $value), explode('.', $host))),
-        };
+        switch (null) {
+            case $host:
+                return null;
+            default:
+                return '0x' . implode('', array_map(function ($value) {
+                    return dechex((int) $value);
+                }, explode('.', $host)));
+        }
     }
     /**
      * Tries to convert a IPv4 hexadecimal or a IPv4 octal notation into a IPv4 dot-decimal notation if possible
      * otherwise returns null.
      *
      * @see https://url.spec.whatwg.org/#concept-ipv4-parser
+     * @param \Stringable|string|null $host
      */
-    public function toDecimal(Stringable|string|null $host) : ?string
+    public function toDecimal($host) : ?string
     {
         $host = (string) $host;
-        if (str_starts_with($host, '[') && str_ends_with($host, ']')) {
+        if (strncmp($host, '[', strlen('[')) === 0 && substr_compare($host, ']', -strlen(']')) === 0) {
             $host = substr($host, 1, -1);
             if (\false === filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
                 return null;
             }
             $ipAddress = strtolower((string) inet_ntop((string) inet_pton($host)));
-            if (str_starts_with($ipAddress, self::IPV4_MAPPED_PREFIX)) {
+            if (strncmp($ipAddress, self::IPV4_MAPPED_PREFIX, strlen(self::IPV4_MAPPED_PREFIX)) === 0) {
                 return substr($ipAddress, 7);
             }
-            if (!str_starts_with($ipAddress, self::IPV6_6TO4_PREFIX)) {
+            if (strncmp($ipAddress, self::IPV6_6TO4_PREFIX, strlen(self::IPV6_6TO4_PREFIX)) !== 0) {
                 return null;
             }
             $hexParts = explode(':', substr($ipAddress, 5, 9));
-            return (string) match (\true) {
-                count($hexParts) < 2 => null,
-                default => long2ip((int) hexdec($hexParts[0]) * 65536 + (int) hexdec($hexParts[1])),
-            };
+            switch (\true) {
+                case count($hexParts) < 2:
+                    return null;
+                default:
+                    return long2ip((int) hexdec($hexParts[0]) * 65536 + (int) hexdec($hexParts[1]));
+            }
         }
         if (1 !== preg_match(self::REGEXP_IPV4_HOST, $host)) {
             return null;
         }
-        if (str_ends_with($host, '.')) {
+        if (substr_compare($host, '.', -strlen('.')) === 0) {
             $host = substr($host, 0, -1);
         }
         $numbers = [];
@@ -204,7 +245,7 @@ final class Converter
      *
      * @return mixed returns null if it cannot correctly convert the label
      */
-    private function labelToNumber(string $label) : mixed
+    private function labelToNumber(string $label)
     {
         foreach (self::REGEXP_IPV4_NUMBER_PER_BASE as $regexp => $base) {
             if (1 !== preg_match($regexp, $label, $matches)) {
@@ -228,7 +269,7 @@ final class Converter
      *
      * @param mixed $ipAddress the number representation of the IPV4address
      */
-    private function long2Ip(mixed $ipAddress) : string
+    private function long2Ip($ipAddress) : string
     {
         $output = '';
         for ($offset = 0; $offset < 4; $offset++) {

@@ -26,26 +26,37 @@ use const PREG_SET_ORDER;
 /**
  * @internal The class exposes the internal representation of a Template and its usage
  */
-final class Template implements Stringable
+final class Template
 {
+    /**
+     * @readonly
+     * @var string
+     */
+    public $value;
     /**
      * Expression regular expression pattern.
      */
     private const REGEXP_EXPRESSION_DETECTOR = '/(?<expression>\\{[^}]*})/x';
-    /** @var array<Expression> */
-    private readonly array $expressions;
-    /** @var array<string> */
-    public readonly array $variableNames;
-    private function __construct(public readonly string $value, Expression ...$expressions)
+    /** @var array<Expression>
+     * @readonly */
+    private $expressions;
+    /** @var array<string>
+     * @readonly */
+    public $variableNames;
+    private function __construct(string $value, Expression ...$expressions)
     {
+        $this->value = $value;
         $this->expressions = $expressions;
-        $this->variableNames = array_unique(array_merge(...array_map(static fn(Expression $expression): array => $expression->variableNames, $expressions)));
+        $this->variableNames = array_unique(array_merge(...array_map(static function (Expression $expression) : array {
+            return $expression->variableNames;
+        }, $expressions)));
     }
     /**
      * @throws SyntaxError if the template contains invalid expressions
      * @throws SyntaxError if the template contains invalid variable specification
+     * @param \Stringable|string $template
      */
-    public static function new(Stringable|string $template) : self
+    public static function new($template) : self
     {
         $template = (string) $template;
         /** @var string $remainder */
@@ -77,7 +88,9 @@ final class Template implements Stringable
         if (!$variables instanceof VariableBag) {
             $variables = new VariableBag($variables);
         }
-        $missing = array_filter($this->variableNames, fn(string $name): bool => !isset($variables[$name]));
+        $missing = array_filter($this->variableNames, function (string $name) use ($variables) : bool {
+            return !isset($variables[$name]);
+        });
         if ([] !== $missing) {
             throw TemplateCanNotBeExpanded::dueToMissingVariables(...$missing);
         }
@@ -85,7 +98,9 @@ final class Template implements Stringable
     }
     private function expandAll(VariableBag $variables) : string
     {
-        return array_reduce($this->expressions, fn(string $uri, Expression $expr): string => str_replace($expr->value, $expr->expand($variables), $uri), $this->value);
+        return array_reduce($this->expressions, function (string $uri, Expression $expr) use ($variables) : string {
+            return str_replace($expr->value, $expr->expand($variables), $uri);
+        }, $this->value);
     }
     public function __toString() : string
     {
@@ -102,9 +117,10 @@ final class Template implements Stringable
      *
      * Create a new instance from a string.
      *
+     * @param \Stringable|string $template
      */
     #[Deprecated(message: 'use League\\Uri\\UriTemplate\\Template::new() instead', since: 'league/uri:7.0.0')]
-    public static function createFromString(Stringable|string $template) : self
+    public static function createFromString($template) : self
     {
         return self::new($template);
     }

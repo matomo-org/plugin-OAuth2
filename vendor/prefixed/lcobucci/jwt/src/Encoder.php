@@ -12,8 +12,9 @@ interface Encoder
      * @return non-empty-string
      *
      * @throws CannotEncodeContent When something goes wrong while encoding.
+     * @param mixed $data
      */
-    public function jsonEncode(mixed $data) : string;
+    public function jsonEncode($data) : string;
     /**
      * Encodes to base64url
      *

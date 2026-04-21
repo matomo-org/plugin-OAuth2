@@ -27,9 +27,13 @@ use function ltrim;
 /**
  * @phpstan-import-type InputComponentMap from UriString
  */
-final class Http implements Stringable, Psr7UriInterface, JsonSerializable, Conditionable
+final class Http implements Psr7UriInterface, JsonSerializable, Conditionable
 {
-    private readonly UriInterface $uri;
+    /**
+     * @readonly
+     * @var \Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriInterface
+     */
+    private $uri;
     private function __construct(UriInterface $uri)
     {
         if (null === $uri->getScheme() && '' === $uri->getHost()) {
@@ -61,26 +65,30 @@ final class Http implements Stringable, Psr7UriInterface, JsonSerializable, Cond
             $components['user'] = null;
             $components['pass'] = null;
         }
-        return match ($components) {
-            [] => $uri,
-            default => Uri::fromComponents([...$uri->toComponents(), ...$components]),
-        };
+        switch ($components) {
+            case []:
+                return $uri;
+            default:
+                return Uri::fromComponents(array_merge($uri->toComponents(), is_array($components) ? $components : iterator_to_array($components)));
+        }
     }
     /**
      * Create a new instance from a string or a stringable object.
+     * @param Rfc3986Uri|WhatwgUrl|\Stringable|string $uri
      */
-    public static function new(Rfc3986Uri|WhatwgUrl|Stringable|string $uri = '') : self
+    public static function new($uri = '') : self
     {
         return new self(Uri::new($uri));
     }
     /**
      * Create a new instance from a string or a stringable structure or returns null on failure.
+     * @param Rfc3986Uri|WhatwgUrl|\Stringable|string $uri
      */
-    public static function tryNew(Rfc3986Uri|WhatwgUrl|Stringable|string $uri = '') : ?self
+    public static function tryNew($uri = '') : ?self
     {
         try {
             return self::new($uri);
-        } catch (UriException) {
+        } catch (UriException $exception) {
             return null;
         }
     }
@@ -119,8 +127,9 @@ final class Http implements Stringable, Psr7UriInterface, JsonSerializable, Cond
      *
      * @throws TemplateCanNotBeExpanded if the variables are invalid or missing
      * @throws UriException if the variables are invalid or missing
+     * @param \Stringable|string $template
      */
-    public static function fromTemplate(Stringable|string $template, iterable $variables = []) : self
+    public static function fromTemplate($template, iterable $variables = []) : self
     {
         return new self(Uri::fromTemplate($template, $variables));
     }
@@ -128,8 +137,10 @@ final class Http implements Stringable, Psr7UriInterface, JsonSerializable, Cond
      * Returns a new instance from a URI and a Base URI.or null on failure.
      *
      * The returned URI must be absolute if a base URI is provided
+     * @param WhatWgUrl|Rfc3986Uri|\Stringable|string $uri
+     * @param WhatWgUrl|Rfc3986Uri|\Stringable|string|null $baseUri
      */
-    public static function parse(WhatWgUrl|Rfc3986Uri|Stringable|string $uri, WhatWgUrl|Rfc3986Uri|Stringable|string|null $baseUri = null) : ?self
+    public static function parse($uri, $baseUri = null) : ?self
     {
         return null !== ($uri = Uri::parse($uri, $baseUri)) ? new self($uri) : null;
     }
@@ -156,10 +167,12 @@ final class Http implements Stringable, Psr7UriInterface, JsonSerializable, Cond
     public function getPath() : string
     {
         $path = $this->uri->getPath();
-        return match (\true) {
-            str_starts_with($path, '//') => '/' . ltrim($path, '/'),
-            default => $path,
-        };
+        switch (\true) {
+            case strncmp($path, '//', strlen('//')) === 0:
+                return '/' . ltrim($path, '/');
+            default:
+                return $path;
+        }
     }
     public function getQuery() : string
     {
@@ -182,54 +195,86 @@ final class Http implements Stringable, Psr7UriInterface, JsonSerializable, Cond
      */
     private function filterInput(string $str) : ?string
     {
-        return match ('') {
-            $str => null,
-            default => $str,
-        };
+        switch ('') {
+            case $str:
+                return null;
+            default:
+                return $str;
+        }
     }
     private function newInstance(UriInterface $uri) : self
     {
-        return match ($this->uri->toString()) {
-            $uri->toString() => $this,
-            default => new self($uri),
-        };
+        switch ($this->uri->toString()) {
+            case $uri->toString():
+                return $this;
+            default:
+                return new self($uri);
+        }
     }
-    public function when(callable|bool $condition, callable $onSuccess, ?callable $onFail = null) : static
+    /**
+     * @param callable|bool $condition
+     * @return static
+     */
+    public function when($condition, callable $onSuccess, ?callable $onFail = null)
     {
         if (!is_bool($condition)) {
             $condition = $condition($this);
         }
-        return match (\true) {
-            $condition => $onSuccess($this),
-            null !== $onFail => $onFail($this),
-            default => $this,
-        } ?? $this;
+        switch (\true) {
+            case $condition:
+                return $onSuccess($this);
+            case null !== $onFail:
+                return $onFail($this);
+            default:
+                return $this;
+        }
     }
-    public function withScheme(string $scheme) : self
+    /**
+     * @return $this
+     */
+    public function withScheme(string $scheme) : \Matomo\Dependencies\Oauth2\Psr\Http\Message\UriInterface
     {
         return $this->newInstance($this->uri->withScheme($this->filterInput($scheme)));
     }
-    public function withUserInfo(string $user, ?string $password = null) : self
+    /**
+     * @return $this
+     */
+    public function withUserInfo(string $user, ?string $password = null) : \Matomo\Dependencies\Oauth2\Psr\Http\Message\UriInterface
     {
         return $this->newInstance($this->uri->withUserInfo($this->filterInput($user), $password));
     }
-    public function withHost(string $host) : self
+    /**
+     * @return $this
+     */
+    public function withHost(string $host) : \Matomo\Dependencies\Oauth2\Psr\Http\Message\UriInterface
     {
         return $this->newInstance($this->uri->withHost($this->filterInput($host)));
     }
-    public function withPort(?int $port) : self
+    /**
+     * @return $this
+     */
+    public function withPort(?int $port) : \Matomo\Dependencies\Oauth2\Psr\Http\Message\UriInterface
     {
         return $this->newInstance($this->uri->withPort($port));
     }
-    public function withPath(string $path) : self
+    /**
+     * @return $this
+     */
+    public function withPath(string $path) : \Matomo\Dependencies\Oauth2\Psr\Http\Message\UriInterface
     {
         return $this->newInstance($this->uri->withPath($path));
     }
-    public function withQuery(string $query) : self
+    /**
+     * @return $this
+     */
+    public function withQuery(string $query) : \Matomo\Dependencies\Oauth2\Psr\Http\Message\UriInterface
     {
         return $this->newInstance($this->uri->withQuery($this->filterInput($query)));
     }
-    public function withFragment(string $fragment) : self
+    /**
+     * @return $this
+     */
+    public function withFragment(string $fragment) : \Matomo\Dependencies\Oauth2\Psr\Http\Message\UriInterface
     {
         return $this->newInstance($this->uri->withFragment($this->filterInput($fragment)));
     }
@@ -243,9 +288,11 @@ final class Http implements Stringable, Psr7UriInterface, JsonSerializable, Cond
      * Create a new instance from a URI and a Base URI.
      *
      * The returned URI must be absolute.
+     * @param Rfc3986Uri|WhatwgUrl|\Stringable|string $uri
+     * @param Rfc3986Uri|WhatwgUrl|\Stringable|string|null $baseUri
      */
     #[Deprecated(message: 'use League\\Uri\\Http::parse() instead', since: 'league/uri:7.6.0')]
-    public static function fromBaseUri(Rfc3986Uri|WhatwgUrl|Stringable|string $uri, Rfc3986Uri|WhatwgUrl|Stringable|string|null $baseUri = null) : self
+    public static function fromBaseUri($uri, $baseUri = null) : self
     {
         return new self(Uri::fromBaseUri($uri, $baseUri));
     }
@@ -257,9 +304,10 @@ final class Http implements Stringable, Psr7UriInterface, JsonSerializable, Cond
      * @see Http::new()
      *
      * Create a new instance from a string.
+     * @param \Stringable|string $uri
      */
     #[Deprecated(message: 'use League\\Uri\\Http::new() instead', since: 'league/uri:7.0.0')]
-    public static function createFromString(Stringable|string $uri = '') : self
+    public static function createFromString($uri = '') : self
     {
         return self::new($uri);
     }
@@ -302,9 +350,10 @@ final class Http implements Stringable, Psr7UriInterface, JsonSerializable, Cond
      * @see Http::new()
      *
      * Create a new instance from a URI object.
+     * @param Psr7UriInterface|\Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriInterface $uri
      */
     #[Deprecated(message: 'use League\\Uri\\Http::new() instead', since: 'league/uri:7.0.0')]
-    public static function createFromUri(Psr7UriInterface|UriInterface $uri) : self
+    public static function createFromUri($uri) : self
     {
         return self::new($uri);
     }
@@ -318,9 +367,11 @@ final class Http implements Stringable, Psr7UriInterface, JsonSerializable, Cond
      * Create a new instance from a URI and a Base URI.
      *
      * The returned URI must be absolute.
+     * @param \Stringable|string $uri
+     * @param \Stringable|string|null $baseUri
      */
     #[Deprecated(message: 'use League\\Uri\\Http::fromBaseUri() instead', since: 'league/uri:7.0.0')]
-    public static function createFromBaseUri(Stringable|string $uri, Stringable|string|null $baseUri = null) : self
+    public static function createFromBaseUri($uri, $baseUri = null) : self
     {
         return self::fromBaseUri($uri, $baseUri);
     }

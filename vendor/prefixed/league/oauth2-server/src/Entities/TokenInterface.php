@@ -44,7 +44,7 @@ interface TokenInterface
      *
      * @return non-empty-string|null
      */
-    public function getUserIdentifier() : string|null;
+    public function getUserIdentifier() : ?string;
     /**
      * Get the client that the token was issued to.
      */

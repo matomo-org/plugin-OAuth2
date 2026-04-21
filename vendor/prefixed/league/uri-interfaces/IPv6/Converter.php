@@ -31,10 +31,12 @@ final class Converter
     private const HOST_ADDRESS_BLOCK = "\xfe\x80";
     public static function compressIp(string $ipAddress) : string
     {
-        return match (filter_var($ipAddress, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-            \false => throw new ValueError('The submitted IP is not a valid IPv6 address.'),
-            default => strtolower((string) inet_ntop((string) inet_pton($ipAddress))),
-        };
+        switch (filter_var($ipAddress, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            case \false:
+                throw new ValueError('The submitted IP is not a valid IPv6 address.');
+            default:
+                return strtolower((string) inet_ntop((string) inet_pton($ipAddress)));
+        }
     }
     public static function expandIp(string $ipAddress) : string
     {
@@ -44,46 +46,59 @@ final class Converter
         $hex = (array) unpack('H*hex', (string) inet_pton($ipAddress));
         return implode(':', str_split(strtolower($hex['hex'] ?? ''), 4));
     }
-    public static function compress(Stringable|string|null $host) : ?string
+    /**
+     * @param \Stringable|string|null $host
+     */
+    public static function compress($host) : ?string
     {
         $components = self::parse($host);
         if (null === $components['ipAddress']) {
-            return match ($host) {
-                null => $host,
-                default => (string) $host,
-            };
+            switch ($host) {
+                case null:
+                    return $host;
+                default:
+                    return (string) $host;
+            }
         }
         $components['ipAddress'] = self::compressIp($components['ipAddress']);
         return self::build($components);
     }
-    public static function expand(Stringable|string|null $host) : ?string
+    /**
+     * @param \Stringable|string|null $host
+     */
+    public static function expand($host) : ?string
     {
         $components = self::parse($host);
         if (null === $components['ipAddress']) {
-            return match ($host) {
-                null => $host,
-                default => (string) $host,
-            };
+            switch ($host) {
+                case null:
+                    return $host;
+                default:
+                    return (string) $host;
+            }
         }
         $components['ipAddress'] = self::expandIp($components['ipAddress']);
         return self::build($components);
     }
     public static function build(array $components) : string
     {
-        $components['ipAddress'] ??= null;
-        $components['zoneIdentifier'] ??= null;
+        $components['ipAddress'] = $components['ipAddress'] ?? null;
+        $components['zoneIdentifier'] = $components['zoneIdentifier'] ?? null;
         if (null === $components['ipAddress']) {
             return '';
         }
-        return '[' . $components['ipAddress'] . match ($components['zoneIdentifier']) {
-            null => '',
-            default => '%' . $components['zoneIdentifier'],
-        } . ']';
+        switch ($components['zoneIdentifier']) {
+            case null:
+                return '';
+            default:
+                return '%' . $components['zoneIdentifier'];
+        }
     }
     /**
      * @return array{ipAddress:string|null, zoneIdentifier:string|null}
+     * @param \Stringable|string|null $host
      */
-    private static function parse(Stringable|string|null $host) : array
+    private static function parse($host) : array
     {
         if (null === $host) {
             return ['ipAddress' => null, 'zoneIdentifier' => null];
@@ -92,29 +107,36 @@ final class Converter
         if ('' === $host) {
             return ['ipAddress' => null, 'zoneIdentifier' => null];
         }
-        if (!str_starts_with($host, '[')) {
+        if (strncmp($host, '[', strlen('[')) !== 0) {
             return ['ipAddress' => null, 'zoneIdentifier' => null];
         }
-        if (!str_ends_with($host, ']')) {
+        if (substr_compare($host, ']', -strlen(']')) !== 0) {
             return ['ipAddress' => null, 'zoneIdentifier' => null];
         }
         [$ipv6, $zoneIdentifier] = explode('%', substr($host, 1, -1), 2) + [1 => null];
         if (\false === filter_var($ipv6, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
             return ['ipAddress' => null, 'zoneIdentifier' => null];
         }
-        return match (\true) {
-            null === $zoneIdentifier, is_string($ipv6) && str_starts_with((string) inet_pton($ipv6), self::HOST_ADDRESS_BLOCK) => ['ipAddress' => $ipv6, 'zoneIdentifier' => $zoneIdentifier],
-            default => ['ipAddress' => null, 'zoneIdentifier' => null],
-        };
+        switch (\true) {
+            case null === $zoneIdentifier:
+            case is_string($ipv6) && strncmp((string) inet_pton($ipv6), self::HOST_ADDRESS_BLOCK, strlen(self::HOST_ADDRESS_BLOCK)) === 0:
+                return ['ipAddress' => $ipv6, 'zoneIdentifier' => $zoneIdentifier];
+            default:
+                return ['ipAddress' => null, 'zoneIdentifier' => null];
+        }
     }
     /**
      * Tells whether the host is an IPv6.
+     * @param \Stringable|string|null $host
      */
-    public static function isIpv6(Stringable|string|null $host) : bool
+    public static function isIpv6($host) : bool
     {
         return null !== self::parse($host)['ipAddress'];
     }
-    public static function normalize(Stringable|string|null $host) : ?string
+    /**
+     * @param \Stringable|string|null $host
+     */
+    public static function normalize($host) : ?string
     {
         if (null === $host || '' === $host) {
             return $host;

@@ -26,8 +26,18 @@ use function is_null;
 use function time;
 class ImplicitGrant extends AbstractAuthorizeGrant
 {
-    public function __construct(private DateInterval $accessTokenTTL, private string $queryDelimiter = '#')
+    /**
+     * @var \DateInterval
+     */
+    private $accessTokenTTL;
+    /**
+     * @var string
+     */
+    private $queryDelimiter = '#';
+    public function __construct(DateInterval $accessTokenTTL, string $queryDelimiter = '#')
     {
+        $this->accessTokenTTL = $accessTokenTTL;
+        $this->queryDelimiter = $queryDelimiter;
     }
     /**
      * @throws LogicException

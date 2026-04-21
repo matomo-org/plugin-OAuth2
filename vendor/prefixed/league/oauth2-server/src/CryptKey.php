@@ -28,21 +28,30 @@ use function sprintf;
 use function trigger_error;
 class CryptKey implements CryptKeyInterface
 {
+    /**
+     * @var string|null
+     */
+    protected $passPhrase;
     private const FILE_PREFIX = 'file://';
     /**
      * @var string Key contents
      */
-    protected string $keyContents;
-    protected string $keyPath;
-    public function __construct(string $keyPath, #[SensitiveParameter] protected ?string $passPhrase = null, bool $keyPermissionsCheck = \true)
+    protected $keyContents;
+    /**
+     * @var string
+     */
+    protected $keyPath;
+    public function __construct(string $keyPath, #[\SensitiveParameter]
+    ?string $passPhrase = null, bool $keyPermissionsCheck = \true)
     {
-        if (str_starts_with($keyPath, self::FILE_PREFIX) === \false && $this->isValidKey($keyPath, $this->passPhrase ?? '')) {
+        $this->passPhrase = $passPhrase;
+        if ((strncmp($keyPath, self::FILE_PREFIX, strlen(self::FILE_PREFIX)) === 0) === \false && $this->isValidKey($keyPath, $this->passPhrase ?? '')) {
             $this->keyContents = $keyPath;
             $this->keyPath = '';
             // There's no file, so no need for permission check.
             $keyPermissionsCheck = \false;
         } elseif (is_file($keyPath)) {
-            if (str_starts_with($keyPath, self::FILE_PREFIX) === \false) {
+            if ((strncmp($keyPath, self::FILE_PREFIX, strlen(self::FILE_PREFIX)) === 0) === \false) {
                 $keyPath = self::FILE_PREFIX . $keyPath;
             }
             if (!is_readable($keyPath)) {

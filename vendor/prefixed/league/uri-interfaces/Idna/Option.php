@@ -18,6 +18,11 @@ use ReflectionClassConstant;
  */
 final class Option
 {
+    /**
+     * @readonly
+     * @var int
+     */
+    private $value;
     private const DEFAULT = 0;
     private const ALLOW_UNASSIGNED = 1;
     private const USE_STD3_RULES = 2;
@@ -26,8 +31,9 @@ final class Option
     private const NONTRANSITIONAL_TO_ASCII = 0x10;
     private const NONTRANSITIONAL_TO_UNICODE = 0x20;
     private const CHECK_CONTEXTO = 0x40;
-    private function __construct(private readonly int $value)
+    private function __construct(int $value)
     {
+        $this->value = $value;
     }
     private static function cases() : array
     {
@@ -43,7 +49,9 @@ final class Option
     }
     public static function new(int $bytes = self::DEFAULT) : self
     {
-        return new self(array_reduce(self::cases(), fn(int $value, int $option) => 0 !== ($option & $bytes) ? $value | $option : $value, self::DEFAULT));
+        return new self(array_reduce(self::cases(), function (int $value, int $option) use ($bytes) {
+            return 0 !== ($option & $bytes) ? $value | $option : $value;
+        }, self::DEFAULT));
     }
     public static function forIDNA2008Ascii() : self
     {
@@ -60,7 +68,9 @@ final class Option
     /** array<string, int> */
     public function list() : array
     {
-        return array_keys(array_filter(self::cases(), fn(int $value) => 0 !== ($value & $this->value)));
+        return array_keys(array_filter(self::cases(), function (int $value) {
+            return 0 !== ($value & $this->value);
+        }));
     }
     public function allowUnassigned() : self
     {
@@ -118,20 +128,32 @@ final class Option
     {
         return $this->remove(self::NONTRANSITIONAL_TO_UNICODE);
     }
-    public function add(Option|int|null $option = null) : self
+    /**
+     * @param \Matomo\Dependencies\Oauth2\League\Uri\Idna\Option|int|null $option
+     */
+    public function add($option = null) : self
     {
-        return match (\true) {
-            null === $option => $this,
-            $option instanceof self => self::new($this->value | $option->value),
-            default => self::new($this->value | $option),
-        };
+        switch (\true) {
+            case null === $option:
+                return $this;
+            case $option instanceof self:
+                return self::new($this->value | $option->value);
+            default:
+                return self::new($this->value | $option);
+        }
     }
-    public function remove(Option|int|null $option = null) : self
+    /**
+     * @param \Matomo\Dependencies\Oauth2\League\Uri\Idna\Option|int|null $option
+     */
+    public function remove($option = null) : self
     {
-        return match (\true) {
-            null === $option => $this,
-            $option instanceof self => self::new($this->value & ~$option->value),
-            default => self::new($this->value & ~$option),
-        };
+        switch (\true) {
+            case null === $option:
+                return $this;
+            case $option instanceof self:
+                return self::new($this->value & ~$option->value);
+            default:
+                return self::new($this->value & ~$option);
+        }
     }
 }

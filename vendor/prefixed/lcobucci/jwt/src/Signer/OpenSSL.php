@@ -61,8 +61,9 @@ abstract class OpenSSL implements Signer
      * Raises an exception when the key type is not the expected type
      *
      * @throws InvalidKeyProvided
+     * @param \OpenSSLAsymmetricKey|bool $key
      */
-    private function validateKey(OpenSSLAsymmetricKey|bool $key) : OpenSSLAsymmetricKey
+    private function validateKey($key) : OpenSSLAsymmetricKey
     {
         if (is_bool($key)) {
             throw InvalidKeyProvided::cannotBeParsed($this->fullOpenSSLErrorString());

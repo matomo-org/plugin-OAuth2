@@ -10,8 +10,20 @@ use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\ConstraintViolation;
 use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\SignedWith as SignedWithInterface;
 final class SignedWith implements SignedWithInterface
 {
-    public function __construct(private readonly Signer $signer, private readonly Signer\Key $key)
+    /**
+     * @readonly
+     * @var \Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer
+     */
+    private $signer;
+    /**
+     * @readonly
+     * @var \Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Key
+     */
+    private $key;
+    public function __construct(Signer $signer, Signer\Key $key)
     {
+        $this->signer = $signer;
+        $this->key = $key;
     }
     public function assert(Token $token) : void
     {

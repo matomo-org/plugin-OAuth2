@@ -10,9 +10,15 @@ use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\ConstraintViolation;
 use function in_array;
 final class HasClaim implements Constraint
 {
+    /**
+     * @var non-empty-string
+     * @readonly
+     */
+    private $claim;
     /** @param non-empty-string $claim */
-    public function __construct(private readonly string $claim)
+    public function __construct(string $claim)
     {
+        $this->claim = $claim;
         if (in_array($claim, Token\RegisteredClaims::ALL, \true)) {
             throw CannotValidateARegisteredClaim::create($claim);
         }

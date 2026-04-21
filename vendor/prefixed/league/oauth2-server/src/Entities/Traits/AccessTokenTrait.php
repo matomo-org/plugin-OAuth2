@@ -22,8 +22,14 @@ use RuntimeException;
 use SensitiveParameter;
 trait AccessTokenTrait
 {
-    private CryptKeyInterface $privateKey;
-    private Configuration $jwtConfiguration;
+    /**
+     * @var \Matomo\Dependencies\Oauth2\League\OAuth2\Server\CryptKeyInterface
+     */
+    private $privateKey;
+    /**
+     * @var \Matomo\Dependencies\Oauth2\Lcobucci\JWT\Configuration
+     */
+    private $jwtConfiguration;
     /**
      * Set the private key used to encrypt this access token.
      */
@@ -62,7 +68,7 @@ trait AccessTokenTrait
     /**
      * @return non-empty-string|null
      */
-    public abstract function getUserIdentifier() : string|null;
+    public abstract function getUserIdentifier() : ?string;
     /**
      * @return ScopeEntityInterface[]
      */

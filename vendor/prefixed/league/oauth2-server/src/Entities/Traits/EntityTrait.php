@@ -15,7 +15,7 @@ trait EntityTrait
     /**
      * @var non-empty-string
      */
-    protected string $identifier;
+    protected $identifier;
     /**
      * @return non-empty-string
      */

@@ -34,7 +34,7 @@ final class VariableBag implements ArrayAccess, Countable, IteratorAggregate
     /**
      * @var array<string,string|array<string>>
      */
-    private array $variables = [];
+    private $variables = [];
     /**
      * @param iterable<array-key, InputValue> $variables
      */
@@ -52,20 +52,35 @@ final class VariableBag implements ArrayAccess, Countable, IteratorAggregate
     {
         yield from $this->variables;
     }
-    public function offsetExists(mixed $offset) : bool
+    /**
+     * @param mixed $offset
+     */
+    public function offsetExists($offset) : bool
     {
         return array_key_exists($offset, $this->variables);
     }
-    public function offsetUnset(mixed $offset) : void
+    /**
+     * @param mixed $offset
+     */
+    public function offsetUnset($offset) : void
     {
         unset($this->variables[$offset]);
     }
-    public function offsetSet(mixed $offset, mixed $value) : void
+    /**
+     * @param mixed $offset
+     * @param mixed $value
+     */
+    public function offsetSet($offset, $value) : void
     {
         $this->assign($offset, $value);
         /* @phpstan-ignore-line */
     }
-    public function offsetGet(mixed $offset) : mixed
+    /**
+     * @param mixed $offset
+     * @return mixed
+     */
+    #[\ReturnTypeWillChange]
+    public function offsetGet($offset)
     {
         return $this->fetch($offset);
     }
@@ -83,7 +98,10 @@ final class VariableBag implements ArrayAccess, Countable, IteratorAggregate
     {
         return [] !== $this->variables;
     }
-    public function equals(mixed $value) : bool
+    /**
+     * @param mixed $value
+     */
+    public function equals($value) : bool
     {
         return $value instanceof self && $this->variables === $value->variables;
     }
@@ -92,14 +110,14 @@ final class VariableBag implements ArrayAccess, Countable, IteratorAggregate
      *
      * @return null|string|array<string>
      */
-    public function fetch(string $name) : null|string|array
+    public function fetch(string $name)
     {
         return $this->variables[$name] ?? null;
     }
     /**
      * @param Stringable|InputValue $value
      */
-    public function assign(string $name, Stringable|string|bool|int|float|array|null $value) : void
+    public function assign(string $name, $value) : void
     {
         $this->variables[$name] = $this->normalizeValue($value, $name, \true);
     }
@@ -107,15 +125,22 @@ final class VariableBag implements ArrayAccess, Countable, IteratorAggregate
      * @param Stringable|InputValue $value
      *
      * @throws TemplateCanNotBeExpanded if the value contains nested list
+     * @return mixed[]|string
      */
-    private function normalizeValue(Stringable|string|float|int|bool|array|null $value, string $name, bool $isNestedListAllowed) : array|string
+    private function normalizeValue($value, string $name, bool $isNestedListAllowed)
     {
-        return match (\true) {
-            is_bool($value) => \true === $value ? '1' : '0',
-            null === $value || is_scalar($value) || $value instanceof Stringable => (string) $value,
-            !$isNestedListAllowed => throw TemplateCanNotBeExpanded::dueToNestedListOfValue($name),
-            default => array_map(fn($var): array|string => self::normalizeValue($var, $name, \false), $value),
-        };
+        switch (\true) {
+            case is_bool($value):
+                return \true === $value ? '1' : '0';
+            case null === $value || is_scalar($value) || $value instanceof Stringable:
+                return (string) $value;
+            case !$isNestedListAllowed:
+                throw TemplateCanNotBeExpanded::dueToNestedListOfValue($name);
+            default:
+                return array_map(function ($var) use ($name) {
+                    return self::normalizeValue($var, $name, \false);
+                }, $value);
+        }
     }
     /**
      * Replaces elements from passed variables into the current instance.
@@ -129,6 +154,8 @@ final class VariableBag implements ArrayAccess, Countable, IteratorAggregate
      */
     public function filter(Closure $fn) : self
     {
-        return new self(array_filter($this->variables, $fn, ARRAY_FILTER_USE_BOTH));
+        return new self(array_filter($this->variables, $fn === null ? function ($value, $key) : bool {
+            return !empty($value);
+        } : $fn, $fn === null ? ARRAY_FILTER_USE_BOTH : ARRAY_FILTER_USE_BOTH));
     }
 }

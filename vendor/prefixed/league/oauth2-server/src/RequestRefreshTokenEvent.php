@@ -15,8 +15,14 @@ use Matomo\Dependencies\Oauth2\Psr\Http\Message\ServerRequestInterface;
 use SensitiveParameter;
 class RequestRefreshTokenEvent extends RequestEvent
 {
-    public function __construct(string $name, ServerRequestInterface $request, #[SensitiveParameter] private RefreshTokenEntityInterface $refreshToken)
+    /**
+     * @var \Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\RefreshTokenEntityInterface
+     */
+    private $refreshToken;
+    public function __construct(string $name, ServerRequestInterface $request, #[\SensitiveParameter]
+    RefreshTokenEntityInterface $refreshToken)
     {
+        $this->refreshToken = $refreshToken;
         parent::__construct($name, $request);
     }
     /**

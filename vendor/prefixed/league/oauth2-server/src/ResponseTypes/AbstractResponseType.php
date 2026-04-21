@@ -20,9 +20,18 @@ use SensitiveParameter;
 abstract class AbstractResponseType implements ResponseTypeInterface
 {
     use CryptTrait;
-    protected AccessTokenEntityInterface $accessToken;
-    protected RefreshTokenEntityInterface $refreshToken;
-    protected CryptKeyInterface $privateKey;
+    /**
+     * @var \Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\AccessTokenEntityInterface
+     */
+    protected $accessToken;
+    /**
+     * @var \Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\RefreshTokenEntityInterface
+     */
+    protected $refreshToken;
+    /**
+     * @var \Matomo\Dependencies\Oauth2\League\OAuth2\Server\CryptKeyInterface
+     */
+    protected $privateKey;
     public function setAccessToken(#[SensitiveParameter] AccessTokenEntityInterface $accessToken) : void
     {
         $this->accessToken = $accessToken;

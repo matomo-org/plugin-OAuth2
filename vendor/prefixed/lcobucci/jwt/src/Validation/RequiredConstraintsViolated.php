@@ -9,14 +9,20 @@ use function array_map;
 use function implode;
 final class RequiredConstraintsViolated extends RuntimeException implements Exception
 {
+    /**
+     * @var ConstraintViolation[]
+     * @readonly
+     */
+    public $violations = [];
     /** @param ConstraintViolation[] $violations */
-    public function __construct(string $message = '', public readonly array $violations = [])
+    public function __construct(string $message = '', array $violations = [])
     {
+        $this->violations = $violations;
         parent::__construct($message);
     }
     public static function fromViolations(ConstraintViolation ...$violations) : self
     {
-        return new self(message: self::buildMessage($violations), violations: $violations);
+        return new self(self::buildMessage($violations), $violations);
     }
     /** @param ConstraintViolation[] $violations */
     private static function buildMessage(array $violations) : string

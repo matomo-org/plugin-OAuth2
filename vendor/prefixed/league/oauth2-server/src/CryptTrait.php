@@ -23,7 +23,10 @@ use SensitiveParameter;
 use function is_string;
 trait CryptTrait
 {
-    protected string|Key|null $encryptionKey = null;
+    /**
+     * @var string|\Matomo\Dependencies\Oauth2\Defuse\Crypto\Key|null
+     */
+    protected $encryptionKey = null;
     /**
      * Encrypt data with encryptionKey.
      *
@@ -68,7 +71,10 @@ trait CryptTrait
             throw new LogicException($e->getMessage(), 0, $e);
         }
     }
-    public function setEncryptionKey(#[SensitiveParameter] Key|string|null $key = null) : void
+    /**
+     * @param \Matomo\Dependencies\Oauth2\Defuse\Crypto\Key|string|null $key
+     */
+    public function setEncryptionKey(#[SensitiveParameter] $key = null) : void
     {
         $this->encryptionKey = $key;
     }

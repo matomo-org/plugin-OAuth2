@@ -32,11 +32,27 @@ use function preg_replace;
 use function trim;
 class BearerTokenValidator implements AuthorizationValidatorInterface
 {
+    /**
+     * @var \Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\AccessTokenRepositoryInterface
+     */
+    private $accessTokenRepository;
+    /**
+     * @var \DateInterval|null
+     */
+    private $jwtValidAtDateLeeway;
     use CryptTrait;
-    protected CryptKeyInterface $publicKey;
-    private Configuration $jwtConfiguration;
-    public function __construct(private AccessTokenRepositoryInterface $accessTokenRepository, private ?DateInterval $jwtValidAtDateLeeway = null)
+    /**
+     * @var \Matomo\Dependencies\Oauth2\League\OAuth2\Server\CryptKeyInterface
+     */
+    protected $publicKey;
+    /**
+     * @var \Matomo\Dependencies\Oauth2\Lcobucci\JWT\Configuration
+     */
+    private $jwtConfiguration;
+    public function __construct(AccessTokenRepositoryInterface $accessTokenRepository, ?DateInterval $jwtValidAtDateLeeway = null)
     {
+        $this->accessTokenRepository = $accessTokenRepository;
+        $this->jwtValidAtDateLeeway = $jwtValidAtDateLeeway;
     }
     /**
      * Set the public key

@@ -40,8 +40,9 @@ interface UserInfoInterface extends UriComponentInterface
      * otherwise it returns the same instance unchanged.
      *
      * A variable equal to null is equivalent to removing the complete user information.
+     * @param \Stringable|string|null $username
      */
-    public function withUser(Stringable|string|null $username) : self;
+    public function withUser($username) : self;
     /**
      * Returns an instance with the specified user and/or pass.
      *
@@ -50,6 +51,7 @@ interface UserInfoInterface extends UriComponentInterface
      * otherwise it returns the same instance unchanged.
      *
      * An empty user is equivalent to removing the user information.
+     * @param \Stringable|string|null $password
      */
-    public function withPass(Stringable|string|null $password) : self;
+    public function withPass($password) : self;
 }

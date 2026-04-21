@@ -52,8 +52,9 @@ interface AuthorityInterface extends UriComponentInterface
      * @throws MissingFeature for component or transformations
      *                        requiring IDN support when IDN support is not present
      *                        or misconfigured.
+     * @param \Stringable|string|null $host
      */
-    public function withHost(Stringable|string|null $host) : self;
+    public function withHost($host) : self;
     /**
      * Return an instance with the specified port.
      *
@@ -79,6 +80,8 @@ interface AuthorityInterface extends UriComponentInterface
      *
      * @throws SyntaxError for invalid component or transformations
      *                     that would result in an object in invalid state.
+     * @param \Stringable|string|null $user
+     * @param \Stringable|string|null $password
      */
-    public function withUserInfo(Stringable|string|null $user, Stringable|string|null $password = null) : self;
+    public function withUserInfo($user, $password = null) : self;
 }

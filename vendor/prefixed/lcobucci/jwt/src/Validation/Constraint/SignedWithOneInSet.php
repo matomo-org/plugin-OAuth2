@@ -9,8 +9,9 @@ use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\SignedWith as SignedWithI
 use const PHP_EOL;
 final class SignedWithOneInSet implements SignedWithInterface
 {
-    /** @var array<SignedWithUntilDate> */
-    private readonly array $constraints;
+    /** @var array<SignedWithUntilDate>
+     * @readonly */
+    private $constraints;
     public function __construct(SignedWithUntilDate ...$constraints)
     {
         $this->constraints = $constraints;

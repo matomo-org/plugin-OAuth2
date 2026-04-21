@@ -12,12 +12,18 @@ namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\Traits;
 
 trait ClientTrait
 {
-    protected string $name;
+    /**
+     * @var string
+     */
+    protected $name;
     /**
      * @var string|string[]
      */
-    protected string|array $redirectUri;
-    protected bool $isConfidential = \false;
+    protected $redirectUri;
+    /**
+     * @var bool
+     */
+    protected $isConfidential = \false;
     /**
      * Get the client's name.
      *
@@ -34,7 +40,7 @@ trait ClientTrait
      *
      * @return string|string[]
      */
-    public function getRedirectUri() : string|array
+    public function getRedirectUri()
     {
         return $this->redirectUri;
     }

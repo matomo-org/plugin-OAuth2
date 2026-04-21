@@ -54,7 +54,7 @@ final class SodiumBase64Polyfill
         }
         try {
             return sodium_base642bin($encoded, $variant, '');
-        } catch (SodiumException) {
+        } catch (SodiumException $exception) {
             throw CannotDecodeContent::invalidBase64String();
         }
     }

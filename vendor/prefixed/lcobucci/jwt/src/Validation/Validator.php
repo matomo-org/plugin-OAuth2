@@ -38,7 +38,7 @@ final class Validator implements \Matomo\Dependencies\Oauth2\Lcobucci\JWT\Valida
                 $constraint->assert($token);
             }
             return \true;
-        } catch (ConstraintViolation) {
+        } catch (ConstraintViolation $exception) {
             return \false;
         }
     }

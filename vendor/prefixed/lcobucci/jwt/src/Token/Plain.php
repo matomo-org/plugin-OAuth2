@@ -8,8 +8,26 @@ use Matomo\Dependencies\Oauth2\Lcobucci\JWT\UnencryptedToken;
 use function in_array;
 final class Plain implements UnencryptedToken
 {
-    public function __construct(private readonly DataSet $headers, private readonly DataSet $claims, private readonly Signature $signature)
+    /**
+     * @readonly
+     * @var \Matomo\Dependencies\Oauth2\Lcobucci\JWT\Token\DataSet
+     */
+    private $headers;
+    /**
+     * @readonly
+     * @var \Matomo\Dependencies\Oauth2\Lcobucci\JWT\Token\DataSet
+     */
+    private $claims;
+    /**
+     * @readonly
+     * @var \Matomo\Dependencies\Oauth2\Lcobucci\JWT\Token\Signature
+     */
+    private $signature;
+    public function __construct(DataSet $headers, DataSet $claims, Signature $signature)
     {
+        $this->headers = $headers;
+        $this->claims = $claims;
+        $this->signature = $signature;
     }
     public function headers() : DataSet
     {

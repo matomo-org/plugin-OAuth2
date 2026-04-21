@@ -19,6 +19,7 @@ interface Conditionable
      * @param (callable(static): bool)|bool $condition
      * @param callable(static): (static|null) $onSuccess
      * @param ?callable(static): (static|null) $onFail
+     * @return static
      */
-    public function when(callable|bool $condition, callable $onSuccess, ?callable $onFail = null) : static;
+    public function when($condition, callable $onSuccess, ?callable $onFail = null);
 }

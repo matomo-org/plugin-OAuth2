@@ -23,35 +23,65 @@ use function gmp_sub;
 use const GMP_ROUND_MINUSINF;
 final class GMPCalculator implements Calculator
 {
-    public function baseConvert(mixed $value, int $base) : GMP
+    /**
+     * @param mixed $value
+     */
+    public function baseConvert($value, int $base) : GMP
     {
         return gmp_init($value, $base);
     }
-    public function pow(mixed $value, int $exponent) : GMP
+    /**
+     * @param mixed $value
+     */
+    public function pow($value, int $exponent) : GMP
     {
         return gmp_pow($value, $exponent);
     }
-    public function compare(mixed $value1, mixed $value2) : int
+    /**
+     * @param mixed $value1
+     * @param mixed $value2
+     */
+    public function compare($value1, $value2) : int
     {
         return gmp_cmp($value1, $value2);
     }
-    public function multiply(mixed $value1, mixed $value2) : GMP
+    /**
+     * @param mixed $value1
+     * @param mixed $value2
+     */
+    public function multiply($value1, $value2) : GMP
     {
         return gmp_mul($value1, $value2);
     }
-    public function div(mixed $value, mixed $base) : GMP
+    /**
+     * @param mixed $value
+     * @param mixed $base
+     */
+    public function div($value, $base) : GMP
     {
         return gmp_div_q($value, $base, GMP_ROUND_MINUSINF);
     }
-    public function mod(mixed $value, mixed $base) : GMP
+    /**
+     * @param mixed $value
+     * @param mixed $base
+     */
+    public function mod($value, $base) : GMP
     {
         return gmp_mod($value, $base);
     }
-    public function add(mixed $value1, mixed $value2) : GMP
+    /**
+     * @param mixed $value1
+     * @param mixed $value2
+     */
+    public function add($value1, $value2) : GMP
     {
         return gmp_add($value1, $value2);
     }
-    public function sub(mixed $value1, mixed $value2) : GMP
+    /**
+     * @param mixed $value1
+     * @param mixed $value2
+     */
+    public function sub($value1, $value2) : GMP
     {
         return gmp_sub($value1, $value2);
     }

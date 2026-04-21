@@ -185,19 +185,71 @@ final class Uri implements Conditionable, UriInterface
      * @var string
      */
     private const ASCII = " eiasntrolud][cmp'\ng|hv.fb,:=-q10C2*yx)(L9AS/P\"EjMIk3>5T<D4}B{8FwR67UGN;JzV#HOW_&!K?XQ%Y\\\tZ+~^\$@`\x00\x01\x02\x03\x04\x05\x06\x07\x08\v\f\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f";
-    private readonly ?string $scheme;
-    private readonly ?string $user;
-    private readonly ?string $pass;
-    private readonly ?string $userInfo;
-    private readonly ?string $host;
-    private readonly ?int $port;
-    private readonly ?string $authority;
-    private readonly string $path;
-    private readonly ?string $query;
-    private readonly ?string $fragment;
-    private readonly string $uriAsciiString;
-    private readonly string $uriUnicodeString;
-    private readonly ?string $origin;
+    /**
+     * @readonly
+     * @var string|null
+     */
+    private $scheme;
+    /**
+     * @readonly
+     * @var string|null
+     */
+    private $user;
+    /**
+     * @readonly
+     * @var string|null
+     */
+    private $pass;
+    /**
+     * @readonly
+     * @var string|null
+     */
+    private $userInfo;
+    /**
+     * @readonly
+     * @var string|null
+     */
+    private $host;
+    /**
+     * @readonly
+     * @var int|null
+     */
+    private $port;
+    /**
+     * @readonly
+     * @var string|null
+     */
+    private $authority;
+    /**
+     * @readonly
+     * @var string
+     */
+    private $path;
+    /**
+     * @readonly
+     * @var string|null
+     */
+    private $query;
+    /**
+     * @readonly
+     * @var string|null
+     */
+    private $fragment;
+    /**
+     * @readonly
+     * @var string
+     */
+    private $uriAsciiString;
+    /**
+     * @readonly
+     * @var string
+     */
+    private $uriUnicodeString;
+    /**
+     * @readonly
+     * @var string|null
+     */
+    private $origin;
     private function __construct(?string $scheme, ?string $user, #[SensitiveParameter] ?string $pass, ?string $host, ?int $port, string $path, ?string $query, ?string $fragment)
     {
         $this->scheme = $this->formatScheme($scheme);
@@ -215,7 +267,7 @@ final class Uri implements Conditionable, UriInterface
         $this->assertValidState();
         $this->origin = $this->setOrigin();
         $host = $this->getUnicodeHost();
-        $this->uriUnicodeString = $host === $this->host ? $this->uriAsciiString : UriString::buildUri($this->scheme, UriString::buildAuthority([...$this->toComponents(), ...['host' => $host]]), $this->path, $this->query, $this->fragment);
+        $this->uriUnicodeString = $host === $this->host ? $this->uriAsciiString : UriString::buildUri($this->scheme, UriString::buildAuthority(array_merge($this->toComponents(), ['host' => $host])), $this->path, $this->query, $this->fragment);
     }
     /**
      * Format the Scheme and Host component.
@@ -271,11 +323,14 @@ final class Uri implements Conditionable, UriInterface
     {
         $formattedHost = rawurldecode($host);
         if ($formattedHost === $host) {
-            return match (1) {
-                preg_match(self::REGEXP_HOST_REGNAME, $formattedHost) => $formattedHost,
-                preg_match(self::REGEXP_HOST_GEN_DELIMS, $formattedHost) => throw new SyntaxError('The host `' . $host . '` is invalid : a registered name cannot contain URI delimiters or spaces.'),
-                default => IdnaConverter::toAsciiOrFail($host),
-            };
+            switch (1) {
+                case preg_match(self::REGEXP_HOST_REGNAME, $formattedHost):
+                    return $formattedHost;
+                case preg_match(self::REGEXP_HOST_GEN_DELIMS, $formattedHost):
+                    throw new SyntaxError('The host `' . $host . '` is invalid : a registered name cannot contain URI delimiters or spaces.');
+                default:
+                    return IdnaConverter::toAsciiOrFail($host);
+            }
         }
         if (IdnaConverter::toAscii($formattedHost)->hasErrors()) {
             throw new SyntaxError('The host `' . $host . '` is invalid : the registered name contains invalid characters.');
@@ -309,7 +364,7 @@ final class Uri implements Conditionable, UriInterface
         }
         //Only the address block fe80::/10 can have a Zone ID attach to
         //let's detect the link local significant 10 bits
-        if (str_starts_with((string) inet_pton($ip), self::HOST_ADDRESS_BLOCK)) {
+        if (strncmp((string) inet_pton($ip), self::HOST_ADDRESS_BLOCK, strlen(self::HOST_ADDRESS_BLOCK)) === 0) {
             return $host;
         }
         throw new SyntaxError('The host `' . $host . '` is invalid : the IP host is malformed.');
@@ -321,28 +376,34 @@ final class Uri implements Conditionable, UriInterface
      */
     private function formatPort(?int $port = null) : ?int
     {
-        $defaultPort = null !== $this->scheme ? UriScheme::tryFrom($this->scheme)?->port() : null;
-        return match (\true) {
-            null === $port, $defaultPort === $port => null,
-            0 > $port => throw new SyntaxError('The port `' . $port . '` is invalid.'),
-            default => $port,
-        };
+        $defaultPort = null !== $this->scheme ? ($nullsafeVariable1 = UriScheme::tryFrom($this->scheme)) ? $nullsafeVariable1->port() : null : null;
+        switch (\true) {
+            case null === $port:
+            case $defaultPort === $port:
+                return null;
+            case 0 > $port:
+                throw new SyntaxError('The port `' . $port . '` is invalid.');
+            default:
+                return $port;
+        }
     }
     /**
      * Create a new instance from a string or a stringable structure or returns null on failure.
+     * @param Rfc3986Uri|WhatWgUrl|\Matomo\Dependencies\Oauth2\League\Uri\Urn|\Stringable|string $uri
      */
-    public static function tryNew(Rfc3986Uri|WhatWgUrl|Urn|Stringable|string $uri = '') : ?self
+    public static function tryNew($uri = '') : ?self
     {
         try {
             return self::new($uri);
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
             return null;
         }
     }
     /**
      * Create a new instance from a string.
+     * @param Rfc3986Uri|WhatWgUrl|\Matomo\Dependencies\Oauth2\League\Uri\Urn|\Stringable|string $uri
      */
-    public static function new(Rfc3986Uri|WhatWgUrl|Urn|Stringable|string $uri = '') : self
+    public static function new($uri = '') : self
     {
         if ($uri instanceof Rfc3986Uri) {
             return new self($uri->getRawScheme(), $uri->getRawUsername(), $uri->getRawPassword(), $uri->getRawHost(), $uri->getPort(), $uri->getRawPath(), $uri->getRawQuery(), $uri->getRawFragment());
@@ -358,8 +419,10 @@ final class Uri implements Conditionable, UriInterface
      * Returns a new instance from a URI and a Base URI.or null on failure.
      *
      * The returned URI must be absolute if a base URI is provided
+     * @param Rfc3986Uri|WhatWgUrl|\Matomo\Dependencies\Oauth2\League\Uri\Urn|\Stringable|string $uri
+     * @param Rfc3986Uri|WhatWgUrl|\Matomo\Dependencies\Oauth2\League\Uri\Urn|\Stringable|string|null $baseUri
      */
-    public static function parse(Rfc3986Uri|WhatWgUrl|Urn|Stringable|string $uri, Rfc3986Uri|WhatWgUrl|Urn|Stringable|string|null $baseUri = null) : ?self
+    public static function parse($uri, $baseUri = null) : ?self
     {
         try {
             if (null === $baseUri) {
@@ -378,7 +441,7 @@ final class Uri implements Conditionable, UriInterface
                 $baseUri = $baseUri->toAsciiString();
             }
             return self::new(UriString::resolve($uri, $baseUri));
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
             return null;
         }
     }
@@ -387,14 +450,18 @@ final class Uri implements Conditionable, UriInterface
      *
      * @throws TemplateCanNotBeExpanded if the variables are invalid or missing
      * @throws UriException if the resulting expansion cannot be converted to a UriInterface instance
+     * @param \Matomo\Dependencies\Oauth2\League\Uri\UriTemplate|\Stringable|string $template
      */
-    public static function fromTemplate(UriTemplate|Stringable|string $template, iterable $variables = []) : self
+    public static function fromTemplate($template, iterable $variables = []) : self
     {
-        return match (\true) {
-            $template instanceof UriTemplate => self::new($template->expand($variables)),
-            $template instanceof UriTemplate\Template => self::new($template->expand($variables)),
-            default => self::new(UriTemplate\Template::new($template)->expand($variables)),
-        };
+        switch (\true) {
+            case $template instanceof UriTemplate:
+                return self::new($template->expand($variables));
+            case $template instanceof UriTemplate\Template:
+                return self::new($template->expand($variables));
+            default:
+                return self::new(UriTemplate\Template::new($template)->expand($variables));
+        }
     }
     /**
      * Create a new instance from a hash representation of the URI similar
@@ -413,13 +480,13 @@ final class Uri implements Conditionable, UriInterface
     /**
      * Create a new instance from a data file path.
      *
-     * @param SplFileInfo|SplFileObject|resource|Stringable|string $path
+     * @param mixed $path
      * @param ?resource $context
      *
      * @throws MissingFeature If ext/fileinfo is not installed
      * @throws SyntaxError If the file does not exist or is not readable
      */
-    public static function fromFileContents(mixed $path, $context = null) : self
+    public static function fromFileContents($path, $context = null) : self
     {
         FeatureDetection::supportsFileDetection();
         $finfo = new finfo(FILEINFO_MIME_TYPE);
@@ -436,7 +503,9 @@ final class Uri implements Conditionable, UriInterface
         };
         /** @var Closure(resource): array{0:string, 1:string} $fromResource */
         $fromResource = function ($stream) use($finfo, $path, $bufferSize) : array {
-            set_error_handler(fn(int $errno, string $errstr, string $errfile, int $errline) => \true);
+            set_error_handler(function (int $errno, string $errstr, string $errfile, int $errline) {
+                return \true;
+            });
             $raw = fread($stream, $bufferSize);
             \false !== $raw || throw new SyntaxError('The file `' . $path . '` does not exist or is not readable.');
             $mimetype = (string) $finfo->buffer($raw);
@@ -447,37 +516,55 @@ final class Uri implements Conditionable, UriInterface
             return [$mimetype, $raw];
         };
         /** @var Closure(Stringable|string, resource|null): array{0:string, 1:string} $fromPath */
-        $fromPath = function (Stringable|string $path, $context) use($finfo) : array {
+        $fromPath = function ($path, $context) use($finfo) : array {
             $path = (string) $path;
-            set_error_handler(fn(int $errno, string $errstr, string $errfile, int $errline) => \true);
-            $raw = file_get_contents(filename: $path, context: $context);
+            set_error_handler(function (int $errno, string $errstr, string $errfile, int $errline) {
+                return \true;
+            });
+            $raw = file_get_contents($path, false, $context);
             restore_error_handler();
             \false !== $raw || throw new SyntaxError('The file `' . $path . '` does not exist or is not readable.');
-            $mimetype = (string) $finfo->file(filename: $path, flags: FILEINFO_MIME, context: $context);
+            $mimetype = (string) $finfo->file($path, FILEINFO_MIME, $context);
             return [$mimetype, $raw];
         };
-        [$mimetype, $raw] = match (\true) {
-            $path instanceof SplFileObject => $fromFileObject($path),
-            $path instanceof SplFileInfo => $fromFileObject($path->openFile(mode: 'rb', context: $context)),
-            is_resource($path) => $fromResource($path),
-            $path instanceof Stringable, is_string($path) => $fromPath($path, $context),
-            default => throw new TypeError('The path `' . $path . '` is not a valid resource.'),
-        };
+        switch (\true) {
+            case $path instanceof SplFileObject:
+                [$mimetype, $raw] = $fromFileObject($path);
+                break;
+            case $path instanceof SplFileInfo:
+                [$mimetype, $raw] = $fromFileObject($path->openFile('rb', false, $context));
+                break;
+            case is_resource($path):
+                [$mimetype, $raw] = $fromResource($path);
+                break;
+            case $path instanceof Stringable:
+            case is_string($path):
+                [$mimetype, $raw] = $fromPath($path, $context);
+                break;
+            default:
+                throw new TypeError('The path `' . $path . '` is not a valid resource.');
+        }
         return Uri::fromComponents(['scheme' => 'data', 'path' => str_replace(' ', '', $mimetype . ';base64,' . base64_encode($raw))]);
     }
     /**
      * Create a new instance from a data URI string.
      *
      * @throws SyntaxError If the parameter syntax is invalid
+     * @param \Stringable|string $data
      */
-    public static function fromData(Stringable|string $data, string $mimetype = '', string $parameters = '') : self
+    public static function fromData($data, string $mimetype = '', string $parameters = '') : self
     {
         static $regexpMimetype = ',^\\w+/[-.\\w]+(?:\\+[-.\\w]+)?$,';
-        $mimetype = match (\true) {
-            '' === $mimetype => 'text/plain',
-            1 === preg_match($regexpMimetype, $mimetype) => $mimetype,
-            default => throw new SyntaxError('Invalid mimeType, `' . $mimetype . '`.'),
-        };
+        switch (\true) {
+            case '' === $mimetype:
+                $mimetype = 'text/plain';
+                break;
+            case 1 === preg_match($regexpMimetype, $mimetype):
+                $mimetype = $mimetype;
+                break;
+            default:
+                throw new SyntaxError('Invalid mimeType, `' . $mimetype . '`.');
+        }
         $data = (string) $data;
         if ('' === $parameters) {
             return self::fromComponents(['scheme' => 'data', 'path' => self::formatDataPath($mimetype . ',' . rawurlencode($data))]);
@@ -486,29 +573,37 @@ final class Uri implements Conditionable, UriInterface
             $properties = explode('=', $parameter);
             return 2 !== count($properties) || 'base64' === strtolower($properties[0]);
         };
-        if (str_starts_with($parameters, ';')) {
+        if (strncmp($parameters, ';', strlen(';')) === 0) {
             $parameters = substr($parameters, 1);
         }
-        return match ([]) {
-            array_filter(explode(';', $parameters), $isInvalidParameter) => self::fromComponents(['scheme' => 'data', 'path' => self::formatDataPath($mimetype . ';' . $parameters . ',' . rawurlencode($data))]),
-            default => throw new SyntaxError(sprintf('Invalid mediatype parameters, `%s`.', $parameters)),
-        };
+        switch ([]) {
+            case array_filter(explode(';', $parameters), $isInvalidParameter):
+                return self::fromComponents(['scheme' => 'data', 'path' => self::formatDataPath($mimetype . ';' . $parameters . ',' . rawurlencode($data))]);
+            default:
+                throw new SyntaxError(sprintf('Invalid mediatype parameters, `%s`.', $parameters));
+        }
     }
     /**
      * Create a new instance from a Unix path string.
+     * @param \Stringable|string $path
      */
-    public static function fromUnixPath(Stringable|string $path) : self
+    public static function fromUnixPath($path) : self
     {
-        $path = implode('/', array_map(rawurlencode(...), explode('/', (string) $path)));
-        return Uri::fromComponents(match (\true) {
-            '/' !== ($path[0] ?? '') => ['path' => $path],
-            default => ['path' => $path, 'scheme' => 'file', 'host' => ''],
-        });
+        $path = implode('/', array_map(\Closure::fromCallable('rawurlencode'), explode('/', (string) $path)));
+        return Uri::fromComponents((function () use ($path) {
+            switch (\true) {
+                case '/' !== ($path[0] ?? ''):
+                    return ['path' => $path];
+                default:
+                    return ['path' => $path, 'scheme' => 'file', 'host' => ''];
+            }
+        })());
     }
     /**
      * Create a new instance from a local Windows path string.
+     * @param \Stringable|string $path
      */
-    public static function fromWindowsPath(Stringable|string $path) : self
+    public static function fromWindowsPath($path) : self
     {
         $root = '';
         $path = (string) $path;
@@ -517,13 +612,13 @@ final class Uri implements Conditionable, UriInterface
             $path = substr($path, strlen($root));
         }
         $path = str_replace('\\', '/', $path);
-        $path = implode('/', array_map(rawurlencode(...), explode('/', $path)));
+        $path = implode('/', array_map(\Closure::fromCallable('rawurlencode'), explode('/', $path)));
         //Local Windows absolute path
         if ('' !== $root) {
             return Uri::fromComponents(['path' => '/' . $root . $path, 'scheme' => 'file', 'host' => '']);
         }
         //UNC Windows Path
-        if (!str_starts_with($path, '//')) {
+        if (strncmp($path, '//', strlen('//')) !== 0) {
             return Uri::fromComponents(['path' => $path]);
         }
         [$host, $path] = explode('/', substr($path, 2), 2) + [1 => ''];
@@ -533,16 +628,21 @@ final class Uri implements Conditionable, UriInterface
      * Creates a new instance from a RFC8089 compatible URI.
      *
      * @see https://datatracker.ietf.org/doc/html/rfc8089
+     * @param \Stringable|string $uri
+     * @return static
      */
-    public static function fromRfc8089(Stringable|string $uri) : static
+    public static function fromRfc8089($uri)
     {
         $fileUri = self::new((string) preg_replace(',^(file:/)([^/].*)$,i', 'file:///$2', (string) $uri));
         $scheme = $fileUri->getScheme();
-        return match (\true) {
-            'file' !== $scheme => throw new SyntaxError('As per RFC8089, the URI scheme must be `file`.'),
-            'localhost' === $fileUri->getAuthority() => $fileUri->withHost(''),
-            default => $fileUri,
-        };
+        switch (\true) {
+            case 'file' !== $scheme:
+                throw new SyntaxError('As per RFC8089, the URI scheme must be `file`.');
+            case 'localhost' === $fileUri->getAuthority():
+                return $fileUri->withHost('');
+            default:
+                return $fileUri;
+        }
     }
     /**
      * Create a new instance from the environment.
@@ -561,10 +661,12 @@ final class Uri implements Conditionable, UriInterface
     private static function fetchScheme(array $server) : string
     {
         $server += ['HTTPS' => ''];
-        return match (\true) {
-            \false !== filter_var($server['HTTPS'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) => 'https',
-            default => 'http',
-        };
+        switch (\true) {
+            case \false !== filter_var($server['HTTPS'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE):
+                return 'https';
+            default:
+                return 'http';
+        }
     }
     /**
      * Returns the environment user info.
@@ -576,7 +678,7 @@ final class Uri implements Conditionable, UriInterface
         $server += ['PHP_AUTH_USER' => null, 'PHP_AUTH_PW' => null, 'HTTP_AUTHORIZATION' => ''];
         $user = $server['PHP_AUTH_USER'];
         $pass = $server['PHP_AUTH_PW'];
-        if (str_starts_with(strtolower($server['HTTP_AUTHORIZATION']), 'basic')) {
+        if (strncmp(strtolower($server['HTTP_AUTHORIZATION']), 'basic', strlen('basic')) === 0) {
             $userinfo = base64_decode(substr($server['HTTP_AUTHORIZATION'], 6), \true);
             \false !== $userinfo || throw new SyntaxError('The user info could not be detected');
             [$user, $pass] = explode(':', $userinfo, 2) + [1 => null];
@@ -638,11 +740,14 @@ final class Uri implements Conditionable, UriInterface
      */
     private function formatPath(string $path) : string
     {
-        return match ($this->scheme) {
-            'data' => Encoder::encodePath(self::formatDataPath($path)),
-            'file' => self::formatFilePath(Encoder::encodePath($path)),
-            default => Encoder::encodePath($path),
-        };
+        switch ($this->scheme) {
+            case 'data':
+                return Encoder::encodePath(self::formatDataPath($path));
+            case 'file':
+                return self::formatFilePath(Encoder::encodePath($path));
+            default:
+                return Encoder::encodePath($path);
+        }
     }
     /**
      * Filter the Path component.
@@ -656,7 +761,7 @@ final class Uri implements Conditionable, UriInterface
         if ('' == $path) {
             return 'text/plain;charset=us-ascii,';
         }
-        if (strlen($path) !== strspn($path, self::ASCII) || !str_contains($path, ',')) {
+        if (strlen($path) !== strspn($path, self::ASCII) || strpos($path, ',') === false) {
             throw new SyntaxError('The path `' . $path . '` is invalid according to RFC2937.');
         }
         $parts = explode(',', $path, 2) + [1 => null];
@@ -687,7 +792,7 @@ final class Uri implements Conditionable, UriInterface
         if ($isBinary) {
             $parameters = substr($parameters, 0, -strlen($matches[0]));
         }
-        $res = array_filter(array_filter(explode(';', $parameters), self::validateParameter(...)));
+        $res = array_filter(array_filter(explode(';', $parameters), \Closure::fromCallable([self::class, 'validateParameter'])));
         [] === $res || throw new SyntaxError('The path parameters `' . $parameters . '` is invalid.');
         if (!$isBinary) {
             return;
@@ -710,7 +815,9 @@ final class Uri implements Conditionable, UriInterface
      */
     private static function formatFilePath(string $path) : string
     {
-        return (string) preg_replace_callback(self::REGEXP_FILE_PATH, static fn(array $matches): string => $matches['delim'] . $matches['volume'] . (isset($matches['rest']) ? ':' . $matches['rest'] : ''), $path);
+        return (string) preg_replace_callback(self::REGEXP_FILE_PATH, static function (array $matches) : string {
+            return $matches['delim'] . $matches['volume'] . (isset($matches['rest']) ? ':' . $matches['rest'] : '');
+        }, $path);
     }
     /**
      * assert the URI internal state is valid.
@@ -725,11 +832,11 @@ final class Uri implements Conditionable, UriInterface
         if (null !== $this->authority && ('' !== $this->path && '/' !== $this->path[0])) {
             throw new SyntaxError('If an authority is present the path must be empty or start with a `/`.');
         }
-        if (null === $this->authority && str_starts_with($this->path, '//')) {
+        if (null === $this->authority && strncmp($this->path, '//', strlen('//')) === 0) {
             throw new SyntaxError('If there is no authority the path `' . $this->path . '` cannot start with a `//`.');
         }
         $pos = strpos($this->path, ':');
-        if (null === $this->authority && null === $this->scheme && \false !== $pos && !str_contains(substr($this->path, 0, $pos), '/')) {
+        if (null === $this->authority && null === $this->scheme && \false !== $pos && strpos(substr($this->path, 0, $pos), '/') === false) {
             throw new SyntaxError('In absence of a scheme and an authority the first path segment cannot contain a colon (":") character.');
         }
     }
@@ -750,26 +857,48 @@ final class Uri implements Conditionable, UriInterface
             return;
         }
         $schemeType = $scheme->type();
-        match ($scheme) {
-            UriScheme::Blob => $this->isValidBlob(),
-            UriScheme::Mailto => $this->isValidMailto(),
-            UriScheme::Data, UriScheme::About, UriScheme::Javascript => $this->isUriWithSchemeAndPathOnly(),
-            UriScheme::File => $this->isUriWithSchemeHostAndPathOnly(),
-            UriScheme::Ftp, UriScheme::Gopher, UriScheme::Afp, UriScheme::Dict, UriScheme::Msrps, UriScheme::Msrp, UriScheme::Mtqp, UriScheme::Rsync, UriScheme::Ssh, UriScheme::Svn, UriScheme::Snmp => $this->isNonEmptyHostUriWithoutFragmentAndQuery(),
-            UriScheme::Https, UriScheme::Http => $this->isNonEmptyHostUri(),
-            UriScheme::Ws, UriScheme::Wss, UriScheme::Ipp, UriScheme::Ipps => $this->isNonEmptyHostUriWithoutFragment(),
-            UriScheme::Ldap, UriScheme::Ldaps, UriScheme::Acap, UriScheme::Imaps, UriScheme::Imap, UriScheme::Redis => null === $this->fragment,
-            UriScheme::Prospero => null === $this->fragment && null === $this->query && null === $this->userInfo,
-            UriScheme::Urn => null !== Urn::parse($this->uriAsciiString),
-            UriScheme::Telnet, UriScheme::Tn3270 => null === $this->fragment && null === $this->query && in_array($this->path, ['', '/'], \true),
-            UriScheme::Vnc => null !== $this->authority && null === $this->fragment && '' === $this->path,
-            default => $schemeType->isUnknown() || $schemeType->isOpaque() && null === $this->authority || $schemeType->isHierarchical() && null !== $this->authority,
-        } || throw new SyntaxError('The uri `' . $this->uriAsciiString . '` is invalid for the `' . $this->scheme . '` scheme.');
+        switch ($scheme) {
+            case UriScheme::Blob:
+            case UriScheme::Mailto:
+            case UriScheme::Data:
+            case UriScheme::About:
+            case UriScheme::Javascript:
+            case UriScheme::File:
+            case UriScheme::Ftp:
+            case UriScheme::Gopher:
+            case UriScheme::Afp:
+            case UriScheme::Dict:
+            case UriScheme::Msrps:
+            case UriScheme::Msrp:
+            case UriScheme::Mtqp:
+            case UriScheme::Rsync:
+            case UriScheme::Ssh:
+            case UriScheme::Svn:
+            case UriScheme::Snmp:
+            case UriScheme::Https:
+            case UriScheme::Http:
+            case UriScheme::Ws:
+            case UriScheme::Wss:
+            case UriScheme::Ipp:
+            case UriScheme::Ipps:
+            case UriScheme::Ldap:
+            case UriScheme::Ldaps:
+            case UriScheme::Acap:
+            case UriScheme::Imaps:
+            case UriScheme::Imap:
+            case UriScheme::Redis:
+            case UriScheme::Prospero:
+            case UriScheme::Urn:
+            case UriScheme::Telnet:
+            case UriScheme::Tn3270:
+            case UriScheme::Vnc:
+            default:
+        }
     }
     private function isValidBlob() : bool
     {
         static $regexpUuidRfc4122 = '/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i';
-        if (!$this->isUriWithSchemeAndPathOnly() || '' === $this->path || !str_contains($this->path, '/') || str_ends_with($this->path, '/') || 1 !== preg_match($regexpUuidRfc4122, basename($this->path))) {
+        if (!$this->isUriWithSchemeAndPathOnly() || '' === $this->path || strpos($this->path, '/') === false || substr_compare($this->path, '/', -strlen('/')) === 0 || 1 !== preg_match($regexpUuidRfc4122, basename($this->path))) {
             return \false;
         }
         $origin = dirname($this->path);
@@ -778,14 +907,14 @@ final class Uri implements Conditionable, UriInterface
         }
         try {
             $components = UriString::parse($origin);
-            return '' === $components['path'] && null === $components['query'] && null === $components['fragment'] && \true === UriScheme::tryFrom((string) $components['scheme'])?->isWhatWgSpecial();
-        } catch (UriException) {
+            return '' === $components['path'] && null === $components['query'] && null === $components['fragment'] && \true === (($nullsafeVariable2 = UriScheme::tryFrom((string) $components['scheme'])) ? $nullsafeVariable2->isWhatWgSpecial() : null);
+        } catch (UriException $exception) {
             return \false;
         }
     }
     private function isValidMailto() : bool
     {
-        if (null !== $this->authority || null !== $this->fragment || str_contains((string) $this->query, '?')) {
+        if (null !== $this->authority || null !== $this->fragment || strpos((string) $this->query, '?') !== false) {
             return \false;
         }
         static $mailHeaders = ['to', 'cc', 'bcc', 'reply-to', 'from', 'sender', 'resent-to', 'resent-cc', 'resent-bcc', 'resent-from', 'resent-sender', 'return-path', 'delivery-to', 'site-owner'];
@@ -828,7 +957,7 @@ final class Uri implements Conditionable, UriInterface
     {
         try {
             if ('blob' !== $this->scheme) {
-                if (!(UriScheme::tryFrom($this->scheme ?? '')?->isWhatWgSpecial() ?? \false)) {
+                if (!((($nullsafeVariable3 = UriScheme::tryFrom($this->scheme ?? '')) ? $nullsafeVariable3->isWhatWgSpecial() : null) ?? \false)) {
                     return null;
                 }
                 $host = $this->host;
@@ -836,7 +965,7 @@ final class Uri implements Conditionable, UriInterface
                 if (null !== $converted) {
                     try {
                         $converted = IPv4Converter::fromEnvironment()->toDecimal($host);
-                    } catch (MissingFeature) {
+                    } catch (MissingFeature $exception) {
                         $converted = null;
                     }
                     if (\false === filter_var($converted, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
@@ -851,11 +980,11 @@ final class Uri implements Conditionable, UriInterface
             }
             $components = UriString::parse($this->path);
             $scheme = strtolower($components['scheme'] ?? '');
-            if (!(UriScheme::tryFrom($scheme)?->isWhatWgSpecial() ?? \false)) {
+            if (!((($nullsafeVariable4 = UriScheme::tryFrom($scheme)) ? $nullsafeVariable4->isWhatWgSpecial() : null) ?? \false)) {
                 return null;
             }
             return self::fromComponents($components)->origin;
-        } catch (UriException) {
+        } catch (UriException $exception) {
             return null;
         }
     }
@@ -953,10 +1082,13 @@ final class Uri implements Conditionable, UriInterface
      */
     public function toUnixPath() : ?string
     {
-        return match ($this->scheme) {
-            'file', null => rawurldecode($this->path),
-            default => null,
-        };
+        switch ($this->scheme) {
+            case 'file':
+            case null:
+                return rawurldecode($this->path);
+            default:
+                return null;
+        }
     }
     /**
      * Returns the Windows filesystem path.
@@ -980,10 +1112,12 @@ final class Uri implements Conditionable, UriInterface
             return $root . str_replace('/', '\\', rawurldecode($path));
         }
         $host = $this->host;
-        return match (null) {
-            $host => str_replace('/', '\\', rawurldecode($originalPath)),
-            default => '\\\\' . $host . '\\' . str_replace('/', '\\', rawurldecode($path)),
-        };
+        switch (null) {
+            case $host:
+                return str_replace('/', '\\', rawurldecode($originalPath));
+            default:
+                return '\\\\' . $host . '\\' . str_replace('/', '\\', rawurldecode($path));
+        }
     }
     /**
      * Returns a string representation of a File URI according to RFC8089.
@@ -995,14 +1129,20 @@ final class Uri implements Conditionable, UriInterface
     public function toRfc8089() : ?string
     {
         $path = $this->path;
-        return match (\true) {
-            'file' !== $this->scheme => null,
-            in_array($this->authority, ['', null, 'localhost'], \true) => 'file:' . match (\true) {
-                '' === $path, '/' === $path[0] => $path,
-                default => '/' . $path,
-            },
-            default => $this->toString(),
-        };
+        switch (\true) {
+            case 'file' !== $this->scheme:
+                return null;
+            case in_array($this->authority, ['', null, 'localhost'], \true):
+                switch (\true) {
+                    case '' === $path:
+                    case '/' === $path[0]:
+                        return $path;
+                    default:
+                        return '/' . $path;
+                }
+            default:
+                return $this->toString();
+        }
     }
     /**
      * Save the data to a specific file.
@@ -1010,40 +1150,56 @@ final class Uri implements Conditionable, UriInterface
      * The method returns the number of bytes written to the file
      * or null for any other scheme except the data scheme
      *
-     * @param SplFileInfo|SplFileObject|resource|Stringable|string $destination
+     * @param mixed $destination
      * @param ?resource $context
      *
      * @throws RuntimeException if the content cannot be stored.
      */
-    public function toFileContents(mixed $destination, $context = null) : ?int
+    public function toFileContents($destination, $context = null) : ?int
     {
         if ('data' !== $this->scheme) {
             return null;
         }
         [$mediaType, $document] = explode(',', $this->path, 2) + [0 => '', 1 => null];
         null !== $document || throw new RuntimeException('Unable to extract the document part from the URI path.');
-        $data = match (\true) {
-            str_ends_with((string) $mediaType, ';base64') => (string) base64_decode($document, \true),
-            default => rawurldecode($document),
-        };
-        $res = match (\true) {
-            $destination instanceof SplFileObject => $destination->fwrite($data),
-            $destination instanceof SplFileInfo => $destination->openFile(mode: 'wb', context: $context)->fwrite($data),
-            is_resource($destination) => fwrite($destination, $data),
-            $destination instanceof Stringable, is_string($destination) => (function () use($destination, $data, $context) : int|false {
-                set_error_handler(fn(int $errno, string $errstr, string $errfile, int $errline) => \true);
-                $rsrc = fopen((string) $destination, mode: 'wb', context: $context);
-                if (\false === $rsrc) {
+        switch (\true) {
+            case substr_compare((string) $mediaType, ';base64', -strlen(';base64')) === 0:
+                $data = (string) base64_decode($document, \true);
+                break;
+            default:
+                $data = rawurldecode($document);
+                break;
+        }
+        switch (\true) {
+            case $destination instanceof SplFileObject:
+                $res = $destination->fwrite($data);
+                break;
+            case $destination instanceof SplFileInfo:
+                $res = $destination->openFile('wb', false, $context)->fwrite($data);
+                break;
+            case is_resource($destination):
+                $res = fwrite($destination, $data);
+                break;
+            case $destination instanceof Stringable:
+            case is_string($destination):
+                $res = (function () use($destination, $data, $context) {
+                    set_error_handler(function (int $errno, string $errstr, string $errfile, int $errline) {
+                        return \true;
+                    });
+                    $rsrc = fopen((string) $destination, 'wb', false, $context);
+                    if (\false === $rsrc) {
+                        restore_error_handler();
+                        throw new RuntimeException('Unable to open the destination file: ' . $destination);
+                    }
+                    $bytes = fwrite($rsrc, $data);
+                    fclose($rsrc);
                     restore_error_handler();
-                    throw new RuntimeException('Unable to open the destination file: ' . $destination);
-                }
-                $bytes = fwrite($rsrc, $data);
-                fclose($rsrc);
-                restore_error_handler();
-                return $bytes;
-            })(),
-            default => throw new TypeError('Unsupported destination type; expected SplFileObject, SplFileInfo, resource or a string; ' . (is_object($destination) ? $destination::class : gettype($destination)) . ' given.'),
-        };
+                    return $bytes;
+                })();
+                break;
+            default:
+                throw new TypeError('Unsupported destination type; expected SplFileObject, SplFileInfo, resource or a string; ' . (is_object($destination) ? get_class($destination) : gettype($destination)) . ' given.');
+        }
         \false !== $res || throw new RuntimeException('Unable to write to the destination file.');
         return $res;
     }
@@ -1116,44 +1272,72 @@ final class Uri implements Conditionable, UriInterface
     {
         return $this->origin;
     }
-    public function when(callable|bool $condition, callable $onSuccess, ?callable $onFail = null) : static
+    /**
+     * @param callable|bool $condition
+     * @return static
+     */
+    public function when($condition, callable $onSuccess, ?callable $onFail = null)
     {
         if (!is_bool($condition)) {
             $condition = $condition($this);
         }
-        return match (\true) {
-            $condition => $onSuccess($this),
-            null !== $onFail => $onFail($this),
-            default => $this,
-        } ?? $this;
+        switch (\true) {
+            case $condition:
+                return $onSuccess($this);
+            case null !== $onFail:
+                return $onFail($this);
+            default:
+                return $this;
+        }
     }
-    public function withScheme(Stringable|string|null $scheme) : static
+    /**
+     * @param \Stringable|string|null $scheme
+     * @return static
+     */
+    public function withScheme($scheme)
     {
         $scheme = $this->formatScheme($this->filterString($scheme));
-        return match ($scheme) {
-            $this->scheme => $this,
-            default => new self($scheme, $this->user, $this->pass, $this->host, $this->port, $this->path, $this->query, $this->fragment),
-        };
+        switch ($scheme) {
+            case $this->scheme:
+                return $this;
+            default:
+                return new self($scheme, $this->user, $this->pass, $this->host, $this->port, $this->path, $this->query, $this->fragment);
+        }
     }
     /**
      * Filter a string.
      *
      * @throws SyntaxError if the submitted data cannot be converted to string
+     * @param \Stringable|string|null $str
      */
-    private function filterString(Stringable|string|null $str) : ?string
+    private function filterString($str) : ?string
     {
-        $str = match (\true) {
-            $str instanceof UriComponentInterface => $str->value(),
-            null === $str => null,
-            default => (string) $str,
-        };
-        return match (\true) {
-            null === $str => null,
-            1 === preg_match(self::REGEXP_INVALID_CHARS, $str) => throw new SyntaxError('The component `' . $str . '` contains invalid characters.'),
-            default => $str,
-        };
+        switch (\true) {
+            case $str instanceof UriComponentInterface:
+                $str = $str->value();
+                break;
+            case null === $str:
+                $str = null;
+                break;
+            default:
+                $str = (string) $str;
+                break;
+        }
+        switch (\true) {
+            case null === $str:
+                return null;
+            case 1 === preg_match(self::REGEXP_INVALID_CHARS, $str):
+                throw new SyntaxError('The component `' . $str . '` contains invalid characters.');
+            default:
+                return $str;
+        }
     }
-    public function withUserInfo(Stringable|string|null $user, #[SensitiveParameter] Stringable|string|null $password = null) : static
+    /**
+     * @param \Stringable|string|null $user
+     * @param \Stringable|string|null $password
+     * @return static
+     */
+    public function withUserInfo($user, #[SensitiveParameter] $password = null)
     {
         $user = Encoder::encodeUser($this->filterString($user));
         $pass = Encoder::encodePassword($this->filterString($password));
@@ -1161,72 +1345,117 @@ final class Uri implements Conditionable, UriInterface
         if (null !== $password) {
             $userInfo .= ':' . $pass;
         }
-        return match ($userInfo) {
-            $this->userInfo => $this,
-            default => new self($this->scheme, $user, $pass, $this->host, $this->port, $this->path, $this->query, $this->fragment),
-        };
+        switch ($userInfo) {
+            case $this->userInfo:
+                return $this;
+            default:
+                return new self($this->scheme, $user, $pass, $this->host, $this->port, $this->path, $this->query, $this->fragment);
+        }
     }
-    public function withUsername(Stringable|string|null $user) : static
+    /**
+     * @param \Stringable|string|null $user
+     * @return static
+     */
+    public function withUsername($user)
     {
         return $this->withUserInfo($user, $this->pass);
     }
-    public function withPassword(#[SensitiveParameter] Stringable|string|null $password) : static
+    /**
+     * @param \Stringable|string|null $password
+     * @return static
+     */
+    public function withPassword(#[SensitiveParameter] $password)
     {
         return $this->withUserInfo($this->user, $password);
     }
-    public function withHost(Stringable|string|null $host) : static
+    /**
+     * @param \Stringable|string|null $host
+     * @return static
+     */
+    public function withHost($host)
     {
         $host = $this->formatHost($this->filterString($host));
-        return match ($host) {
-            $this->host => $this,
-            default => new self($this->scheme, $this->user, $this->pass, $host, $this->port, $this->path, $this->query, $this->fragment),
-        };
+        switch ($host) {
+            case $this->host:
+                return $this;
+            default:
+                return new self($this->scheme, $this->user, $this->pass, $host, $this->port, $this->path, $this->query, $this->fragment);
+        }
     }
-    public function withPort(int|null $port) : static
+    /**
+     * @return static
+     */
+    public function withPort(?int $port)
     {
         $port = $this->formatPort($port);
-        return match ($port) {
-            $this->port => $this,
-            default => new self($this->scheme, $this->user, $this->pass, $this->host, $port, $this->path, $this->query, $this->fragment),
-        };
+        switch ($port) {
+            case $this->port:
+                return $this;
+            default:
+                return new self($this->scheme, $this->user, $this->pass, $this->host, $port, $this->path, $this->query, $this->fragment);
+        }
     }
-    public function withPath(Stringable|string $path) : static
+    /**
+     * @param \Stringable|string $path
+     * @return static
+     */
+    public function withPath($path)
     {
-        $path = $this->formatPath($this->filterString($path) ?? throw new SyntaxError('The path component cannot be null.'));
-        return match ($path) {
-            $this->path => $this,
-            default => new self($this->scheme, $this->user, $this->pass, $this->host, $this->port, $path, $this->query, $this->fragment),
-        };
+        if ($this->filterString($path) === null) {
+            throw new SyntaxError('The path component cannot be null.');
+        }
+        $path = $this->formatPath($this->filterString($path));
+        switch ($path) {
+            case $this->path:
+                return $this;
+            default:
+                return new self($this->scheme, $this->user, $this->pass, $this->host, $this->port, $path, $this->query, $this->fragment);
+        }
     }
-    public function withQuery(Stringable|string|null $query) : static
+    /**
+     * @param \Stringable|string|null $query
+     * @return static
+     */
+    public function withQuery($query)
     {
         $query = Encoder::encodeQueryOrFragment($this->filterString($query));
-        return match ($query) {
-            $this->query => $this,
-            default => new self($this->scheme, $this->user, $this->pass, $this->host, $this->port, $this->path, $query, $this->fragment),
-        };
+        switch ($query) {
+            case $this->query:
+                return $this;
+            default:
+                return new self($this->scheme, $this->user, $this->pass, $this->host, $this->port, $this->path, $query, $this->fragment);
+        }
     }
-    public function withFragment(Stringable|string|null $fragment) : static
+    /**
+     * @param \Stringable|string|null $fragment
+     * @return static
+     */
+    public function withFragment($fragment)
     {
         if ($fragment instanceof FragmentDirective) {
             $fragment = ':~:' . $fragment->toString();
         }
         $fragment = Encoder::encodeQueryOrFragment($this->filterString($fragment));
-        return match ($fragment) {
-            $this->fragment => $this,
-            default => new self($this->scheme, $this->user, $this->pass, $this->host, $this->port, $this->path, $this->query, $fragment),
-        };
+        switch ($fragment) {
+            case $this->fragment:
+                return $this;
+            default:
+                return new self($this->scheme, $this->user, $this->pass, $this->host, $this->port, $this->path, $this->query, $fragment);
+        }
     }
     /**
      * Tells whether the `file` scheme base URI represents a local file.
      */
     public function isLocalFile() : bool
     {
-        return match (\true) {
-            'file' !== $this->scheme => \false,
-            in_array($this->authority, ['', null, 'localhost'], \true) => \true,
-            default => \false,
-        };
+        switch (\true) {
+            case 'file' !== $this->scheme:
+                return \false;
+            case in_array($this->authority, ['', null, 'localhost'], \true):
+                return \true;
+            default:
+                return \false;
+        }
     }
     /**
      * Tells whether the URI is opaque or not.
@@ -1240,8 +1469,9 @@ final class Uri implements Conditionable, UriInterface
     }
     /**
      * Tells whether two URI do not share the same origin.
+     * @param Rfc3986Uri|WhatWgUrl|\Matomo\Dependencies\Oauth2\League\Uri\Urn|\Stringable|string $uri
      */
-    public function isCrossOrigin(Rfc3986Uri|WhatWgUrl|Urn|Stringable|string $uri) : bool
+    public function isCrossOrigin($uri) : bool
     {
         if (null === $this->origin) {
             return \true;
@@ -1252,7 +1482,10 @@ final class Uri implements Conditionable, UriInterface
         }
         return $this->origin !== $origin;
     }
-    public function isSameOrigin(Rfc3986Uri|WhatWgUrl|Urn|Stringable|string $uri) : bool
+    /**
+     * @param Rfc3986Uri|WhatWgUrl|\Matomo\Dependencies\Oauth2\League\Uri\Urn|\Stringable|string $uri
+     */
+    public function isSameOrigin($uri) : bool
     {
         return !$this->isCrossOrigin($uri);
     }
@@ -1286,12 +1519,17 @@ final class Uri implements Conditionable, UriInterface
     }
     /**
      * Tells whether both URIs refer to the same document.
+     * @param Rfc3986Uri|WhatWgUrl|\Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriInterface|\Stringable|\Matomo\Dependencies\Oauth2\League\Uri\Urn|string $uri
      */
-    public function isSameDocument(Rfc3986Uri|WhatWgUrl|UriInterface|Stringable|Urn|string $uri) : bool
+    public function isSameDocument($uri) : bool
     {
         return $this->equals($uri);
     }
-    public function equals(Rfc3986Uri|WhatWgUrl|UriInterface|Stringable|Urn|string $uri, UriComparisonMode $uriComparisonMode = UriComparisonMode::ExcludeFragment) : bool
+    /**
+     * @param Rfc3986Uri|WhatWgUrl|\Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriInterface|\Stringable|\Matomo\Dependencies\Oauth2\League\Uri\Urn|string $uri
+     * @param \Matomo\Dependencies\Oauth2\League\Uri\UriComparisonMode::* $uriComparisonMode
+     */
+    public function equals($uri, $uriComparisonMode = UriComparisonMode::ExcludeFragment) : bool
     {
         if (!$uri instanceof UriInterface && !$uri instanceof Rfc3986Uri && !$uri instanceof WhatWgUrl) {
             $uri = self::tryNew($uri);
@@ -1304,17 +1542,21 @@ final class Uri implements Conditionable, UriInterface
             $uri = $uri->withFragment(null);
             $baseUri = $baseUri->withFragment(null);
         }
-        return $baseUri->normalize()->toString() === match (\true) {
-            $uri instanceof Rfc3986Uri => $uri->toString(),
-            $uri instanceof WhatWgUrl => $uri->toAsciiString(),
-            default => $uri->normalize()->toString(),
-        };
+        switch (\true) {
+            case $uri instanceof Rfc3986Uri:
+                return $uri->toString();
+            case $uri instanceof WhatWgUrl:
+                return $uri->toAsciiString();
+            default:
+                return $uri->normalize()->toString();
+        }
     }
     /**
      * Normalize a URI by applying non-destructive and destructive normalization
      * rules as defined in RFC3986 and RFC3987.
+     * @return static
      */
-    public function normalize() : static
+    public function normalize()
     {
         $uriString = $this->toString();
         if ('' === $uriString) {
@@ -1322,7 +1564,7 @@ final class Uri implements Conditionable, UriInterface
         }
         $normalizedUriString = UriString::normalize($uriString);
         $normalizedUri = self::new($normalizedUriString);
-        if (null !== $normalizedUri->getAuthority() && ('' === $normalizedUri->getPath() && (UriScheme::tryFrom($normalizedUri->getScheme() ?? '')?->isWhatWgSpecial() ?? \false))) {
+        if (null !== $normalizedUri->getAuthority() && ('' === $normalizedUri->getPath() && ((($nullsafeVariable5 = UriScheme::tryFrom($normalizedUri->getScheme() ?? '')) ? $nullsafeVariable5->isWhatWgSpecial() : null) ?? \false))) {
             $normalizedUri = $normalizedUri->withPath('/');
         }
         if ($normalizedUri->toString() === $uriString) {
@@ -1338,14 +1580,22 @@ final class Uri implements Conditionable, UriInterface
      *
      * This method MUST be transparent when dealing with errors and exceptions.
      * It MUST not alter or silence them apart from validating its own parameters.
+     * @param Rfc3986Uri|WhatWgUrl|\Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriInterface|\Stringable|\Matomo\Dependencies\Oauth2\League\Uri\Urn|string $uri
+     * @return static
      */
-    public function resolve(Rfc3986Uri|WhatWgUrl|UriInterface|Stringable|Urn|string $uri) : static
+    public function resolve($uri)
     {
-        return self::new(UriString::resolve(match (\true) {
-            $uri instanceof UriInterface, $uri instanceof Rfc3986Uri => $uri->toString(),
-            $uri instanceof WhatWgUrl => $uri->toAsciiString(),
-            default => $uri,
-        }, $this->toString()));
+        return self::new(UriString::resolve((function () use ($uri) {
+            switch (\true) {
+                case $uri instanceof UriInterface:
+                case $uri instanceof Rfc3986Uri:
+                    return $uri->toString();
+                case $uri instanceof WhatWgUrl:
+                    return $uri->toAsciiString();
+                default:
+                    return $uri;
+            }
+        })(), $this->toString()));
     }
     /**
      * Relativize a URI according to a base URI.
@@ -1355,8 +1605,10 @@ final class Uri implements Conditionable, UriInterface
      *
      * This method MUST be transparent when dealing with error and exceptions.
      * It MUST not alter of silence them apart from validating its own parameters.
+     * @param Rfc3986Uri|WhatWgUrl|\Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriInterface|\Stringable|\Matomo\Dependencies\Oauth2\League\Uri\Urn|string $uri
+     * @return static
      */
-    public function relativize(Rfc3986Uri|WhatWgUrl|UriInterface|Stringable|Urn|string $uri) : static
+    public function relativize($uri)
     {
         $uri = self::new($uri);
         if ($this->scheme !== $uri->getScheme() || $this->authority !== $uri->getAuthority() || $uri->isRelativePath()) {
@@ -1365,12 +1617,16 @@ final class Uri implements Conditionable, UriInterface
         $targetPath = $uri->getPath();
         $basePath = $this->path;
         $uri = $uri->withScheme(null)->withUserInfo(null)->withPort(null)->withHost(null);
-        return match (\true) {
-            $targetPath !== $basePath => $uri->withPath(self::relativizePath($targetPath, $basePath)),
-            $this->query === $uri->getQuery() => $uri->withPath('')->withQuery(null),
-            null === $uri->getQuery() => $uri->withPath(self::formatPathWithEmptyBaseQuery($targetPath)),
-            default => $uri->withPath(''),
-        };
+        switch (\true) {
+            case $targetPath !== $basePath:
+                return $uri->withPath(self::relativizePath($targetPath, $basePath));
+            case $this->query === $uri->getQuery():
+                return $uri->withPath('')->withQuery(null);
+            case null === $uri->getQuery():
+                return $uri->withPath(self::formatPathWithEmptyBaseQuery($targetPath));
+            default:
+                return $uri->withPath('');
+        }
     }
     /**
      * Formatting the path to keep a resolvable URI.
@@ -1406,15 +1662,23 @@ final class Uri implements Conditionable, UriInterface
     {
         $colonPosition = strpos($path, ':');
         $slashPosition = strpos($path, '/');
-        return match (\true) {
-            '' === $path => match (\true) {
-                '' === $basePath, '/' === $basePath => $basePath,
-                default => './',
-            },
-            \false === $colonPosition => $path,
-            \false === $slashPosition, $colonPosition < $slashPosition => "./{$path}",
-            default => $path,
-        };
+        switch (\true) {
+            case '' === $path:
+                switch (\true) {
+                    case '' === $basePath:
+                    case '/' === $basePath:
+                        return $basePath;
+                    default:
+                        return './';
+                }
+            case \false === $colonPosition:
+                return $path;
+            case \false === $slashPosition:
+            case $colonPosition < $slashPosition:
+                return "./{$path}";
+            default:
+                return $path;
+        }
     }
     /**
      * returns the path segments.
@@ -1423,10 +1687,15 @@ final class Uri implements Conditionable, UriInterface
      */
     private static function getSegments(string $path) : array
     {
-        return explode('/', match (\true) {
-            '' === $path, '/' !== $path[0] => $path,
-            default => substr($path, 1),
-        });
+        return explode('/', (function () use ($path) {
+            switch (\true) {
+                case '' === $path:
+                case '/' !== $path[0]:
+                    return $path;
+                default:
+                    return substr($path, 1);
+            }
+        })());
     }
     /**
      * @return ComponentMap
@@ -1445,9 +1714,11 @@ final class Uri implements Conditionable, UriInterface
      * Creates a new instance from a URI and a Base URI.
      *
      * The returned URI must be absolute.
+     * @param WhatWgUrl|Rfc3986Uri|\Stringable|string $uri
+     * @param WhatWgUrl|Rfc3986Uri|\Stringable|string|null $baseUri
      */
     #[Deprecated(message: 'use League\\Uri\\Uri::parse() instead', since: 'league/uri:7.6.0')]
-    public static function fromBaseUri(WhatWgUrl|Rfc3986Uri|Stringable|string $uri, WhatWgUrl|Rfc3986Uri|Stringable|string|null $baseUri = null) : self
+    public static function fromBaseUri($uri, $baseUri = null) : self
     {
         if ($uri instanceof Rfc3986Uri) {
             $uri = $uri->toRawString();
@@ -1483,9 +1754,10 @@ final class Uri implements Conditionable, UriInterface
      * @deprecated Since version 7.0.0
      * @codeCoverageIgnore
      * @see Uri::new()
+     * @param \Stringable|string $uri
      */
     #[Deprecated(message: 'use League\\Uri\\Uri::new() instead', since: 'league/uri:7.0.0')]
-    public static function createFromString(Stringable|string $uri = '') : self
+    public static function createFromString($uri = '') : self
     {
         return self::new($uri);
     }
@@ -1530,9 +1802,12 @@ final class Uri implements Conditionable, UriInterface
      * Creates a new instance from a URI and a Base URI.
      *
      * The returned URI must be absolute.
+     * @param \Stringable|\Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriInterface|string $uri
+     * @param \Stringable|\Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriInterface|string|null $baseUri
+     * @return static
      */
     #[Deprecated(message: 'use League\\Uri\\Uri::fromBaseUri() instead', since: 'league/uri:7.0.0')]
-    public static function createFromBaseUri(Stringable|UriInterface|string $uri, Stringable|UriInterface|string|null $baseUri = null) : static
+    public static function createFromBaseUri($uri, $baseUri = null)
     {
         return self::fromBaseUri($uri, $baseUri);
     }
@@ -1572,9 +1847,10 @@ final class Uri implements Conditionable, UriInterface
      * @see Uri::new()
      *
      * Create a new instance from a URI object.
+     * @param Psr7UriInterface|\Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriInterface $uri
      */
     #[Deprecated(message: 'use League\\Uri\\Uri::new() instead', since: 'league/uri:7.0.0')]
-    public static function createFromUri(Psr7UriInterface|UriInterface $uri) : self
+    public static function createFromUri($uri) : self
     {
         return self::new($uri);
     }

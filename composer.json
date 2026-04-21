@@ -4,7 +4,7 @@
   "require": {
     "php": ">=8.2",
     "lcobucci/jwt": "^5.5",
-    "lcobucci/clock": "3.3.*",
+    "lcobucci/clock": "3.5.*",
     "league/oauth2-server": "^9.3",
     "nyholm/psr7": "^1.8",
     "nyholm/psr7-server": "^1.0",

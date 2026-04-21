@@ -41,6 +41,7 @@ interface FragmentDirective extends Stringable
     /**
      * Tells whether the submitted value is equals to the string
      * representation of the given directive.
+     * @param mixed $directive
      */
-    public function equals(mixed $directive) : bool;
+    public function equals($directive) : bool;
 }

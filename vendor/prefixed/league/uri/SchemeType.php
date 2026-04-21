@@ -11,11 +11,11 @@
 declare (strict_types=1);
 namespace Matomo\Dependencies\Oauth2\League\Uri;
 
-enum SchemeType
+class SchemeType
 {
-    case Opaque;
-    case Hierarchical;
-    case Unknown;
+    public const Opaque = 'opaque';
+    public const Hierarchical = 'hierarchical';
+    public const Unknown = 'unknown';
     public function isOpaque() : bool
     {
         return self::Opaque === $this;

@@ -59,16 +59,46 @@ abstract class AbstractGrant implements GrantTypeInterface
     use CryptTrait;
     protected const SCOPE_DELIMITER_STRING = ' ';
     protected const MAX_RANDOM_TOKEN_GENERATION_ATTEMPTS = 10;
-    protected ClientRepositoryInterface $clientRepository;
-    protected AccessTokenRepositoryInterface $accessTokenRepository;
-    protected ScopeRepositoryInterface $scopeRepository;
-    protected AuthCodeRepositoryInterface $authCodeRepository;
-    protected RefreshTokenRepositoryInterface $refreshTokenRepository;
-    protected UserRepositoryInterface $userRepository;
-    protected DateInterval $refreshTokenTTL;
-    protected CryptKeyInterface $privateKey;
-    protected string $defaultScope;
-    protected bool $revokeRefreshTokens = \true;
+    /**
+     * @var \Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\ClientRepositoryInterface
+     */
+    protected $clientRepository;
+    /**
+     * @var \Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\AccessTokenRepositoryInterface
+     */
+    protected $accessTokenRepository;
+    /**
+     * @var \Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\ScopeRepositoryInterface
+     */
+    protected $scopeRepository;
+    /**
+     * @var \Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\AuthCodeRepositoryInterface
+     */
+    protected $authCodeRepository;
+    /**
+     * @var \Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface
+     */
+    protected $refreshTokenRepository;
+    /**
+     * @var \Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\UserRepositoryInterface
+     */
+    protected $userRepository;
+    /**
+     * @var \DateInterval
+     */
+    protected $refreshTokenTTL;
+    /**
+     * @var \Matomo\Dependencies\Oauth2\League\OAuth2\Server\CryptKeyInterface
+     */
+    protected $privateKey;
+    /**
+     * @var string
+     */
+    protected $defaultScope;
+    /**
+     * @var bool
+     */
+    protected $revokeRefreshTokens = \true;
     public function setClientRepository(ClientRepositoryInterface $clientRepository) : void
     {
         $this->clientRepository = $clientRepository;
@@ -207,7 +237,7 @@ abstract class AbstractGrant implements GrantTypeInterface
      *
      * @return ScopeEntityInterface[]
      */
-    public function validateScopes(string|array|null $scopes, ?string $redirectUri = null) : array
+    public function validateScopes($scopes, ?string $redirectUri = null) : array
     {
         if ($scopes === null) {
             $scopes = [];
@@ -231,7 +261,9 @@ abstract class AbstractGrant implements GrantTypeInterface
      */
     private function convertScopesQueryStringToArray(string $scopes) : array
     {
-        return array_filter(explode(self::SCOPE_DELIMITER_STRING, trim($scopes)), static fn($scope) => $scope !== '');
+        return array_filter(explode(self::SCOPE_DELIMITER_STRING, trim($scopes)), static function ($scope) {
+            return $scope !== '';
+        });
     }
     /**
      * Parse request parameter.
@@ -291,7 +323,7 @@ abstract class AbstractGrant implements GrantTypeInterface
         if ($decoded === \false) {
             return [null, null];
         }
-        if (str_contains($decoded, ':') === \false) {
+        if ((strpos($decoded, ':') !== false) === \false) {
             return [null, null];
             // HTTP Basic header without colon isn't valid
         }
@@ -342,7 +374,7 @@ abstract class AbstractGrant implements GrantTypeInterface
      * @throws OAuthServerException
      * @throws UniqueTokenIdentifierConstraintViolationException
      */
-    protected function issueAccessToken(DateInterval $accessTokenTTL, ClientEntityInterface $client, string|null $userIdentifier, array $scopes = []) : AccessTokenEntityInterface
+    protected function issueAccessToken(DateInterval $accessTokenTTL, ClientEntityInterface $client, ?string $userIdentifier, array $scopes = []) : AccessTokenEntityInterface
     {
         $maxGenerationAttempts = self::MAX_RANDOM_TOKEN_GENERATION_ATTEMPTS;
         $accessToken = $this->accessTokenRepository->getNewToken($client, $scopes, $userIdentifier);

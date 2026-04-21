@@ -15,7 +15,11 @@ use InvalidArgumentException;
 use Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriException;
 class TemplateCanNotBeExpanded extends InvalidArgumentException implements UriException
 {
-    public readonly array $variablesNames;
+    /**
+     * @readonly
+     * @var mixed[]
+     */
+    public $variablesNames;
     public function __construct(string $message = '', string ...$variableNames)
     {
         parent::__construct($message, 0, null);

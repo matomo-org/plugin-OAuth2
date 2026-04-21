@@ -12,6 +12,6 @@ namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities;
 
 interface AuthCodeEntityInterface extends TokenInterface
 {
-    public function getRedirectUri() : string|null;
+    public function getRedirectUri() : ?string;
     public function setRedirectUri(string $uri) : void;
 }

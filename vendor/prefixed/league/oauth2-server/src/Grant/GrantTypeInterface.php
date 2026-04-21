@@ -103,7 +103,10 @@ interface GrantTypeInterface extends EmitterAwareInterface
      * Set the path to the private key.
      */
     public function setPrivateKey(CryptKeyInterface $privateKey) : void;
-    public function setEncryptionKey(Key|string|null $key = null) : void;
+    /**
+     * @param \Matomo\Dependencies\Oauth2\Defuse\Crypto\Key|string|null $key
+     */
+    public function setEncryptionKey($key = null) : void;
     /**
      * Enable or prevent the revocation of refresh tokens upon usage.
      */

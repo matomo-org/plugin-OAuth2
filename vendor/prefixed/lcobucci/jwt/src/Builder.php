@@ -53,16 +53,18 @@ interface Builder
      * Configures a header item
      *
      * @param non-empty-string $name
+     * @param mixed $value
      */
-    public function withHeader(string $name, mixed $value) : Builder;
+    public function withHeader(string $name, $value) : Builder;
     /**
      * Configures a claim item
      *
      * @param non-empty-string $name
      *
      * @throws RegisteredClaimGiven When trying to set a registered claim.
+     * @param mixed $value
      */
-    public function withClaim(string $name, mixed $value) : Builder;
+    public function withClaim(string $name, $value) : Builder;
     /**
      * Returns a signed token to be used
      *

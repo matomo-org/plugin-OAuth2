@@ -17,9 +17,25 @@ use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\AccessTokenRepo
 use Matomo\Dependencies\Oauth2\Psr\Http\Message\ServerRequestInterface;
 class ResourceServer
 {
-    private CryptKeyInterface $publicKey;
-    public function __construct(private AccessTokenRepositoryInterface $accessTokenRepository, CryptKeyInterface|string $publicKey, private ?AuthorizationValidatorInterface $authorizationValidator = null)
+    /**
+     * @var \Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\AccessTokenRepositoryInterface
+     */
+    private $accessTokenRepository;
+    /**
+     * @var \Matomo\Dependencies\Oauth2\League\OAuth2\Server\AuthorizationValidators\AuthorizationValidatorInterface|null
+     */
+    private $authorizationValidator;
+    /**
+     * @var \Matomo\Dependencies\Oauth2\League\OAuth2\Server\CryptKeyInterface
+     */
+    private $publicKey;
+    /**
+     * @param \Matomo\Dependencies\Oauth2\League\OAuth2\Server\CryptKeyInterface|string $publicKey
+     */
+    public function __construct(AccessTokenRepositoryInterface $accessTokenRepository, $publicKey, ?AuthorizationValidatorInterface $authorizationValidator = null)
     {
+        $this->accessTokenRepository = $accessTokenRepository;
+        $this->authorizationValidator = $authorizationValidator;
         if ($publicKey instanceof CryptKeyInterface === \false) {
             $publicKey = new CryptKey($publicKey);
         }

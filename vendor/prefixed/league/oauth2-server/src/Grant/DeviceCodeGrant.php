@@ -39,12 +39,35 @@ use function time;
  */
 class DeviceCodeGrant extends AbstractGrant
 {
-    protected DeviceCodeRepositoryInterface $deviceCodeRepository;
-    private bool $includeVerificationUriComplete = \false;
-    private bool $intervalVisibility = \false;
-    private string $verificationUri;
-    public function __construct(DeviceCodeRepositoryInterface $deviceCodeRepository, RefreshTokenRepositoryInterface $refreshTokenRepository, private DateInterval $deviceCodeTTL, string $verificationUri, private readonly int $retryInterval = 5)
+    /**
+     * @var \DateInterval
+     */
+    private $deviceCodeTTL;
+    /**
+     * @readonly
+     * @var int
+     */
+    private $retryInterval = 5;
+    /**
+     * @var \Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\DeviceCodeRepositoryInterface
+     */
+    protected $deviceCodeRepository;
+    /**
+     * @var bool
+     */
+    private $includeVerificationUriComplete = \false;
+    /**
+     * @var bool
+     */
+    private $intervalVisibility = \false;
+    /**
+     * @var string
+     */
+    private $verificationUri;
+    public function __construct(DeviceCodeRepositoryInterface $deviceCodeRepository, RefreshTokenRepositoryInterface $refreshTokenRepository, DateInterval $deviceCodeTTL, string $verificationUri, int $retryInterval = 5)
     {
+        $this->deviceCodeTTL = $deviceCodeTTL;
+        $this->retryInterval = $retryInterval;
         $this->setDeviceCodeRepository($deviceCodeRepository);
         $this->setRefreshTokenRepository($refreshTokenRepository);
         $this->refreshTokenTTL = new DateInterval('P1M');

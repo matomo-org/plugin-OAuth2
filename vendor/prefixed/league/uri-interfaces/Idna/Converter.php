@@ -50,14 +50,18 @@ final class Converter
      *
      * @throws SyntaxError if the string cannot be converted to UNICODE using IDN UTS46 algorithm
      * @throws ConversionFailed if the conversion returns error
+     * @param \Stringable|string $domain
+     * @param \Matomo\Dependencies\Oauth2\League\Uri\Idna\Option|int|null $options
      */
-    public static function toAsciiOrFail(Stringable|string $domain, Option|int|null $options = null) : string
+    public static function toAsciiOrFail($domain, $options = null) : string
     {
         $result = self::toAscii($domain, $options);
-        return match (\true) {
-            $result->hasErrors() => throw ConversionFailed::dueToIdnError($domain, $result),
-            default => $result->domain(),
-        };
+        switch (\true) {
+            case $result->hasErrors():
+                throw ConversionFailed::dueToIdnError($domain, $result);
+            default:
+                return $result->domain();
+        }
     }
     /**
      * Converts the input to its IDNA ASCII form.
@@ -65,17 +69,25 @@ final class Converter
      * This method returns the string converted to IDN ASCII form
      *
      * @throws SyntaxError if the string cannot be converted to ASCII using IDN UTS46 algorithm
+     * @param \Stringable|string $domain
+     * @param \Matomo\Dependencies\Oauth2\League\Uri\Idna\Option|int|null $options
      */
-    public static function toAscii(Stringable|string $domain, Option|int|null $options = null) : Result
+    public static function toAscii($domain, $options = null) : Result
     {
         $domain = rawurldecode((string) $domain);
         if (1 === preg_match(self::REGEXP_IDNA_PATTERN, $domain)) {
             FeatureDetection::supportsIdn();
-            $flags = match (\true) {
-                null === $options => Option::forIDNA2008Ascii(),
-                $options instanceof Option => $options,
-                default => Option::new($options),
-            };
+            switch (\true) {
+                case null === $options:
+                    $flags = Option::forIDNA2008Ascii();
+                    break;
+                case $options instanceof Option:
+                    $flags = $options;
+                    break;
+                default:
+                    $flags = Option::new($options);
+                    break;
+            }
             idn_to_ascii($domain, $flags->toBytes(), INTL_IDNA_VARIANT_UTS46, $idnaInfo);
             if ([] === $idnaInfo) {
                 return Result::fromIntl(['result' => strtolower($domain), 'isTransitionalDifferent' => \false, 'errors' => self::validateDomainAndLabelLength($domain)]);
@@ -94,14 +106,18 @@ final class Converter
      * @see Converter::toUnicode()
      *
      * @throws ConversionFailed if the conversion returns error
+     * @param \Stringable|string $domain
+     * @param \Matomo\Dependencies\Oauth2\League\Uri\Idna\Option|int|null $options
      */
-    public static function toUnicodeOrFail(Stringable|string $domain, Option|int|null $options = null) : string
+    public static function toUnicodeOrFail($domain, $options = null) : string
     {
         $result = self::toUnicode($domain, $options);
-        return match (\true) {
-            $result->hasErrors() => throw ConversionFailed::dueToIdnError($domain, $result),
-            default => $result->domain(),
-        };
+        switch (\true) {
+            case $result->hasErrors():
+                throw ConversionFailed::dueToIdnError($domain, $result);
+            default:
+                return $result->domain();
+        }
     }
     /**
      * Converts the input to its IDNA UNICODE form.
@@ -109,19 +125,27 @@ final class Converter
      * This method returns the string converted to IDN UNICODE form
      *
      * @throws SyntaxError if the string cannot be converted to UNICODE using IDN UTS46 algorithm
+     * @param \Stringable|string $domain
+     * @param \Matomo\Dependencies\Oauth2\League\Uri\Idna\Option|int|null $options
      */
-    public static function toUnicode(Stringable|string $domain, Option|int|null $options = null) : Result
+    public static function toUnicode($domain, $options = null) : Result
     {
         $domain = rawurldecode((string) $domain);
         if (\false === stripos($domain, 'xn--')) {
             return Result::fromIntl(['result' => strtolower($domain), 'isTransitionalDifferent' => \false, 'errors' => Error::NONE->value]);
         }
         FeatureDetection::supportsIdn();
-        $flags = match (\true) {
-            null === $options => Option::forIDNA2008Unicode(),
-            $options instanceof Option => $options,
-            default => Option::new($options),
-        };
+        switch (\true) {
+            case null === $options:
+                $flags = Option::forIDNA2008Unicode();
+                break;
+            case $options instanceof Option:
+                $flags = $options;
+                break;
+            default:
+                $flags = Option::new($options);
+                break;
+        }
         idn_to_utf8($domain, $flags->toBytes(), INTL_IDNA_VARIANT_UTS46, $idnaInfo);
         if ([] === $idnaInfo) {
             return Result::fromIntl(['result' => strtolower($domain), 'isTransitionalDifferent' => \false, 'errors' => Error::NONE->value]);
@@ -132,18 +156,25 @@ final class Converter
      * Tells whether the submitted host is a valid IDN regardless of its format.
      *
      * Returns false if the host is invalid or if its conversion yields the same result
+     * @param \Stringable|string|null $domain
      */
-    public static function isIdn(Stringable|string|null $domain) : bool
+    public static function isIdn($domain) : bool
     {
         $domain = strtolower(rawurldecode((string) $domain));
-        $result = match (1) {
-            preg_match(self::REGEXP_IDNA_PATTERN, $domain) => self::toAscii($domain),
-            default => self::toUnicode($domain),
-        };
-        return match (\true) {
-            $result->hasErrors() => \false,
-            default => $result->domain() !== $domain,
-        };
+        switch (1) {
+            case preg_match(self::REGEXP_IDNA_PATTERN, $domain):
+                $result = self::toAscii($domain);
+                break;
+            default:
+                $result = self::toUnicode($domain);
+                break;
+        }
+        switch (\true) {
+            case $result->hasErrors():
+                return \false;
+            default:
+                return $result->domain() !== $domain;
+        }
     }
     /**
      * Adapted from https://github.com/TRowbotham/idna.

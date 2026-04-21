@@ -24,7 +24,7 @@ interface AccessTokenRepositoryInterface extends RepositoryInterface
      *
      * @param ScopeEntityInterface[] $scopes
      */
-    public function getNewToken(ClientEntityInterface $clientEntity, array $scopes, string|null $userIdentifier = null) : AccessTokenEntityInterface;
+    public function getNewToken(ClientEntityInterface $clientEntity, array $scopes, ?string $userIdentifier = null) : AccessTokenEntityInterface;
     /**
      * @throws UniqueTokenIdentifierConstraintViolationException
      */
