@@ -1,3 +1,6 @@
+5.0.2 - 2026-04-27
+- Fixes README.md
+
 5.0.1 - 2026-04-17
 - Fixes README.md
 
