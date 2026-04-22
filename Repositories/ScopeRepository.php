@@ -15,6 +15,7 @@ use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Exception\OAuthServerExcepti
 use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\ScopeRepositoryInterface;
 use Piwik\Piwik;
 use Piwik\Plugins\OAuth2\Entities\ClientEntity;
+use Piwik\Plugins\OAuth2\OAuth2;
 use Piwik\Plugins\OAuth2\Entities\ScopeEntity;
 use Piwik\Plugins\OAuth2\SystemSettings;
 
@@ -29,12 +30,7 @@ class ScopeRepository implements ScopeRepositoryInterface
 
     public static function getScopeDescriptions(): array
     {
-        return [
-            'matomo:read' => Piwik::translate('OAuth2_ScopeReadDescription'),
-            'matomo:write' => Piwik::translate('OAuth2_ScopeWriteDescription'),
-            'matomo:admin' => Piwik::translate('OAuth2_ScopeAdminDescription'),
-            'matomo:superuser' => Piwik::translate('OAuth2_ScopeSuperUserDescription'),
-        ];
+        return OAuth2::getScopeDescriptions();
     }
 
     public function getScopeEntityByIdentifier(string $identifier): ?ScopeEntityInterface

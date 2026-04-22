@@ -3,6 +3,7 @@
     <Oauth2ClientList
       v-if="!isEditMode"
       :clients="clients"
+      :scopes="scopes"
       @create="createClient"
       @edit="editClient"
       @deleted="onClientDeleted"

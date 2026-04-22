@@ -45,6 +45,7 @@
             <th>{{ translate('OAuth2_AdminName') }}</th>
             <th>{{ translate('OAuth2_AdminClientType') }}</th>
             <th>{{ translate('OAuth2_AdminClientGrants') }}</th>
+            <th>{{ translate('OAuth2_AdminScope') }}</th>
             <th>{{ translate('OAuth2_AdminClientStatus') }}</th>
             <th>{{ translate('OAuth2_AdminClientId') }}</th>
             <th>{{ translate('OAuth2_AdminClientRedirects') }}</th>
@@ -61,7 +62,15 @@
               {{ client.name }}
             </td>
             <td>{{ typeOptions[client.type] }}</td>
-            <td>{{ (client.grant_types || []).join(', ') }}</td>
+            <td>
+              <div
+                v-for="grantType in (client.grant_types || [])"
+                :key="grantType"
+              >
+                {{ getGrantTypeLabel(grantType) }}
+              </div>
+            </td>
+            <td>{{ getScopeLabel(client) }}</td>
             <td>
               <span>
                 {{
@@ -108,7 +117,7 @@
         </tbody>
         <tbody v-else>
           <tr>
-            <td colspan="8">{{ translate('OAuth2_AdminNoClients') }}</td>
+            <td colspan="9">{{ translate('OAuth2_AdminNoClients') }}</td>
           </tr>
         </tbody>
       </table>
@@ -156,6 +165,10 @@ export default defineComponent({
       type: Array as PropType<Client[]>,
       required: true,
     },
+    scopes: {
+      type: Object as PropType<Record<string, string>>,
+      required: true,
+    },
   },
   emits: ['create', 'edit', 'deleted', 'updated'],
   components: {
@@ -172,9 +185,24 @@ export default defineComponent({
         confidential: this.translate('OAuth2_AdminConfidential'),
         public: this.translate('OAuth2_AdminPublic'),
       } as Record<string, string>,
+      grantTypeOptions: {
+        authorization_code: this.translate('OAuth2_AdminGrantAuthorizationCode'),
+        client_credentials: this.translate('OAuth2_AdminGrantClientCredentials'),
+        refresh_token: this.translate('OAuth2_AdminGrantRefreshToken'),
+      } as Record<string, string>,
     };
   },
   methods: {
+    getShortScopeLabel(scope: string) {
+      const shortScopeLabels = {
+        'matomo:read': this.translate('UsersManager_PrivView'),
+        'matomo:write': this.translate('UsersManager_PrivWrite'),
+        'matomo:admin': this.translate('UsersManager_PrivAdmin'),
+        'matomo:superuser': this.translate('OAuth2_ScopeSuperUserShort'),
+      } as Record<string, string>;
+
+      return shortScopeLabels[scope] || this.scopes[scope] || scope;
+    },
     showNotification(message: string, context: NotificationType['context'],
       type: null|NotificationType['type'] = null) {
       const instanceId = NotificationsStore.show({
@@ -191,6 +219,18 @@ export default defineComponent({
     removeNotifications() {
       NotificationsStore.remove(notificationId);
       NotificationsStore.remove('ajaxHelper');
+    },
+    getScopeLabel(client: Client) {
+      const scope = client.scopes?.[0];
+
+      if (!scope) {
+        return '';
+      }
+
+      return this.getShortScopeLabel(scope);
+    },
+    getGrantTypeLabel(grantType: string) {
+      return this.grantTypeOptions[grantType] || grantType;
     },
     toggleClientStatus(client: Client) {
       const safeClientName = Matomo.helper.htmlEntities(client.name || client.client_id);
