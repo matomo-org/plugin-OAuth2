@@ -9,13 +9,17 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri\UriTemplate;
+namespace Matomo\Dependencies\OAuth2\League\Uri\UriTemplate;
 
 use InvalidArgumentException;
-use Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriException;
+use Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriException;
 class TemplateCanNotBeExpanded extends InvalidArgumentException implements UriException
 {
-    public readonly array $variablesNames;
+    /**
+     * @readonly
+     * @var mixed[]
+     */
+    public $variablesNames;
     public function __construct(string $message = '', string ...$variableNames)
     {
         parent::__construct($message, 0, null);

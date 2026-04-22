@@ -1,11 +1,11 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Nyholm\Psr7;
+namespace Matomo\Dependencies\OAuth2\Nyholm\Psr7;
 
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\RequestInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\StreamInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\UriInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\RequestInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\StreamInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\UriInterface;
 /**
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  * @author Martijn van der Ven <martijn@vanderven.se>

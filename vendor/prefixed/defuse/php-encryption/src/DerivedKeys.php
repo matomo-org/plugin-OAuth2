@@ -1,6 +1,6 @@
 <?php
 
-namespace Matomo\Dependencies\Oauth2\Defuse\Crypto;
+namespace Matomo\Dependencies\OAuth2\Defuse\Crypto;
 
 /**
  * Class DerivedKeys

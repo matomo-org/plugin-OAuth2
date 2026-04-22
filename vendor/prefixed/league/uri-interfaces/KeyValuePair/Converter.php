@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri\KeyValuePair;
+namespace Matomo\Dependencies\OAuth2\League\Uri\KeyValuePair;
 
-use Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriComponentInterface;
-use Matomo\Dependencies\Oauth2\League\Uri\Exceptions\SyntaxError;
+use Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriComponentInterface;
+use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\SyntaxError;
 use Stringable;
 use function array_combine;
 use function explode;
@@ -28,14 +28,32 @@ use const PHP_QUERY_RFC1738;
 use const PHP_QUERY_RFC3986;
 final class Converter
 {
+    /**
+     * @var non-empty-string
+     * @readonly
+     */
+    private $separator;
+    /**
+     * @var array<string>
+     * @readonly
+     */
+    private $fromRfc3986 = [];
+    /**
+     * @var array<string>
+     * @readonly
+     */
+    private $toEncoding = [];
     private const REGEXP_INVALID_CHARS = '/[\\x00-\\x1f\\x7f]/';
     /**
      * @param non-empty-string $separator the query string separator
      * @param array<string> $fromRfc3986 contains all the RFC3986 encoded characters to be converted
      * @param array<string> $toEncoding contains all the expected encoded characters
      */
-    private function __construct(private readonly string $separator, private readonly array $fromRfc3986 = [], private readonly array $toEncoding = [])
+    private function __construct(string $separator, array $fromRfc3986 = [], array $toEncoding = [])
     {
+        $this->separator = $separator;
+        $this->fromRfc3986 = $fromRfc3986;
+        $this->toEncoding = $toEncoding;
         if ('' === $this->separator) {
             throw new SyntaxError('The separator character must be a non empty string.');
         }
@@ -72,11 +90,14 @@ final class Converter
     }
     public static function fromEncodingType(int $encType) : self
     {
-        return match ($encType) {
-            PHP_QUERY_RFC3986 => self::fromRFC3986(),
-            PHP_QUERY_RFC1738 => self::fromRFC1738(),
-            default => throw new SyntaxError('Unknown or Unsupported encoding.'),
-        };
+        switch ($encType) {
+            case PHP_QUERY_RFC3986:
+                return self::fromRFC3986();
+            case PHP_QUERY_RFC1738:
+                return self::fromRFC1738();
+            default:
+                throw new SyntaxError('Unknown or Unsupported encoding.');
+        }
     }
     /**
      * @return non-empty-string
@@ -94,34 +115,59 @@ final class Converter
     }
     /**
      * @return array<non-empty-list<string|null>>
+     * @param \Stringable|string|int|float|bool|null $value
      */
-    public function toPairs(Stringable|string|int|float|bool|null $value) : array
+    public function toPairs($value) : array
     {
-        $value = match (\true) {
-            $value instanceof UriComponentInterface => $value->value(),
-            $value instanceof Stringable, is_int($value) => (string) $value,
-            \false === $value => '0',
-            \true === $value => '1',
-            default => $value,
-        };
+        switch (\true) {
+            case $value instanceof UriComponentInterface:
+                $value = $value->value();
+                break;
+            case $value instanceof Stringable:
+            case is_int($value):
+                $value = (string) $value;
+                break;
+            case \false === $value:
+                $value = '0';
+                break;
+            case \true === $value:
+                $value = '1';
+                break;
+            default:
+                $value = $value;
+                break;
+        }
         if (null === $value) {
             return [];
         }
-        $value = match (1) {
-            preg_match(self::REGEXP_INVALID_CHARS, (string) $value) => throw new SyntaxError('Invalid query string: `' . $value . '`.'),
-            default => str_replace($this->toEncoding, $this->fromRfc3986, (string) $value),
-        };
-        return array_map(fn(string $pair): array => explode('=', $pair, 2) + [1 => null], explode($this->separator, $value));
+        switch (1) {
+            case preg_match(self::REGEXP_INVALID_CHARS, (string) $value):
+                throw new SyntaxError('Invalid query string: `' . $value . '`.');
+            default:
+                $value = str_replace($this->toEncoding, $this->fromRfc3986, (string) $value);
+                break;
+        }
+        return array_map(function (string $pair) : array {
+            return explode('=', $pair, 2) + [1 => null];
+        }, explode($this->separator, $value));
     }
-    private static function vString(Stringable|string|bool|int|float|null $value) : ?string
+    /**
+     * @param \Stringable|string|bool|int|float|null $value
+     */
+    private static function vString($value) : ?string
     {
-        return match (\true) {
-            $value => '1',
-            \false === $value => '0',
-            null === $value => null,
-            is_float($value) => (string) json_encode($value, JSON_PRESERVE_ZERO_FRACTION),
-            default => (string) $value,
-        };
+        switch (\true) {
+            case $value:
+                return '1';
+            case \false === $value:
+                return '0';
+            case null === $value:
+                return null;
+            case is_float($value):
+                return (string) json_encode($value, JSON_PRESERVE_ZERO_FRACTION);
+            default:
+                return (string) $value;
+        }
     }
     /**
      * @param iterable<array{0:string|null, 1:Stringable|string|bool|int|float|null}> $pairs
@@ -130,26 +176,35 @@ final class Converter
     {
         $filteredPairs = [];
         foreach ($pairs as $pair) {
-            $filteredPairs[] = match (\true) {
-                !is_string($pair[0]) => throw new SyntaxError('the pair key MUST be a string;, `' . gettype($pair[0]) . '` given.'),
-                null === $pair[1] => self::vString($pair[0]),
-                default => self::vString($pair[0]) . '=' . self::vString($pair[1]),
-            };
+            switch (\true) {
+                case !is_string($pair[0]):
+                    throw new SyntaxError('the pair key MUST be a string;, `' . gettype($pair[0]) . '` given.');
+                case null === $pair[1]:
+                    $filteredPairs[] = self::vString($pair[0]);
+                    break;
+                default:
+                    $filteredPairs[] = self::vString($pair[0]) . '=' . self::vString($pair[1]);
+                    break;
+            }
         }
-        return match ([]) {
-            $filteredPairs => null,
-            default => str_replace($this->fromRfc3986, $this->toEncoding, implode($this->separator, $filteredPairs)),
-        };
+        switch ([]) {
+            case $filteredPairs:
+                return null;
+            default:
+                return str_replace($this->fromRfc3986, $this->toEncoding, implode($this->separator, $filteredPairs));
+        }
     }
     /**
      * @param non-empty-string $separator
      */
     public function withSeparator(string $separator) : self
     {
-        return match ($this->separator) {
-            $separator => $this,
-            default => new self($separator, $this->fromRfc3986, $this->toEncoding),
-        };
+        switch ($this->separator) {
+            case $separator:
+                return $this;
+            default:
+                return new self($separator, $this->fromRfc3986, $this->toEncoding);
+        }
     }
     /**
      * Sets the conversion map.
@@ -162,15 +217,23 @@ final class Converter
         $fromRfc3986 = [];
         $toEncoding = [];
         foreach ($encodingMap as $from => $to) {
-            [$fromRfc3986[], $toEncoding[]] = match (\true) {
-                !is_string($from) => throw new SyntaxError('The encoding output must be a string; `' . gettype($from) . '` given.'),
-                $to instanceof Stringable, is_string($to) => [$from, (string) $to],
-                default => throw new SyntaxError('The encoding output must be a string; `' . gettype($to) . '` given.'),
-            };
+            switch (\true) {
+                case !is_string($from):
+                    throw new SyntaxError('The encoding output must be a string; `' . gettype($from) . '` given.');
+                case $to instanceof Stringable:
+                case is_string($to):
+                    [$fromRfc3986[], $toEncoding[]] = [$from, (string) $to];
+                    break;
+                default:
+                    throw new SyntaxError('The encoding output must be a string; `' . gettype($to) . '` given.');
+            }
         }
-        return match (\true) {
-            $fromRfc3986 !== $this->fromRfc3986, $toEncoding !== $this->toEncoding => new self($this->separator, $fromRfc3986, $toEncoding),
-            default => $this,
-        };
+        switch (\true) {
+            case $fromRfc3986 !== $this->fromRfc3986:
+            case $toEncoding !== $this->toEncoding:
+                return new self($this->separator, $fromRfc3986, $toEncoding);
+            default:
+                return $this;
+        }
     }
 }

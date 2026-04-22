@@ -1,15 +1,23 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\EventEmitting;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\EventEmitting;
 
-use Matomo\Dependencies\Oauth2\League\Event\HasEventName;
-use Matomo\Dependencies\Oauth2\Psr\EventDispatcher\StoppableEventInterface;
+use Matomo\Dependencies\OAuth2\League\Event\HasEventName;
+use Matomo\Dependencies\OAuth2\Psr\EventDispatcher\StoppableEventInterface;
 class AbstractEvent implements StoppableEventInterface, HasEventName
 {
-    private bool $propagationStopped = \false;
-    public function __construct(private string $name)
+    /**
+     * @var string
+     */
+    private $name;
+    /**
+     * @var bool
+     */
+    private $propagationStopped = \false;
+    public function __construct(string $name)
     {
+        $this->name = $name;
     }
     public function eventName() : string
     {

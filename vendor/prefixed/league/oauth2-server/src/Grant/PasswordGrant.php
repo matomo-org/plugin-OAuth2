@@ -10,19 +10,19 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\Grant;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\Grant;
 
 use DateInterval;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ClientEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\UserEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Exception\OAuthServerException;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\UserRepositoryInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\RequestAccessTokenEvent;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\RequestEvent;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\RequestRefreshTokenEvent;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\ServerRequestInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ClientEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\UserEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Exception\OAuthServerException;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\UserRepositoryInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\RequestAccessTokenEvent;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\RequestEvent;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\RequestRefreshTokenEvent;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\ServerRequestInterface;
 /**
  * Password grant class.
  */
@@ -61,8 +61,14 @@ class PasswordGrant extends AbstractGrant
      */
     protected function validateUser(ServerRequestInterface $request, ClientEntityInterface $client) : UserEntityInterface
     {
-        $username = $this->getRequestParameter('username', $request) ?? throw OAuthServerException::invalidRequest('username');
-        $password = $this->getRequestParameter('password', $request) ?? throw OAuthServerException::invalidRequest('password');
+        if ($this->getRequestParameter('username', $request) === null) {
+            throw OAuthServerException::invalidRequest('username');
+        }
+        $username = $this->getRequestParameter('username', $request);
+        if ($this->getRequestParameter('password', $request) === null) {
+            throw OAuthServerException::invalidRequest('password');
+        }
+        $password = $this->getRequestParameter('password', $request);
         $user = $this->userRepository->getUserEntityByUserCredentials($username, $password, $this->getIdentifier(), $client);
         if ($user instanceof UserEntityInterface === \false) {
             $this->getEmitter()->emit(new RequestEvent(RequestEvent::USER_AUTHENTICATION_FAILED, $request));

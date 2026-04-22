@@ -8,7 +8,7 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities;
 
 interface ClientEntityInterface
 {
@@ -28,7 +28,7 @@ interface ClientEntityInterface
      *
      * @return string|string[]
      */
-    public function getRedirectUri() : string|array;
+    public function getRedirectUri();
     /**
      * Returns true if the client is confidential.
      */

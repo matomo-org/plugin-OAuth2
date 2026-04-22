@@ -1,22 +1,28 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Validation;
 
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Exception;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Exception;
 use RuntimeException;
 use function array_map;
 use function implode;
 final class RequiredConstraintsViolated extends RuntimeException implements Exception
 {
+    /**
+     * @var ConstraintViolation[]
+     * @readonly
+     */
+    public $violations = [];
     /** @param ConstraintViolation[] $violations */
-    public function __construct(string $message = '', public readonly array $violations = [])
+    public function __construct(string $message = '', array $violations = [])
     {
+        $this->violations = $violations;
         parent::__construct($message);
     }
     public static function fromViolations(ConstraintViolation ...$violations) : self
     {
-        return new self(message: self::buildMessage($violations), violations: $violations);
+        return new self(self::buildMessage($violations), $violations);
     }
     /** @param ConstraintViolation[] $violations */
     private static function buildMessage(array $violations) : string

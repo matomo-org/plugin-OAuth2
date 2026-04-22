@@ -10,19 +10,28 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\ResponseTypes;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\ResponseTypes;
 
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\CryptKeyInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\CryptTrait;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\AccessTokenEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\RefreshTokenEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\CryptKeyInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\CryptTrait;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\AccessTokenEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\RefreshTokenEntityInterface;
 use SensitiveParameter;
 abstract class AbstractResponseType implements ResponseTypeInterface
 {
     use CryptTrait;
-    protected AccessTokenEntityInterface $accessToken;
-    protected RefreshTokenEntityInterface $refreshToken;
-    protected CryptKeyInterface $privateKey;
+    /**
+     * @var \Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\AccessTokenEntityInterface
+     */
+    protected $accessToken;
+    /**
+     * @var \Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\RefreshTokenEntityInterface
+     */
+    protected $refreshToken;
+    /**
+     * @var \Matomo\Dependencies\OAuth2\League\OAuth2\Server\CryptKeyInterface
+     */
+    protected $privateKey;
     public function setAccessToken(#[SensitiveParameter] AccessTokenEntityInterface $accessToken) : void
     {
         $this->accessToken = $accessToken;

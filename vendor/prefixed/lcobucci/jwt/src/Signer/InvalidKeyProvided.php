@@ -1,10 +1,10 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer;
 
 use InvalidArgumentException;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Exception;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Exception;
 final class InvalidKeyProvided extends InvalidArgumentException implements Exception
 {
     public static function cannotBeParsed(string $details) : self

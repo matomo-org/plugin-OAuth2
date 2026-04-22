@@ -1,15 +1,22 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer;
 
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Ecdsa\MultibyteStringConverter;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Ecdsa\SignatureConverter;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Ecdsa\MultibyteStringConverter;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Ecdsa\SignatureConverter;
 use const OPENSSL_KEYTYPE_EC;
 abstract class Ecdsa extends OpenSSL
 {
-    public function __construct(private readonly SignatureConverter $converter = new MultibyteStringConverter())
+    /**
+     * @readonly
+     * @var \Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Ecdsa\SignatureConverter
+     */
+    private $converter;
+    public function __construct(SignatureConverter $converter = null)
     {
+        $converter = $converter ?? new MultibyteStringConverter();
+        $this->converter = $converter;
     }
     public final function sign(string $payload, Key $key) : string
     {

@@ -1,15 +1,16 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\Constraint;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Validation\Constraint;
 
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Token;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\Constraint;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\ConstraintViolation;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Token;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Validation\Constraint;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Validation\ConstraintViolation;
 final class IssuedBy implements Constraint
 {
-    /** @var non-empty-string[] */
-    private readonly array $issuers;
+    /** @var non-empty-string[]
+     * @readonly */
+    private $issuers;
     /** @param non-empty-string ...$issuers */
     public function __construct(string ...$issuers)
     {

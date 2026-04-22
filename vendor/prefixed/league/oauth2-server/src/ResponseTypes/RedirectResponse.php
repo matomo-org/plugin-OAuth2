@@ -10,12 +10,15 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\ResponseTypes;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\ResponseTypes;
 
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\ResponseInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\ResponseInterface;
 class RedirectResponse extends AbstractResponseType
 {
-    private string $redirectUri;
+    /**
+     * @var string
+     */
+    private $redirectUri;
     public function setRedirectUri(string $redirectUri) : void
     {
         $this->redirectUri = $redirectUri;

@@ -28,7 +28,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "Matomo\\Dependencies\\Oauth2\\Defuse\\Crypto\\": "src"
+            "Matomo\\Dependencies\\OAuth2\\Defuse\\Crypto\\": "src"
         }
     },
     "require": {

@@ -1,9 +1,9 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT;
 
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Encoding\CannotEncodeContent;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Encoding\CannotEncodeContent;
 interface Encoder
 {
     /**
@@ -12,8 +12,9 @@ interface Encoder
      * @return non-empty-string
      *
      * @throws CannotEncodeContent When something goes wrong while encoding.
+     * @param mixed $data
      */
-    public function jsonEncode(mixed $data) : string;
+    public function jsonEncode($data) : string;
     /**
      * Encodes to base64url
      *

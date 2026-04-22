@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri\Contracts;
+namespace Matomo\Dependencies\OAuth2\League\Uri\Contracts;
 
 use Countable;
 use Iterator;
 use IteratorAggregate;
-use Matomo\Dependencies\Oauth2\League\Uri\Exceptions\SyntaxError;
+use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\SyntaxError;
 use Stringable;
 /**
  * @extends IteratorAggregate<string>
@@ -49,12 +49,14 @@ interface DomainHostInterface extends Countable, HostInterface, IteratorAggregat
     public function isAbsolute() : bool;
     /**
      * Prepends a label to the host.
+     * @param \Stringable|string $label
      */
-    public function prepend(Stringable|string $label) : self;
+    public function prepend($label) : self;
     /**
      * Appends a label to the host.
+     * @param \Stringable|string $label
      */
-    public function append(Stringable|string $label) : self;
+    public function append($label) : self;
     /**
      * Extracts a slice of $length elements starting at position $offset from the host.
      *
@@ -86,8 +88,9 @@ interface DomainHostInterface extends Countable, HostInterface, IteratorAggregat
      * If $key is negative, the added label will be the label at $key position from the end.
      *
      * @throws SyntaxError If the key is invalid
+     * @param \Stringable|string $label
      */
-    public function withLabel(int $key, Stringable|string $label) : self;
+    public function withLabel(int $key, $label) : self;
     /**
      * Returns an instance without the specified label.
      *

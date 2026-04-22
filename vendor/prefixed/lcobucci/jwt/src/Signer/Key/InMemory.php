@@ -1,29 +1,47 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Key;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Key;
 
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\InvalidKeyProvided;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Key;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\SodiumBase64Polyfill;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\InvalidKeyProvided;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Key;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\SodiumBase64Polyfill;
+use SensitiveParameter;
 use SplFileObject;
 use Throwable;
 use function assert;
 use function is_string;
 final class InMemory implements Key
 {
+    /**
+     * @var non-empty-string
+     * @readonly
+     */
+    public $contents;
+    /**
+     * @readonly
+     * @var string
+     */
+    public $passphrase;
     /** @param non-empty-string $contents */
-    private function __construct(public readonly string $contents, public readonly string $passphrase)
+    private function __construct(
+        #[\SensitiveParameter]
+        string $contents,
+        #[\SensitiveParameter]
+        string $passphrase
+    )
     {
+        $this->contents = $contents;
+        $this->passphrase = $passphrase;
     }
     /** @param non-empty-string $contents */
-    public static function plainText(string $contents, string $passphrase = '') : self
+    public static function plainText(#[SensitiveParameter] string $contents, #[SensitiveParameter] string $passphrase = '') : self
     {
         self::guardAgainstEmptyKey($contents);
         return new self($contents, $passphrase);
     }
     /** @param non-empty-string $contents */
-    public static function base64Encoded(string $contents, string $passphrase = '') : self
+    public static function base64Encoded(#[SensitiveParameter] string $contents, #[SensitiveParameter] string $passphrase = '') : self
     {
         $decoded = SodiumBase64Polyfill::base642bin($contents, SodiumBase64Polyfill::SODIUM_BASE64_VARIANT_ORIGINAL);
         self::guardAgainstEmptyKey($decoded);
@@ -34,7 +52,7 @@ final class InMemory implements Key
      *
      * @throws FileCouldNotBeRead
      */
-    public static function file(string $path, string $passphrase = '') : self
+    public static function file(string $path, #[SensitiveParameter] string $passphrase = '') : self
     {
         try {
             $file = new SplFileObject($path);

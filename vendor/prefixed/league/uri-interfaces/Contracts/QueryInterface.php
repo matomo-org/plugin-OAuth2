@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri\Contracts;
+namespace Matomo\Dependencies\OAuth2\League\Uri\Contracts;
 
 use Countable;
-use Matomo\Dependencies\Oauth2\Deprecated;
+use Matomo\Dependencies\OAuth2\Deprecated;
 use Iterator;
 use IteratorAggregate;
 use Stringable;
@@ -114,7 +114,7 @@ interface QueryInterface extends Countable, IteratorAggregate, UriComponentInter
      * @return mixed the collection of stored PHP variables or the empty array if no input is given,
      *               the single value of a stored PHP variable or null if the variable is not present in the collection
      */
-    public function parameter(string $name) : mixed;
+    public function parameter(string $name);
     /**
      * Tells whether a list of variable with specific names exists.
      *
@@ -139,8 +139,9 @@ interface QueryInterface extends Countable, IteratorAggregate, UriComponentInter
      * an instance that contains the modified query
      *
      * @see ::withPair
+     * @param \Stringable|string $query
      */
-    public function merge(Stringable|string $query) : self;
+    public function merge($query) : self;
     /**
      * Returns an instance with the new pairs appended to it.
      *
@@ -148,15 +149,17 @@ interface QueryInterface extends Countable, IteratorAggregate, UriComponentInter
      * an instance that contains the modified query
      *
      * If the pair already exists the value will be added to it.
+     * @param \Stringable|string $query
      */
-    public function append(Stringable|string $query) : self;
+    public function append($query) : self;
     /**
      * Returns a new instance with a specified key/value pair appended as a new pair.
      *
      * This method MUST retain the state of the current instance, and return
      * an instance that contains the modified query
+     * @param \Stringable|string|int|bool|null $value
      */
-    public function appendTo(string $key, Stringable|string|int|bool|null $value) : self;
+    public function appendTo(string $key, $value) : self;
     /**
      * Sorts the query string by offset, maintaining offset to data correlations.
      *
@@ -203,8 +206,9 @@ interface QueryInterface extends Countable, IteratorAggregate, UriComponentInter
      * If the pair already exists the value will replace the existing value.
      *
      * @see https://url.spec.whatwg.org/#dom-urlsearchparams-set
+     * @param \Stringable|string|int|float|bool|null $value
      */
-    public function withPair(string $key, Stringable|string|int|float|bool|null $value) : self;
+    public function withPair(string $key, $value) : self;
     /**
      * DEPRECATION WARNING! This method will be removed in the next major point release.
      *

@@ -8,10 +8,10 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\RedirectUriValidators;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\RedirectUriValidators;
 
-use Matomo\Dependencies\Oauth2\League\Uri\Exceptions\SyntaxError;
-use Matomo\Dependencies\Oauth2\League\Uri\Uri;
+use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\SyntaxError;
+use Matomo\Dependencies\OAuth2\League\Uri\Uri;
 use function in_array;
 use function is_string;
 class RedirectUriValidator implements RedirectUriValidatorInterface
@@ -19,13 +19,13 @@ class RedirectUriValidator implements RedirectUriValidatorInterface
     /**
      * @var string[]
      */
-    private array $allowedRedirectUris;
+    private $allowedRedirectUris;
     /**
      * New validator instance for the given uri
      *
      * @param string[]|string $allowedRedirectUris
      */
-    public function __construct(array|string $allowedRedirectUris)
+    public function __construct($allowedRedirectUris)
     {
         if (is_string($allowedRedirectUris)) {
             $this->allowedRedirectUris = [$allowedRedirectUris];

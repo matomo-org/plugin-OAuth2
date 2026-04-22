@@ -1,8 +1,8 @@
 <?php
 
-namespace Matomo\Dependencies\Oauth2\Defuse\Crypto;
+namespace Matomo\Dependencies\OAuth2\Defuse\Crypto;
 
-use Matomo\Dependencies\Oauth2\Defuse\Crypto\Exception as Ex;
+use Matomo\Dependencies\OAuth2\Defuse\Crypto\Exception as Ex;
 final class File
 {
     /**
@@ -586,7 +586,7 @@ final class File
      */
     private static function removePHPUnitErrorHandler()
     {
-        if (defined('Matomo\\Dependencies\\Oauth2\\PHPUNIT_COMPOSER_INSTALL') || defined('Matomo\\Dependencies\\Oauth2\\__PHPUNIT_PHAR__')) {
+        if (defined('Matomo\\Dependencies\\OAuth2\\PHPUNIT_COMPOSER_INSTALL') || defined('Matomo\\Dependencies\\OAuth2\\__PHPUNIT_PHAR__')) {
             set_error_handler(null);
         }
     }
@@ -597,7 +597,7 @@ final class File
      */
     private static function restorePHPUnitErrorHandler()
     {
-        if (defined('Matomo\\Dependencies\\Oauth2\\PHPUNIT_COMPOSER_INSTALL') || defined('Matomo\\Dependencies\\Oauth2\\__PHPUNIT_PHAR__')) {
+        if (defined('Matomo\\Dependencies\\OAuth2\\PHPUNIT_COMPOSER_INSTALL') || defined('Matomo\\Dependencies\\OAuth2\\__PHPUNIT_PHAR__')) {
             restore_error_handler();
         }
     }

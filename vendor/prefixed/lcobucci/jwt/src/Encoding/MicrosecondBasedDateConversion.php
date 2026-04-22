@@ -1,11 +1,11 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Encoding;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Encoding;
 
 use DateTimeImmutable;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\ClaimsFormatter;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Token\RegisteredClaims;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\ClaimsFormatter;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Token\RegisteredClaims;
 use function array_key_exists;
 final class MicrosecondBasedDateConversion implements ClaimsFormatter
 {
@@ -20,7 +20,10 @@ final class MicrosecondBasedDateConversion implements ClaimsFormatter
         }
         return $claims;
     }
-    private function convertDate(DateTimeImmutable $date) : int|float
+    /**
+     * @return int|float
+     */
+    private function convertDate(DateTimeImmutable $date)
     {
         if ($date->format('u') === '000000') {
             return (int) $date->format('U');

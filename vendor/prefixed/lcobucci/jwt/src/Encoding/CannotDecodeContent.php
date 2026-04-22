@@ -1,16 +1,16 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Encoding;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Encoding;
 
 use JsonException;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Exception;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Exception;
 use RuntimeException;
 final class CannotDecodeContent extends RuntimeException implements Exception
 {
     public static function jsonIssues(JsonException $previous) : self
     {
-        return new self(message: 'Error while decoding from JSON', previous: $previous);
+        return new self('Error while decoding from JSON', 0, $previous);
     }
     public static function invalidBase64String() : self
     {

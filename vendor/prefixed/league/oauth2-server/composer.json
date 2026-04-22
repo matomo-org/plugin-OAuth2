@@ -69,7 +69,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Matomo\\Dependencies\\Oauth2\\League\\OAuth2\\Server\\": "src\/"
+            "Matomo\\Dependencies\\OAuth2\\League\\OAuth2\\Server\\": "src\/"
         }
     },
     "autoload-dev": {

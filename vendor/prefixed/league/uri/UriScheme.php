@@ -9,142 +9,205 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri;
+namespace Matomo\Dependencies\OAuth2\League\Uri;
 
 use ValueError;
-/*
- *  Supported schemes and corresponding default port.
- *
- * @see https://github.com/python-hyper/hyperlink/blob/master/src/hyperlink/_url.py for the curating list definition
- * @see https://www.iana.org/assignments/uri-schemes/uri-schemes.xhtml
- * @see https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.xhtml
- */
-enum UriScheme : string
+class UriScheme
 {
-    case About = 'about';
-    case Acap = 'acap';
-    case Bitcoin = 'bitcoin';
-    case Geo = 'geo';
-    case Blob = 'blob';
-    case Afp = 'afp';
-    case Data = 'data';
-    case Dict = 'dict';
-    case Dns = 'dns';
-    case File = 'file';
-    case Ftp = 'ftp';
-    case Git = 'git';
-    case Gopher = 'gopher';
-    case Http = 'http';
-    case Https = 'https';
-    case Imap = 'imap';
-    case Imaps = 'imaps';
-    case Ipp = 'ipp';
-    case Ipps = 'ipps';
-    case Irc = 'irc';
-    case Ircs = 'ircs';
-    case Javascript = 'javascript';
-    case Ldap = 'ldap';
-    case Ldaps = 'ldaps';
-    case Magnet = 'magnet';
-    case Mailto = 'mailto';
-    case Mms = 'mms';
-    case Msrp = 'msrp';
-    case Msrps = 'msrps';
-    case Mtqp = 'mtqp';
-    case News = 'news';
-    case Nfs = 'nfs';
-    case Nntp = 'nntp';
-    case Nntps = 'nntps';
-    case Pkcs11 = 'pkcs11';
-    case Pop = 'pop';
-    case Prospero = 'prospero';
-    case Redis = 'redis';
-    case Rsync = 'rsync';
-    case Rtsp = 'rtsp';
-    case Rtsps = 'rtsps';
-    case Rtspu = 'rtspu';
-    case Sftp = 'sftp';
-    case Wss = 'wss';
-    case Ws = 'ws';
-    case Sip = 'sip';
-    case Sips = 'sips';
-    case Smb = 'smb';
-    case Smtp = 'smtp';
-    case Snmp = 'snmp';
-    case Ssh = 'ssh';
-    case Steam = 'steam';
-    case Svn = 'svn';
-    case Tel = 'tel';
-    case Telnet = 'telnet';
-    case Tn3270 = 'tn3270';
-    case Urn = 'urn';
-    case Ventrilo = 'ventrilo';
-    case Vnc = 'vnc';
-    case Wais = 'wais';
-    case Xmpp = 'xmpp';
+    public const About = 'about';
+    public const Acap = 'acap';
+    public const Bitcoin = 'bitcoin';
+    public const Geo = 'geo';
+    public const Blob = 'blob';
+    public const Afp = 'afp';
+    public const Data = 'data';
+    public const Dict = 'dict';
+    public const Dns = 'dns';
+    public const File = 'file';
+    public const Ftp = 'ftp';
+    public const Git = 'git';
+    public const Gopher = 'gopher';
+    public const Http = 'http';
+    public const Https = 'https';
+    public const Imap = 'imap';
+    public const Imaps = 'imaps';
+    public const Ipp = 'ipp';
+    public const Ipps = 'ipps';
+    public const Irc = 'irc';
+    public const Ircs = 'ircs';
+    public const Javascript = 'javascript';
+    public const Ldap = 'ldap';
+    public const Ldaps = 'ldaps';
+    public const Magnet = 'magnet';
+    public const Mailto = 'mailto';
+    public const Mms = 'mms';
+    public const Msrp = 'msrp';
+    public const Msrps = 'msrps';
+    public const Mtqp = 'mtqp';
+    public const News = 'news';
+    public const Nfs = 'nfs';
+    public const Nntp = 'nntp';
+    public const Nntps = 'nntps';
+    public const Pkcs11 = 'pkcs11';
+    public const Pop = 'pop';
+    public const Prospero = 'prospero';
+    public const Redis = 'redis';
+    public const Rsync = 'rsync';
+    public const Rtsp = 'rtsp';
+    public const Rtsps = 'rtsps';
+    public const Rtspu = 'rtspu';
+    public const Sftp = 'sftp';
+    public const Wss = 'wss';
+    public const Ws = 'ws';
+    public const Sip = 'sip';
+    public const Sips = 'sips';
+    public const Smb = 'smb';
+    public const Smtp = 'smtp';
+    public const Snmp = 'snmp';
+    public const Ssh = 'ssh';
+    public const Steam = 'steam';
+    public const Svn = 'svn';
+    public const Tel = 'tel';
+    public const Telnet = 'telnet';
+    public const Tn3270 = 'tn3270';
+    public const Urn = 'urn';
+    public const Ventrilo = 'ventrilo';
+    public const Vnc = 'vnc';
+    public const Wais = 'wais';
+    public const Xmpp = 'xmpp';
     public function port() : ?int
     {
-        return match ($this) {
-            self::Acap => 674,
-            self::Afp => 548,
-            self::Dict => 2628,
-            self::Dns => 53,
-            self::Ftp => 21,
-            self::Http, self::Ws => 80,
-            self::Https, self::Wss => 443,
-            self::Git => 9418,
-            self::Gopher => 70,
-            self::Imap => 143,
-            self::Imaps => 993,
-            self::Ipp, self::Ipps => 631,
-            self::Irc => 194,
-            self::Ircs => 6697,
-            self::Ldap => 389,
-            self::Ldaps => 636,
-            self::Mms => 1755,
-            self::Msrp, self::Msrps => 2855,
-            self::Mtqp => 1038,
-            self::Nfs => 111,
-            self::Nntp => 119,
-            self::Nntps => 563,
-            self::Pop => 110,
-            self::Prospero => 1525,
-            self::Redis => 6379,
-            self::Rsync => 873,
-            self::Rtsp => 554,
-            self::Rtsps => 322,
-            self::Rtspu => 5005,
-            self::Sftp, self::Ssh => 22,
-            self::Smb => 445,
-            self::Smtp => 25,
-            self::Snmp => 161,
-            self::Svn => 3690,
-            self::Telnet, self::Tn3270 => 23,
-            self::Ventrilo => 3784,
-            self::Vnc => 5900,
-            self::Wais => 210,
-            self::Xmpp => 80,
-            default => null,
-        };
+        switch ($this) {
+            case self::Acap:
+                return 674;
+            case self::Afp:
+                return 548;
+            case self::Dict:
+                return 2628;
+            case self::Dns:
+                return 53;
+            case self::Ftp:
+                return 21;
+            case self::Http:
+            case self::Ws:
+                return 80;
+            case self::Https:
+            case self::Wss:
+                return 443;
+            case self::Git:
+                return 9418;
+            case self::Gopher:
+                return 70;
+            case self::Imap:
+                return 143;
+            case self::Imaps:
+                return 993;
+            case self::Ipp:
+            case self::Ipps:
+                return 631;
+            case self::Irc:
+                return 194;
+            case self::Ircs:
+                return 6697;
+            case self::Ldap:
+                return 389;
+            case self::Ldaps:
+                return 636;
+            case self::Mms:
+                return 1755;
+            case self::Msrp:
+            case self::Msrps:
+                return 2855;
+            case self::Mtqp:
+                return 1038;
+            case self::Nfs:
+                return 111;
+            case self::Nntp:
+                return 119;
+            case self::Nntps:
+                return 563;
+            case self::Pop:
+                return 110;
+            case self::Prospero:
+                return 1525;
+            case self::Redis:
+                return 6379;
+            case self::Rsync:
+                return 873;
+            case self::Rtsp:
+                return 554;
+            case self::Rtsps:
+                return 322;
+            case self::Rtspu:
+                return 5005;
+            case self::Sftp:
+            case self::Ssh:
+                return 22;
+            case self::Smb:
+                return 445;
+            case self::Smtp:
+                return 25;
+            case self::Snmp:
+                return 161;
+            case self::Svn:
+                return 3690;
+            case self::Telnet:
+            case self::Tn3270:
+                return 23;
+            case self::Ventrilo:
+                return 3784;
+            case self::Vnc:
+                return 5900;
+            case self::Wais:
+                return 210;
+            case self::Xmpp:
+                return 80;
+            default:
+                return null;
+        }
     }
     public function type() : SchemeType
     {
-        return match ($this) {
-            self::Urn, self::About, self::Bitcoin, self::Blob, self::Data, self::Geo, self::Javascript, self::Magnet, self::Mailto, self::Pkcs11, self::Sip, self::Sips, self::Tel => SchemeType::Opaque,
-            self::File => SchemeType::Hierarchical,
-            self::News => SchemeType::Unknown,
-            default => match (\true) {
-                null !== $this->port() => SchemeType::Hierarchical,
-                default => SchemeType::Unknown,
-            },
-        };
+        switch ($this) {
+            case self::Urn:
+            case self::About:
+            case self::Bitcoin:
+            case self::Blob:
+            case self::Data:
+            case self::Geo:
+            case self::Javascript:
+            case self::Magnet:
+            case self::Mailto:
+            case self::Pkcs11:
+            case self::Sip:
+            case self::Sips:
+            case self::Tel:
+                return SchemeType::Opaque;
+            case self::File:
+                return SchemeType::Hierarchical;
+            case self::News:
+                return SchemeType::Unknown;
+            default:
+                switch (\true) {
+                    case null !== $this->port():
+                        return SchemeType::Hierarchical;
+                    default:
+                        return SchemeType::Unknown;
+                }
+        }
     }
     public function isWhatWgSpecial() : bool
     {
-        return match ($this) {
-            self::Ftp, self::Http, self::Https, self::Ws, self::Wss => \true,
-            default => \false,
-        };
+        switch ($this) {
+            case self::Ftp:
+            case self::Http:
+            case self::Https:
+            case self::Ws:
+            case self::Wss:
+                return \true;
+            default:
+                return \false;
+        }
     }
     /**
      * @return list<self>
@@ -159,7 +222,7 @@ enum UriScheme : string
                 if (null === $defaultPort) {
                     continue;
                 }
-                $reverse[$defaultPort] ??= [];
+                $reverse[$defaultPort] = $reverse[$defaultPort] ?? [];
                 $reverse[$defaultPort][] = $case;
             }
         }

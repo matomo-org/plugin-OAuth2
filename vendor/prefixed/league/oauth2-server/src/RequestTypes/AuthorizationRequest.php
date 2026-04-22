@@ -8,51 +8,59 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\RequestTypes;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\RequestTypes;
 
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ClientEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ScopeEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\UserEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ClientEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ScopeEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\UserEntityInterface;
 class AuthorizationRequest implements AuthorizationRequestInterface
 {
     /**
      * The grant type identifier
+     * @var string
      */
-    protected string $grantTypeId;
+    protected $grantTypeId;
     /**
      * The client identifier
+     * @var \Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ClientEntityInterface
      */
-    protected ClientEntityInterface $client;
+    protected $client;
     /**
      * The user identifier
+     * @var \Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\UserEntityInterface
      */
-    protected UserEntityInterface $user;
+    protected $user;
     /**
      * An array of scope identifiers
      *
      * @var ScopeEntityInterface[]
      */
-    protected array $scopes = [];
+    protected $scopes = [];
     /**
      * Has the user authorized the authorization request
+     * @var bool
      */
-    protected bool $authorizationApproved = \false;
+    protected $authorizationApproved = \false;
     /**
      * The redirect URI used in the request
+     * @var string|null
      */
-    protected ?string $redirectUri = null;
+    protected $redirectUri;
     /**
      * The state parameter on the authorization request
+     * @var string|null
      */
-    protected ?string $state = null;
+    protected $state;
     /**
      * The code challenge (if provided)
+     * @var string
      */
-    protected string $codeChallenge;
+    protected $codeChallenge;
     /**
      * The code challenge method (if provided)
+     * @var string
      */
-    protected string $codeChallengeMethod;
+    protected $codeChallengeMethod;
     public function getGrantTypeId() : string
     {
         return $this->grantTypeId;

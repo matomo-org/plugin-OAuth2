@@ -9,20 +9,34 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri\Idna;
+namespace Matomo\Dependencies\OAuth2\League\Uri\Idna;
 
 /**
  * @see https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/uidna_8h.html
  */
 final class Result
 {
-    private function __construct(
-        private readonly string $domain,
-        private readonly bool $isTransitionalDifferent,
-        /** @var array<Error> */
-        private readonly array $errors
-    )
+    /**
+     * @readonly
+     * @var string
+     */
+    private $domain;
+    /**
+     * @readonly
+     * @var bool
+     */
+    private $isTransitionalDifferent;
+    /**
+     * @readonly
+     * @var mixed[]
+     */
+    private $errors;
+    private function __construct(string $domain, bool $isTransitionalDifferent, array $errors)
     {
+        $this->domain = $domain;
+        $this->isTransitionalDifferent = $isTransitionalDifferent;
+        /** @var array<Error> */
+        $this->errors = $errors;
     }
     /**
      * @param array{result:string, isTransitionalDifferent:bool, errors:int} $infos
@@ -50,7 +64,10 @@ final class Result
     {
         return [] !== $this->errors;
     }
-    public function hasError(Error $error) : bool
+    /**
+     * @param \Matomo\Dependencies\OAuth2\League\Uri\Idna\Error::* $error
+     */
+    public function hasError($error) : bool
     {
         return in_array($error, $this->errors, \true);
     }

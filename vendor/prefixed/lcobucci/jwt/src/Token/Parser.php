@@ -1,12 +1,12 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Token;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Token;
 
 use DateTimeImmutable;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Decoder;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Parser as ParserInterface;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Token as TokenInterface;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Decoder;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Parser as ParserInterface;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Token as TokenInterface;
 use function array_key_exists;
 use function count;
 use function explode;
@@ -15,9 +15,15 @@ use function is_numeric;
 use function number_format;
 final class Parser implements ParserInterface
 {
+    /**
+     * @readonly
+     * @var \Matomo\Dependencies\OAuth2\Lcobucci\JWT\Decoder
+     */
+    private $decoder;
     private const MICROSECOND_PRECISION = 6;
-    public function __construct(private readonly Decoder $decoder)
+    public function __construct(Decoder $decoder)
     {
+        $this->decoder = $decoder;
     }
     public function parse(string $jwt) : TokenInterface
     {
@@ -117,8 +123,9 @@ final class Parser implements ParserInterface
             }
         }
     }
-    /** @throws InvalidTokenStructure */
-    private function convertDate(int|float|string $timestamp) : DateTimeImmutable
+    /** @throws InvalidTokenStructure
+     * @param int|float|string $timestamp */
+    private function convertDate($timestamp) : DateTimeImmutable
     {
         if (!is_numeric($timestamp)) {
             throw InvalidTokenStructure::dateIsNotParseable($timestamp);

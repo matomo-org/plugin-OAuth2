@@ -8,26 +8,36 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\Grant;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\Grant;
 
 use DateInterval;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\UserEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Exception\OAuthServerException;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\RequestEvent;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\RequestTypes\AuthorizationRequestInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\ResponseTypes\RedirectResponse;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\UserEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Exception\OAuthServerException;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\RequestEvent;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\RequestTypes\AuthorizationRequestInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\ResponseTypes\RedirectResponse;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
 use LogicException;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\ServerRequestInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\ServerRequestInterface;
 use function count;
 use function is_array;
 use function is_null;
 use function time;
 class ImplicitGrant extends AbstractAuthorizeGrant
 {
-    public function __construct(private DateInterval $accessTokenTTL, private string $queryDelimiter = '#')
+    /**
+     * @var \DateInterval
+     */
+    private $accessTokenTTL;
+    /**
+     * @var string
+     */
+    private $queryDelimiter = '#';
+    public function __construct(DateInterval $accessTokenTTL, string $queryDelimiter = '#')
     {
+        $this->accessTokenTTL = $accessTokenTTL;
+        $this->queryDelimiter = $queryDelimiter;
     }
     /**
      * @throws LogicException

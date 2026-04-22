@@ -8,12 +8,15 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\Traits;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\Traits;
 
 trait AuthCodeTrait
 {
-    protected ?string $redirectUri = null;
-    public function getRedirectUri() : string|null
+    /**
+     * @var string|null
+     */
+    protected $redirectUri;
+    public function getRedirectUri() : ?string
     {
         return $this->redirectUri;
     }

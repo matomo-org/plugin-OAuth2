@@ -9,15 +9,18 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri\Contracts;
+namespace Matomo\Dependencies\OAuth2\League\Uri\Contracts;
 
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\UriInterface as Psr7UriInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\UriInterface as Psr7UriInterface;
 /**
  * @deprecated since version 7.6.0
  */
 interface UriAccess
 {
-    public function getUri() : UriInterface|Psr7UriInterface;
+    /**
+     * @return \Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface|Psr7UriInterface
+     */
+    public function getUri();
     /**
      * Returns the RFC3986 string representation of the complete URI.
      */

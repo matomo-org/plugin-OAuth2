@@ -1,10 +1,10 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Validation;
 
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Token;
-final class Validator implements \Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validator
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Token;
+final class Validator implements \Matomo\Dependencies\OAuth2\Lcobucci\JWT\Validator
 {
     public function assert(Token $token, Constraint ...$constraints) : void
     {
@@ -38,7 +38,7 @@ final class Validator implements \Matomo\Dependencies\Oauth2\Lcobucci\JWT\Valida
                 $constraint->assert($token);
             }
             return \true;
-        } catch (ConstraintViolation) {
+        } catch (ConstraintViolation $exception) {
             return \false;
         }
     }

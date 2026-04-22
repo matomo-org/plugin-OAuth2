@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri;
+namespace Matomo\Dependencies\OAuth2\League\Uri;
 
-enum UrnComparisonMode
+class UrnComparisonMode
 {
-    case IncludeComponents;
-    case ExcludeComponents;
+    public const IncludeComponents = 'includecomponents';
+    public const ExcludeComponents = 'excludecomponents';
 }

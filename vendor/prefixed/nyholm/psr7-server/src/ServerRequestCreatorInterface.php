@@ -1,10 +1,10 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Nyholm\Psr7Server;
+namespace Matomo\Dependencies\OAuth2\Nyholm\Psr7Server;
 
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\ServerRequestInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\StreamInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\ServerRequestInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\StreamInterface;
 /**
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  * @author Martijn van der Ven <martijn@vanderven.se>

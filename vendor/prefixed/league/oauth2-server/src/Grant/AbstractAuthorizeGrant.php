@@ -10,11 +10,11 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\Grant;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\Grant;
 
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ClientEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\RequestTypes\AuthorizationRequest;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\RequestTypes\AuthorizationRequestInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ClientEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\RequestTypes\AuthorizationRequest;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\RequestTypes\AuthorizationRequestInterface;
 use function http_build_query;
 abstract class AbstractAuthorizeGrant extends AbstractGrant
 {
@@ -23,7 +23,7 @@ abstract class AbstractAuthorizeGrant extends AbstractGrant
      */
     public function makeRedirectUri(string $uri, array $params = [], string $queryDelimiter = '?') : string
     {
-        $uri .= str_contains($uri, $queryDelimiter) ? '&' : $queryDelimiter;
+        $uri .= strpos($uri, $queryDelimiter) !== false ? '&' : $queryDelimiter;
         return $uri . http_build_query($params);
     }
     protected function createAuthorizationRequest() : AuthorizationRequestInterface

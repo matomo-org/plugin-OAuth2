@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri\Exceptions;
+namespace Matomo\Dependencies\OAuth2\League\Uri\Exceptions;
 
 use InvalidArgumentException;
-use Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriException;
+use Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriException;
 class SyntaxError extends InvalidArgumentException implements UriException
 {
 }

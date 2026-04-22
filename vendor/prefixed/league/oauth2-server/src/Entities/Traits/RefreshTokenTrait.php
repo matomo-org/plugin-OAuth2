@@ -8,14 +8,20 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\Traits;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\Traits;
 
 use DateTimeImmutable;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\AccessTokenEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\AccessTokenEntityInterface;
 trait RefreshTokenTrait
 {
-    protected AccessTokenEntityInterface $accessToken;
-    protected DateTimeImmutable $expiryDateTime;
+    /**
+     * @var \Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\AccessTokenEntityInterface
+     */
+    protected $accessToken;
+    /**
+     * @var \DateTimeImmutable
+     */
+    protected $expiryDateTime;
     /**
      * {@inheritdoc}
      */

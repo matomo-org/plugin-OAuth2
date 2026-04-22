@@ -8,16 +8,21 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\Middleware;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\Middleware;
 
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\AuthorizationServer;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Exception\OAuthServerException;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\ResponseInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\ServerRequestInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\AuthorizationServer;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Exception\OAuthServerException;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\ResponseInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\ServerRequestInterface;
 class AuthorizationServerMiddleware
 {
-    public function __construct(private AuthorizationServer $server)
+    /**
+     * @var \Matomo\Dependencies\OAuth2\League\OAuth2\Server\AuthorizationServer
+     */
+    private $server;
+    public function __construct(AuthorizationServer $server)
     {
+        $this->server = $server;
     }
     public function __invoke(ServerRequestInterface $request, ResponseInterface $response, callable $next) : ResponseInterface
     {

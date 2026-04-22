@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri\UriTemplate;
+namespace Matomo\Dependencies\OAuth2\League\Uri\UriTemplate;
 
-use Matomo\Dependencies\Oauth2\League\Uri\Exceptions\SyntaxError;
+use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\SyntaxError;
 use function preg_match;
 /**
  * @internal The class exposes the internal representation of a Var Specifier
@@ -20,14 +20,32 @@ use function preg_match;
 final class VarSpecifier
 {
     /**
+     * @readonly
+     * @var string
+     */
+    public $name;
+    /**
+     * @readonly
+     * @var string
+     */
+    public $modifier;
+    /**
+     * @readonly
+     * @var int
+     */
+    public $position;
+    /**
      * Variables specification regular expression pattern.
      *
      * @link https://tools.ietf.org/html/rfc6570#section-2.3
      */
     private const REGEXP_VARSPEC = '/^(?<name>(?:[A-z0-9_\\.]|%[0-9a-fA-F]{2})+)(?<modifier>\\:(?<position>\\d+)|\\*)?$/';
     private const MODIFIER_POSITION_MAX_POSITION = 10000;
-    private function __construct(public readonly string $name, public readonly string $modifier, public readonly int $position)
+    private function __construct(string $name, string $modifier, int $position)
     {
+        $this->name = $name;
+        $this->modifier = $modifier;
+        $this->position = $position;
     }
     public static function new(string $specification) : self
     {
@@ -47,9 +65,11 @@ final class VarSpecifier
     }
     public function toString() : string
     {
-        return $this->name . $this->modifier . match (\true) {
-            0 < $this->position => $this->position,
-            default => '',
-        };
+        switch (\true) {
+            case 0 < $this->position:
+                return $this->position;
+            default:
+                return '';
+        }
     }
 }

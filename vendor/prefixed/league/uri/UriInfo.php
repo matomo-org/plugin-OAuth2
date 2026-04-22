@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri;
+namespace Matomo\Dependencies\OAuth2\League\Uri;
 
-use Matomo\Dependencies\Oauth2\Deprecated;
-use Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\UriInterface as Psr7UriInterface;
+use Matomo\Dependencies\OAuth2\Deprecated;
+use Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\UriInterface as Psr7UriInterface;
 /**
  * @deprecated since version 7.0.0
  * @codeCoverageIgnore
@@ -29,42 +29,48 @@ final class UriInfo
     }
     /**
      * Tells whether the URI represents an absolute URI.
+     * @param Psr7UriInterface|\Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface $uri
      */
     #[Deprecated(message: 'use League\\Uri\\BaseUri::isAbsolute() instead', since: 'league/uri:7.0.0')]
-    public static function isAbsolute(Psr7UriInterface|UriInterface $uri) : bool
+    public static function isAbsolute($uri) : bool
     {
         return BaseUri::from($uri)->isAbsolute();
     }
     /**
      * Tell whether the URI represents a network path.
+     * @param Psr7UriInterface|\Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface $uri
      */
     #[Deprecated(message: 'use League\\Uri\\BaseUri::isNetworkPath() instead', since: 'league/uri:7.0.0')]
-    public static function isNetworkPath(Psr7UriInterface|UriInterface $uri) : bool
+    public static function isNetworkPath($uri) : bool
     {
         return BaseUri::from($uri)->isNetworkPath();
     }
     /**
      * Tells whether the URI represents an absolute path.
+     * @param Psr7UriInterface|\Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface $uri
      */
     #[Deprecated(message: 'use League\\Uri\\BaseUri::isAbsolutePath() instead', since: 'league/uri:7.0.0')]
-    public static function isAbsolutePath(Psr7UriInterface|UriInterface $uri) : bool
+    public static function isAbsolutePath($uri) : bool
     {
         return BaseUri::from($uri)->isAbsolutePath();
     }
     /**
      * Tell whether the URI represents a relative path.
      *
+     * @param Psr7UriInterface|\Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface $uri
      */
     #[Deprecated(message: 'use League\\Uri\\BaseUri::isRelativePath() instead', since: 'league/uri:7.0.0')]
-    public static function isRelativePath(Psr7UriInterface|UriInterface $uri) : bool
+    public static function isRelativePath($uri) : bool
     {
         return BaseUri::from($uri)->isRelativePath();
     }
     /**
      * Tells whether both URI refers to the same document.
+     * @param Psr7UriInterface|\Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface $uri
+     * @param Psr7UriInterface|\Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface $baseUri
      */
     #[Deprecated(message: 'use League\\Uri\\BaseUri::isSameDocument() instead', since: 'league/uri:7.0.0')]
-    public static function isSameDocument(Psr7UriInterface|UriInterface $uri, Psr7UriInterface|UriInterface $baseUri) : bool
+    public static function isSameDocument($uri, $baseUri) : bool
     {
         return BaseUri::from($baseUri)->isSameDocument($uri);
     }
@@ -76,19 +82,22 @@ final class UriInfo
      * For URI without a special scheme the method returns null
      * For URI with the file scheme the method will return null (as this is left to the implementation decision)
      * For URI with a special scheme the method returns the scheme followed by its authority (without the userinfo part)
+     * @param Psr7UriInterface|\Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface $uri
      */
     #[Deprecated(message: 'use League\\Uri\\BaseUri::origin() instead', since: 'league/uri:7.0.0')]
-    public static function getOrigin(Psr7UriInterface|UriInterface $uri) : ?string
+    public static function getOrigin($uri) : ?string
     {
-        return BaseUri::from($uri)->origin()?->__toString();
+        return ($nullsafeVariable1 = BaseUri::from($uri)->origin()) ? $nullsafeVariable1->__toString() : null;
     }
     /**
      * Tells whether two URI do not share the same origin.
      *
      * @see UriInfo::getOrigin()
+     * @param Psr7UriInterface|\Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface $uri
+     * @param Psr7UriInterface|\Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface $baseUri
      */
     #[Deprecated(message: 'use League\\Uri\\BaseUri::isCrossOrigin() instead', since: 'league/uri:7.0.0')]
-    public static function isCrossOrigin(Psr7UriInterface|UriInterface $uri, Psr7UriInterface|UriInterface $baseUri) : bool
+    public static function isCrossOrigin($uri, $baseUri) : bool
     {
         return BaseUri::from($baseUri)->isCrossOrigin($uri);
     }

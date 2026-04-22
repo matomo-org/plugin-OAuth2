@@ -9,41 +9,71 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri\IPv4;
+namespace Matomo\Dependencies\OAuth2\League\Uri\IPv4;
 
 use function floor;
 use function intval;
 final class NativeCalculator implements Calculator
 {
-    public function baseConvert(mixed $value, int $base) : int
+    /**
+     * @param mixed $value
+     */
+    public function baseConvert($value, int $base) : int
     {
         return intval((string) $value, $base);
     }
-    public function pow(mixed $value, int $exponent)
+    /**
+     * @param mixed $value
+     */
+    public function pow($value, int $exponent)
     {
         return $value ** $exponent;
     }
-    public function compare(mixed $value1, mixed $value2) : int
+    /**
+     * @param mixed $value1
+     * @param mixed $value2
+     */
+    public function compare($value1, $value2) : int
     {
         return $value1 <=> $value2;
     }
-    public function multiply(mixed $value1, mixed $value2) : int
+    /**
+     * @param mixed $value1
+     * @param mixed $value2
+     */
+    public function multiply($value1, $value2) : int
     {
         return $value1 * $value2;
     }
-    public function div(mixed $value, mixed $base) : int
+    /**
+     * @param mixed $value
+     * @param mixed $base
+     */
+    public function div($value, $base) : int
     {
         return (int) floor($value / $base);
     }
-    public function mod(mixed $value, mixed $base) : int
+    /**
+     * @param mixed $value
+     * @param mixed $base
+     */
+    public function mod($value, $base) : int
     {
         return $value % $base;
     }
-    public function add(mixed $value1, mixed $value2) : int
+    /**
+     * @param mixed $value1
+     * @param mixed $value2
+     */
+    public function add($value1, $value2) : int
     {
         return $value1 + $value2;
     }
-    public function sub(mixed $value1, mixed $value2) : int
+    /**
+     * @param mixed $value1
+     * @param mixed $value2
+     */
+    public function sub($value1, $value2) : int
     {
         return $value1 - $value2;
     }

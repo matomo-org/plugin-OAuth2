@@ -1,7 +1,7 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Token;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Token;
 
 /**
  * Defines the list of claims that are registered in the IANA "JSON Web Token Claims" registry

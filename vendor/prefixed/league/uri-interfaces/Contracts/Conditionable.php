@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri\Contracts;
+namespace Matomo\Dependencies\OAuth2\League\Uri\Contracts;
 
 interface Conditionable
 {
@@ -19,6 +19,7 @@ interface Conditionable
      * @param (callable(static): bool)|bool $condition
      * @param callable(static): (static|null) $onSuccess
      * @param ?callable(static): (static|null) $onFail
+     * @return static
      */
-    public function when(callable|bool $condition, callable $onSuccess, ?callable $onFail = null) : static;
+    public function when($condition, callable $onSuccess, ?callable $onFail = null);
 }

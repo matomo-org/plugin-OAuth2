@@ -1,15 +1,15 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT;
 
 use DateTimeImmutable;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Encoding\CannotEncodeContent;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\CannotSignPayload;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Ecdsa\ConversionFailed;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\InvalidKeyProvided;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Key;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Token\RegisteredClaimGiven;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Encoding\CannotEncodeContent;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\CannotSignPayload;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Ecdsa\ConversionFailed;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\InvalidKeyProvided;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Key;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Token\RegisteredClaimGiven;
 /** @immutable */
 interface Builder
 {
@@ -53,16 +53,18 @@ interface Builder
      * Configures a header item
      *
      * @param non-empty-string $name
+     * @param mixed $value
      */
-    public function withHeader(string $name, mixed $value) : Builder;
+    public function withHeader(string $name, $value) : Builder;
     /**
      * Configures a claim item
      *
      * @param non-empty-string $name
      *
      * @throws RegisteredClaimGiven When trying to set a registered claim.
+     * @param mixed $value
      */
-    public function withClaim(string $name, mixed $value) : Builder;
+    public function withClaim(string $name, $value) : Builder;
     /**
      * Returns a signed token to be used
      *

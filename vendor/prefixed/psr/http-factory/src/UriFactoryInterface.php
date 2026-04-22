@@ -1,6 +1,6 @@
 <?php
 
-namespace Matomo\Dependencies\Oauth2\Psr\Http\Message;
+namespace Matomo\Dependencies\OAuth2\Psr\Http\Message;
 
 interface UriFactoryInterface
 {

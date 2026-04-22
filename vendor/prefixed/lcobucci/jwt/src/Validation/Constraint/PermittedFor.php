@@ -1,16 +1,22 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\Constraint;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Validation\Constraint;
 
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Token;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\Constraint;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\ConstraintViolation;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Token;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Validation\Constraint;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Validation\ConstraintViolation;
 final class PermittedFor implements Constraint
 {
+    /**
+     * @var non-empty-string
+     * @readonly
+     */
+    private $audience;
     /** @param non-empty-string $audience */
-    public function __construct(private readonly string $audience)
+    public function __construct(string $audience)
     {
+        $this->audience = $audience;
     }
     public function assert(Token $token) : void
     {

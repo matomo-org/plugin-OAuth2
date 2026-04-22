@@ -1,9 +1,9 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT;
 
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Encoding\CannotDecodeContent;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Encoding\CannotDecodeContent;
 use SodiumException;
 use function base64_decode;
 use function base64_encode;
@@ -54,7 +54,7 @@ final class SodiumBase64Polyfill
         }
         try {
             return sodium_base642bin($encoded, $variant, '');
-        } catch (SodiumException) {
+        } catch (SodiumException $exception) {
             throw CannotDecodeContent::invalidBase64String();
         }
     }

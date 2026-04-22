@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri;
+namespace Matomo\Dependencies\OAuth2\League\Uri;
 
-use Matomo\Dependencies\Oauth2\Deprecated;
-use Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\UriInterface as Psr7UriInterface;
+use Matomo\Dependencies\OAuth2\Deprecated;
+use Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\UriInterface as Psr7UriInterface;
 /**
  * @deprecated since version 7.0.0
  * @codeCoverageIgnore
@@ -29,9 +29,12 @@ final class UriResolver
      *
      * This method MUST be transparent when dealing with error and exceptions.
      * It MUST not alter or silence them apart from validating its own parameters.
+     * @param Psr7UriInterface|\Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface $uri
+     * @param Psr7UriInterface|\Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface $baseUri
+     * @return Psr7UriInterface|\Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface
      */
     #[Deprecated(message: 'use League\\Uri\\BaseUri::resolve() instead', since: 'league/uri:7.0.0')]
-    public static function resolve(Psr7UriInterface|UriInterface $uri, Psr7UriInterface|UriInterface $baseUri) : Psr7UriInterface|UriInterface
+    public static function resolve($uri, $baseUri)
     {
         return BaseUri::from($baseUri)->resolve($uri)->getUri();
     }
@@ -43,9 +46,12 @@ final class UriResolver
      *
      * This method MUST be transparent when dealing with error and exceptions.
      * It MUST not alter or silence them apart from validating its own parameters.
+     * @param Psr7UriInterface|\Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface $uri
+     * @param Psr7UriInterface|\Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface $baseUri
+     * @return Psr7UriInterface|\Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface
      */
     #[Deprecated(message: 'use League\\Uri\\BaseUri::relativize() instead', since: 'league/uri:7.0.0')]
-    public static function relativize(Psr7UriInterface|UriInterface $uri, Psr7UriInterface|UriInterface $baseUri) : Psr7UriInterface|UriInterface
+    public static function relativize($uri, $baseUri)
     {
         return BaseUri::from($baseUri)->relativize($uri)->getUri();
     }

@@ -1,19 +1,19 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Nyholm\Psr7\Factory;
+namespace Matomo\Dependencies\OAuth2\Nyholm\Psr7\Factory;
 
 use Http\Message\MessageFactory;
 use Http\Message\StreamFactory;
 use Http\Message\UriFactory;
-use Matomo\Dependencies\Oauth2\Nyholm\Psr7\Request;
-use Matomo\Dependencies\Oauth2\Nyholm\Psr7\Response;
-use Matomo\Dependencies\Oauth2\Nyholm\Psr7\Stream;
-use Matomo\Dependencies\Oauth2\Nyholm\Psr7\Uri;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\RequestInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\ResponseInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\StreamInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\UriInterface;
+use Matomo\Dependencies\OAuth2\Nyholm\Psr7\Request;
+use Matomo\Dependencies\OAuth2\Nyholm\Psr7\Response;
+use Matomo\Dependencies\OAuth2\Nyholm\Psr7\Stream;
+use Matomo\Dependencies\OAuth2\Nyholm\Psr7\Uri;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\RequestInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\ResponseInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\StreamInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\UriInterface;
 if (!\interface_exists(MessageFactory::class)) {
     throw new \LogicException('You cannot use "Nyholm\\Psr7\\Factory\\HttplugFactory" as the "php-http/message-factory" package is not installed. Try running "composer require php-http/message-factory". Note that this package is deprecated, use "psr/http-factory" instead');
 }

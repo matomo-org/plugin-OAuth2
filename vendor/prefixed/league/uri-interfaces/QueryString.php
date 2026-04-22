@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri;
+namespace Matomo\Dependencies\OAuth2\League\Uri;
 
-use Matomo\Dependencies\Oauth2\League\Uri\Exceptions\SyntaxError;
-use Matomo\Dependencies\Oauth2\League\Uri\KeyValuePair\Converter;
+use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\SyntaxError;
+use Matomo\Dependencies\OAuth2\League\Uri\KeyValuePair\Converter;
 use Stringable;
 use function array_key_exists;
 use function array_keys;
@@ -78,10 +78,14 @@ final class QueryString
             if (!is_array($pair) || [0, 1] !== array_keys($pair)) {
                 throw new SyntaxError('A pair must be a sequential array starting at `0` and containing two elements.');
             }
-            $keyValuePairs[] = [(string) Encoder::encodeQueryKeyValue($pair[0]), match (null) {
-                $pair[1] => null,
-                default => Encoder::encodeQueryKeyValue($pair[1]),
-            }];
+            $keyValuePairs[] = [(string) Encoder::encodeQueryKeyValue($pair[0]), (function () use ($pair) {
+                switch (null) {
+                    case $pair[1]:
+                        return null;
+                    default:
+                        return Encoder::encodeQueryKeyValue($pair[1]);
+                }
+            })()];
         }
         return ($converter ?? Converter::fromRFC3986())->toValue($keyValuePairs);
     }
@@ -95,8 +99,9 @@ final class QueryString
      * @param non-empty-string $separator
      *
      * @throws SyntaxError
+     * @param \Stringable|string|bool|null $query
      */
-    public static function extract(Stringable|string|bool|null $query, string $separator = '&', int $encType = PHP_QUERY_RFC3986) : array
+    public static function extract($query, string $separator = '&', int $encType = PHP_QUERY_RFC3986) : array
     {
         return self::extractFromValue($query, Converter::fromEncodingType($encType)->withSeparator($separator));
     }
@@ -111,8 +116,9 @@ final class QueryString
      * @see https://wiki.php.net/rfc/on_demand_name_mangling
      *
      * @throws SyntaxError
+     * @param \Stringable|string|bool|null $query
      */
-    public static function extractFromValue(Stringable|string|bool|null $query, ?Converter $converter = null) : array
+    public static function extractFromValue($query, ?Converter $converter = null) : array
     {
         return self::convert(self::decodePairs(($converter ?? Converter::fromRFC3986())->toPairs($query), self::PAIR_VALUE_PRESERVED));
     }
@@ -124,8 +130,9 @@ final class QueryString
      * @throws SyntaxError
      *
      * @return array<int, array{0:string, 1:string|null}>
+     * @param \Stringable|string|bool|null $query
      */
-    public static function parse(Stringable|string|bool|null $query, string $separator = '&', int $encType = PHP_QUERY_RFC3986) : array
+    public static function parse($query, string $separator = '&', int $encType = PHP_QUERY_RFC3986) : array
     {
         return self::parseFromValue($query, Converter::fromEncodingType($encType)->withSeparator($separator));
     }
@@ -135,8 +142,9 @@ final class QueryString
      * @throws SyntaxError
      *
      * @return array<int, array{0:string, 1:string|null}>
+     * @param \Stringable|string|bool|null $query
      */
-    public static function parseFromValue(Stringable|string|bool|null $query, ?Converter $converter = null) : array
+    public static function parseFromValue($query, ?Converter $converter = null) : array
     {
         return self::decodePairs(($converter ?? Converter::fromRFC3986())->toPairs($query), self::PAIR_VALUE_DECODED);
     }
@@ -149,12 +157,16 @@ final class QueryString
     {
         $decodePair = static function (array $pair, int $pairValueState) : array {
             [$key, $value] = $pair;
-            return match ($pairValueState) {
-                self::PAIR_VALUE_PRESERVED => [(string) Encoder::decodeAll($key), $value],
-                default => [(string) Encoder::decodeAll($key), Encoder::decodeAll($value)],
-            };
+            switch ($pairValueState) {
+                case self::PAIR_VALUE_PRESERVED:
+                    return [(string) Encoder::decodeAll($key), $value];
+                default:
+                    return [(string) Encoder::decodeAll($key), Encoder::decodeAll($value)];
+            }
         };
-        return array_reduce($pairs, fn(array $carry, array $pair) => [...$carry, $decodePair($pair, $pairValueState)], []);
+        return array_reduce($pairs, function (array $carry, array $pair) use ($decodePair, $pairValueState) {
+            return array_merge($carry, [$decodePair($pair, $pairValueState)]);
+        }, []);
     }
     /**
      * Converts a collection of key/value pairs and returns
@@ -193,7 +205,7 @@ final class QueryString
      * @param array|string $name the pair key
      * @param string $value the pair value
      */
-    private static function extractPhpVariable(array $data, array|string $name, string $value = '') : array
+    private static function extractPhpVariable(array $data, $name, string $value = '') : array
     {
         if (is_array($name)) {
             [$name, $value] = $name;
@@ -220,7 +232,7 @@ final class QueryString
             $data[$key] = [];
         }
         $remaining = substr($name, $rightBracketPosition + 1);
-        if (!str_starts_with($remaining, '[') || !str_contains($remaining, ']')) {
+        if (strncmp($remaining, '[', strlen('[')) !== 0 || strpos($remaining, ']') === false) {
             $remaining = '';
         }
         $name = substr($name, $leftBracketPosition + 1, $rightBracketPosition - $leftBracketPosition - 1) . $remaining;

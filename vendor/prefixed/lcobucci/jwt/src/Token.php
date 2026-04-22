@@ -1,10 +1,10 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT;
 
 use DateTimeInterface;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Token\DataSet;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Token\DataSet;
 interface Token
 {
     /**

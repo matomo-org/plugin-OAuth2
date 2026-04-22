@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri\Contracts;
+namespace Matomo\Dependencies\OAuth2\League\Uri\Contracts;
 
 use Stringable;
 /**
@@ -41,6 +41,7 @@ interface FragmentDirective extends Stringable
     /**
      * Tells whether the submitted value is equals to the string
      * representation of the given directive.
+     * @param mixed $directive
      */
-    public function equals(mixed $directive) : bool;
+    public function equals($directive) : bool;
 }

@@ -1,10 +1,10 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\Constraint;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Validation\Constraint;
 
 use InvalidArgumentException;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Exception;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Exception;
 final class CannotValidateARegisteredClaim extends InvalidArgumentException implements Exception
 {
     /** @param non-empty-string $claim */

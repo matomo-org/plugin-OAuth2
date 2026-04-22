@@ -1,12 +1,12 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Encoding;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Encoding;
 
 use JsonException;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Decoder;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Encoder;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\SodiumBase64Polyfill;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Decoder;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Encoder;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\SodiumBase64Polyfill;
 use function json_decode;
 use function json_encode;
 use const JSON_THROW_ON_ERROR;
@@ -17,7 +17,10 @@ use const JSON_UNESCAPED_UNICODE;
  */
 final class JoseEncoder implements Encoder, Decoder
 {
-    public function jsonEncode(mixed $data) : string
+    /**
+     * @param mixed $data
+     */
+    public function jsonEncode($data) : string
     {
         try {
             return json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
@@ -25,10 +28,13 @@ final class JoseEncoder implements Encoder, Decoder
             throw CannotEncodeContent::jsonIssues($exception);
         }
     }
-    public function jsonDecode(string $json) : mixed
+    /**
+     * @return mixed
+     */
+    public function jsonDecode(string $json)
     {
         try {
-            return json_decode(json: $json, associative: \true, flags: JSON_THROW_ON_ERROR);
+            return json_decode($json, \true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
             throw CannotDecodeContent::jsonIssues($exception);
         }

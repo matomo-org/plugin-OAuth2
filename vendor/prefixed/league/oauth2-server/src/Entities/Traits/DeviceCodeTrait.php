@@ -8,19 +8,37 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\Traits;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\Traits;
 
 use DateTimeImmutable;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ClientEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ScopeEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ClientEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ScopeEntityInterface;
 trait DeviceCodeTrait
 {
-    private bool $userApproved = \false;
-    private bool $includeVerificationUriComplete = \false;
-    private int $interval = 5;
-    private string $userCode;
-    private string $verificationUri;
-    private ?DateTimeImmutable $lastPolledAt = null;
+    /**
+     * @var bool
+     */
+    private $userApproved = \false;
+    /**
+     * @var bool
+     */
+    private $includeVerificationUriComplete = \false;
+    /**
+     * @var int
+     */
+    private $interval = 5;
+    /**
+     * @var string
+     */
+    private $userCode;
+    /**
+     * @var string
+     */
+    private $verificationUri;
+    /**
+     * @var \DateTimeImmutable|null
+     */
+    private $lastPolledAt;
     public function getUserCode() : string
     {
         return $this->userCode;

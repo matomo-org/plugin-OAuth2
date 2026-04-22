@@ -8,14 +8,14 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\Traits;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\Traits;
 
 trait EntityTrait
 {
     /**
      * @var non-empty-string
      */
-    protected string $identifier;
+    protected $identifier;
     /**
      * @return non-empty-string
      */

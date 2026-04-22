@@ -1,7 +1,7 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer;
 
 use const OPENSSL_KEYTYPE_RSA;
 abstract class Rsa extends OpenSSL

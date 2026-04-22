@@ -1,13 +1,13 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Encoding;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Encoding;
 
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\ClaimsFormatter;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\ClaimsFormatter;
 final class ChainedFormatter implements ClaimsFormatter
 {
     /** @var array<ClaimsFormatter> */
-    private array $formatters;
+    private $formatters;
     public function __construct(ClaimsFormatter ...$formatters)
     {
         $this->formatters = $formatters;

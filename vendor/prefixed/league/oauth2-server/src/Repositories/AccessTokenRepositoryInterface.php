@@ -8,12 +8,12 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories;
 
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\AccessTokenEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ClientEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ScopeEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Exception\UniqueTokenIdentifierConstraintViolationException;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\AccessTokenEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ClientEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ScopeEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Exception\UniqueTokenIdentifierConstraintViolationException;
 /**
  * Access token interface.
  */
@@ -24,7 +24,7 @@ interface AccessTokenRepositoryInterface extends RepositoryInterface
      *
      * @param ScopeEntityInterface[] $scopes
      */
-    public function getNewToken(ClientEntityInterface $clientEntity, array $scopes, string|null $userIdentifier = null) : AccessTokenEntityInterface;
+    public function getNewToken(ClientEntityInterface $clientEntity, array $scopes, ?string $userIdentifier = null) : AccessTokenEntityInterface;
     /**
      * @throws UniqueTokenIdentifierConstraintViolationException
      */

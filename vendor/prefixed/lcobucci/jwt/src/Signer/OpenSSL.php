@@ -1,10 +1,11 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer;
 
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer;
 use OpenSSLAsymmetricKey;
+use SensitiveParameter;
 use function array_key_exists;
 use function assert;
 use function is_array;
@@ -30,7 +31,7 @@ abstract class OpenSSL implements Signer
      * @throws CannotSignPayload
      * @throws InvalidKeyProvided
      */
-    protected final function createSignature(string $pem, string $passphrase, string $payload) : string
+    protected final function createSignature(#[SensitiveParameter] string $pem, #[SensitiveParameter] string $passphrase, string $payload) : string
     {
         $key = $this->getPrivateKey($pem, $passphrase);
         $signature = '';
@@ -40,7 +41,7 @@ abstract class OpenSSL implements Signer
         return $signature;
     }
     /** @throws CannotSignPayload */
-    private function getPrivateKey(string $pem, string $passphrase) : OpenSSLAsymmetricKey
+    private function getPrivateKey(#[SensitiveParameter] string $pem, #[SensitiveParameter] string $passphrase) : OpenSSLAsymmetricKey
     {
         return $this->validateKey(openssl_pkey_get_private($pem, $passphrase));
     }
@@ -60,8 +61,9 @@ abstract class OpenSSL implements Signer
      * Raises an exception when the key type is not the expected type
      *
      * @throws InvalidKeyProvided
+     * @param \OpenSSLAsymmetricKey|bool $key
      */
-    private function validateKey(OpenSSLAsymmetricKey|bool $key) : OpenSSLAsymmetricKey
+    private function validateKey($key) : OpenSSLAsymmetricKey
     {
         if (is_bool($key)) {
             throw InvalidKeyProvided::cannotBeParsed($this->fullOpenSSLErrorString());

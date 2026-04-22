@@ -10,25 +10,25 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\Grant;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\Grant;
 
 use DateInterval;
 use DateTimeImmutable;
 use Error;
 use Exception;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ClientEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\DeviceCodeEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ScopeEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Exception\OAuthServerException;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Exception\UniqueTokenIdentifierConstraintViolationException;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\DeviceCodeRepositoryInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\RequestAccessTokenEvent;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\RequestEvent;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\RequestRefreshTokenEvent;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\ResponseTypes\DeviceCodeResponse;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\ServerRequestInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ClientEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\DeviceCodeEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ScopeEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Exception\OAuthServerException;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Exception\UniqueTokenIdentifierConstraintViolationException;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\DeviceCodeRepositoryInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\RequestAccessTokenEvent;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\RequestEvent;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\RequestRefreshTokenEvent;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\ResponseTypes\DeviceCodeResponse;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\ServerRequestInterface;
 use TypeError;
 use function is_null;
 use function random_int;
@@ -39,12 +39,35 @@ use function time;
  */
 class DeviceCodeGrant extends AbstractGrant
 {
-    protected DeviceCodeRepositoryInterface $deviceCodeRepository;
-    private bool $includeVerificationUriComplete = \false;
-    private bool $intervalVisibility = \false;
-    private string $verificationUri;
-    public function __construct(DeviceCodeRepositoryInterface $deviceCodeRepository, RefreshTokenRepositoryInterface $refreshTokenRepository, private DateInterval $deviceCodeTTL, string $verificationUri, private readonly int $retryInterval = 5)
+    /**
+     * @var \DateInterval
+     */
+    private $deviceCodeTTL;
+    /**
+     * @readonly
+     * @var int
+     */
+    private $retryInterval = 5;
+    /**
+     * @var \Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\DeviceCodeRepositoryInterface
+     */
+    protected $deviceCodeRepository;
+    /**
+     * @var bool
+     */
+    private $includeVerificationUriComplete = \false;
+    /**
+     * @var bool
+     */
+    private $intervalVisibility = \false;
+    /**
+     * @var string
+     */
+    private $verificationUri;
+    public function __construct(DeviceCodeRepositoryInterface $deviceCodeRepository, RefreshTokenRepositoryInterface $refreshTokenRepository, DateInterval $deviceCodeTTL, string $verificationUri, int $retryInterval = 5)
     {
+        $this->deviceCodeTTL = $deviceCodeTTL;
+        $this->retryInterval = $retryInterval;
         $this->setDeviceCodeRepository($deviceCodeRepository);
         $this->setRefreshTokenRepository($refreshTokenRepository);
         $this->refreshTokenTTL = new DateInterval('P1M');

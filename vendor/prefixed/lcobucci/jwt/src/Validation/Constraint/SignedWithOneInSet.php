@@ -1,16 +1,17 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\Constraint;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Validation\Constraint;
 
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Token;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\ConstraintViolation;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\SignedWith as SignedWithInterface;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Token;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Validation\ConstraintViolation;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Validation\SignedWith as SignedWithInterface;
 use const PHP_EOL;
 final class SignedWithOneInSet implements SignedWithInterface
 {
-    /** @var array<SignedWithUntilDate> */
-    private readonly array $constraints;
+    /** @var array<SignedWithUntilDate>
+     * @readonly */
+    private $constraints;
     public function __construct(SignedWithUntilDate ...$constraints)
     {
         $this->constraints = $constraints;

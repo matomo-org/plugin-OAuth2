@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri\Contracts;
+namespace Matomo\Dependencies\OAuth2\League\Uri\Contracts;
 
 use Countable;
 use Iterator;
 use IteratorAggregate;
-use Matomo\Dependencies\Oauth2\League\Uri\Exceptions\SyntaxError;
+use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\SyntaxError;
 use Stringable;
 /**
  * @extends IteratorAggregate<string>
@@ -56,12 +56,14 @@ interface SegmentedPathInterface extends Countable, IteratorAggregate, PathInter
      * the given value will be returned
      *
      * @return array<int>
+     * @param \Stringable|string|null $segment
      */
-    public function keys(Stringable|string|null $segment = null) : array;
+    public function keys($segment = null) : array;
     /**
      * Appends a segment to the path.
+     * @param \Stringable|string $segment
      */
-    public function append(Stringable|string $segment) : self;
+    public function append($segment) : self;
     /**
      * Extracts a slice of $length elements starting at position $offset from the host.
      *
@@ -73,8 +75,9 @@ interface SegmentedPathInterface extends Countable, IteratorAggregate, PathInter
     public function slice(int $offset, ?int $length = null) : self;
     /**
      * Prepends a segment to the path.
+     * @param \Stringable|string $segment
      */
-    public function prepend(Stringable|string $segment) : self;
+    public function prepend($segment) : self;
     /**
      * Returns an instance with the modified segment.
      *
@@ -85,8 +88,9 @@ interface SegmentedPathInterface extends Countable, IteratorAggregate, PathInter
      * If $key is negative, the added segment will be the segment at $key position from the end.
      *
      * @throws SyntaxError If the key is invalid
+     * @param \Stringable|string $segment
      */
-    public function withSegment(int $key, Stringable|string $segment) : self;
+    public function withSegment(int $key, $segment) : self;
     /**
      * Returns an instance without the specified segment.
      *
@@ -112,20 +116,23 @@ interface SegmentedPathInterface extends Countable, IteratorAggregate, PathInter
      *
      * This method MUST retain the state of the current instance, and return
      * an instance that contains the extension basename modified.
+     * @param \Stringable|string $path
      */
-    public function withDirname(Stringable|string $path) : self;
+    public function withDirname($path) : self;
     /**
      * Returns an instance with the specified basename.
      *
      * This method MUST retain the state of the current instance, and return
      * an instance that contains the extension basename modified.
+     * @param \Stringable|string $basename
      */
-    public function withBasename(Stringable|string $basename) : self;
+    public function withBasename($basename) : self;
     /**
      * Returns an instance with the specified basename extension.
      *
      * This method MUST retain the state of the current instance, and return
      * an instance that contains the extension basename modified.
+     * @param \Stringable|string $extension
      */
-    public function withExtension(Stringable|string $extension) : self;
+    public function withExtension($extension) : self;
 }

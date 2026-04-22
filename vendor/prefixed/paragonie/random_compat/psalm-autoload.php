@@ -1,6 +1,6 @@
 <?php
 
-namespace Matomo\Dependencies\Oauth2;
+namespace Matomo\Dependencies\OAuth2;
 
 require_once 'lib/byte_safe_strings.php';
 require_once 'lib/cast_to_int.php';

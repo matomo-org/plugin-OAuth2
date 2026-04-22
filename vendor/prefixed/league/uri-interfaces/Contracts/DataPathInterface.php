@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri\Contracts;
+namespace Matomo\Dependencies\OAuth2\League\Uri\Contracts;
 
 use SplFileObject;
 use Stringable;
@@ -79,6 +79,7 @@ interface DataPathInterface extends PathInterface
      * Users must provide encoded characters.
      *
      * An empty parameters value is equivalent to removing the parameter.
+     * @param \Stringable|string $parameters
      */
-    public function withParameters(Stringable|string $parameters) : self;
+    public function withParameters($parameters) : self;
 }

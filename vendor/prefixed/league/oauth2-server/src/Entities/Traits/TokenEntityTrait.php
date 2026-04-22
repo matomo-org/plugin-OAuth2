@@ -8,24 +8,30 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\Traits;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\Traits;
 
 use DateTimeImmutable;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ClientEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ScopeEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ClientEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ScopeEntityInterface;
 use function array_values;
 trait TokenEntityTrait
 {
     /**
      * @var ScopeEntityInterface[]
      */
-    protected array $scopes = [];
-    protected DateTimeImmutable $expiryDateTime;
+    protected $scopes = [];
+    /**
+     * @var \DateTimeImmutable
+     */
+    protected $expiryDateTime;
     /**
      * @var non-empty-string|null
      */
-    protected string|null $userIdentifier = null;
-    protected ClientEntityInterface $client;
+    protected $userIdentifier = null;
+    /**
+     * @var \Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ClientEntityInterface
+     */
+    protected $client;
     /**
      * Associate a scope with the token.
      */
@@ -70,7 +76,7 @@ trait TokenEntityTrait
      *
      * @return non-empty-string|null
      */
-    public function getUserIdentifier() : string|null
+    public function getUserIdentifier() : ?string
     {
         return $this->userIdentifier;
     }

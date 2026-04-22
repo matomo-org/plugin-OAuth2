@@ -1,8 +1,8 @@
 #!/usr/bin/env php
 <?php 
-namespace Matomo\Dependencies\Oauth2;
+namespace Matomo\Dependencies\OAuth2;
 
-use Matomo\Dependencies\Oauth2\Defuse\Crypto\Key;
+use Matomo\Dependencies\OAuth2\Defuse\Crypto\Key;
 foreach ([__DIR__ . '/../../../autoload.php', __DIR__ . '/../vendor/autoload.php'] as $file) {
     if (\file_exists($file)) {
         require $file;

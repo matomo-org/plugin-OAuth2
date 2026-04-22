@@ -10,18 +10,27 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\ResponseTypes;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\ResponseTypes;
 
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\DeviceCodeEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\DeviceCodeEntityInterface;
 use LogicException;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\ResponseInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\ResponseInterface;
 use function json_encode;
 use function time;
 class DeviceCodeResponse extends AbstractResponseType
 {
-    protected DeviceCodeEntityInterface $deviceCodeEntity;
-    private bool $includeVerificationUriComplete = \false;
-    private bool $includeInterval = \false;
+    /**
+     * @var \Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\DeviceCodeEntityInterface
+     */
+    protected $deviceCodeEntity;
+    /**
+     * @var bool
+     */
+    private $includeVerificationUriComplete = \false;
+    /**
+     * @var bool
+     */
+    private $includeInterval = \false;
     /**
      * {@inheritdoc}
      */

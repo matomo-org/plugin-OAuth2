@@ -10,36 +10,36 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\Grant;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\Grant;
 
 use DateInterval;
 use DateTimeImmutable;
 use DomainException;
 use Error;
 use Exception;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\CryptKeyInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\CryptTrait;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\AccessTokenEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\AuthCodeEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ClientEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\RefreshTokenEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ScopeEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\EventEmitting\EmitterAwarePolyfill;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Exception\OAuthServerException;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Exception\UniqueTokenIdentifierConstraintViolationException;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\RedirectUriValidators\RedirectUriValidator;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\AccessTokenRepositoryInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\AuthCodeRepositoryInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\ClientRepositoryInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\ScopeRepositoryInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\UserRepositoryInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\RequestEvent;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\RequestTypes\AuthorizationRequestInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\ResponseTypes\DeviceCodeResponse;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\CryptKeyInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\CryptTrait;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\AccessTokenEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\AuthCodeEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ClientEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\RefreshTokenEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ScopeEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\EventEmitting\EmitterAwarePolyfill;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Exception\OAuthServerException;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Exception\UniqueTokenIdentifierConstraintViolationException;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\RedirectUriValidators\RedirectUriValidator;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\AccessTokenRepositoryInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\AuthCodeRepositoryInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\ClientRepositoryInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\ScopeRepositoryInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\UserRepositoryInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\RequestEvent;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\RequestTypes\AuthorizationRequestInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\ResponseTypes\DeviceCodeResponse;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
 use LogicException;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\ServerRequestInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\ServerRequestInterface;
 use TypeError;
 use function array_filter;
 use function array_key_exists;
@@ -59,16 +59,46 @@ abstract class AbstractGrant implements GrantTypeInterface
     use CryptTrait;
     protected const SCOPE_DELIMITER_STRING = ' ';
     protected const MAX_RANDOM_TOKEN_GENERATION_ATTEMPTS = 10;
-    protected ClientRepositoryInterface $clientRepository;
-    protected AccessTokenRepositoryInterface $accessTokenRepository;
-    protected ScopeRepositoryInterface $scopeRepository;
-    protected AuthCodeRepositoryInterface $authCodeRepository;
-    protected RefreshTokenRepositoryInterface $refreshTokenRepository;
-    protected UserRepositoryInterface $userRepository;
-    protected DateInterval $refreshTokenTTL;
-    protected CryptKeyInterface $privateKey;
-    protected string $defaultScope;
-    protected bool $revokeRefreshTokens = \true;
+    /**
+     * @var \Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\ClientRepositoryInterface
+     */
+    protected $clientRepository;
+    /**
+     * @var \Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\AccessTokenRepositoryInterface
+     */
+    protected $accessTokenRepository;
+    /**
+     * @var \Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\ScopeRepositoryInterface
+     */
+    protected $scopeRepository;
+    /**
+     * @var \Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\AuthCodeRepositoryInterface
+     */
+    protected $authCodeRepository;
+    /**
+     * @var \Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface
+     */
+    protected $refreshTokenRepository;
+    /**
+     * @var \Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\UserRepositoryInterface
+     */
+    protected $userRepository;
+    /**
+     * @var \DateInterval
+     */
+    protected $refreshTokenTTL;
+    /**
+     * @var \Matomo\Dependencies\OAuth2\League\OAuth2\Server\CryptKeyInterface
+     */
+    protected $privateKey;
+    /**
+     * @var string
+     */
+    protected $defaultScope;
+    /**
+     * @var bool
+     */
+    protected $revokeRefreshTokens = \true;
     public function setClientRepository(ClientRepositoryInterface $clientRepository) : void
     {
         $this->clientRepository = $clientRepository;
@@ -207,7 +237,7 @@ abstract class AbstractGrant implements GrantTypeInterface
      *
      * @return ScopeEntityInterface[]
      */
-    public function validateScopes(string|array|null $scopes, ?string $redirectUri = null) : array
+    public function validateScopes($scopes, ?string $redirectUri = null) : array
     {
         if ($scopes === null) {
             $scopes = [];
@@ -231,7 +261,9 @@ abstract class AbstractGrant implements GrantTypeInterface
      */
     private function convertScopesQueryStringToArray(string $scopes) : array
     {
-        return array_filter(explode(self::SCOPE_DELIMITER_STRING, trim($scopes)), static fn($scope) => $scope !== '');
+        return array_filter(explode(self::SCOPE_DELIMITER_STRING, trim($scopes)), static function ($scope) {
+            return $scope !== '';
+        });
     }
     /**
      * Parse request parameter.
@@ -291,7 +323,7 @@ abstract class AbstractGrant implements GrantTypeInterface
         if ($decoded === \false) {
             return [null, null];
         }
-        if (str_contains($decoded, ':') === \false) {
+        if ((strpos($decoded, ':') !== false) === \false) {
             return [null, null];
             // HTTP Basic header without colon isn't valid
         }
@@ -342,7 +374,7 @@ abstract class AbstractGrant implements GrantTypeInterface
      * @throws OAuthServerException
      * @throws UniqueTokenIdentifierConstraintViolationException
      */
-    protected function issueAccessToken(DateInterval $accessTokenTTL, ClientEntityInterface $client, string|null $userIdentifier, array $scopes = []) : AccessTokenEntityInterface
+    protected function issueAccessToken(DateInterval $accessTokenTTL, ClientEntityInterface $client, ?string $userIdentifier, array $scopes = []) : AccessTokenEntityInterface
     {
         $maxGenerationAttempts = self::MAX_RANDOM_TOKEN_GENERATION_ATTEMPTS;
         $accessToken = $this->accessTokenRepository->getNewToken($client, $scopes, $userIdentifier);

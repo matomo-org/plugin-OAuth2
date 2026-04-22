@@ -1,18 +1,31 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\Constraint;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Validation\Constraint;
 
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Token;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\UnencryptedToken;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\Constraint;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\ConstraintViolation;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Token;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\UnencryptedToken;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Validation\Constraint;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Validation\ConstraintViolation;
 use function in_array;
 final class HasClaimWithValue implements Constraint
 {
-    /** @param non-empty-string $claim */
-    public function __construct(private readonly string $claim, private readonly mixed $expectedValue)
+    /**
+     * @var non-empty-string
+     * @readonly
+     */
+    private $claim;
+    /**
+     * @readonly
+     * @var mixed
+     */
+    private $expectedValue;
+    /** @param non-empty-string $claim
+     * @param mixed $expectedValue */
+    public function __construct(string $claim, $expectedValue)
     {
+        $this->claim = $claim;
+        $this->expectedValue = $expectedValue;
         if (in_array($claim, Token\RegisteredClaims::ALL, \true)) {
             throw CannotValidateARegisteredClaim::create($claim);
         }

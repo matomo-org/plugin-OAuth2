@@ -9,16 +9,16 @@
 
 namespace Piwik\Plugins\OAuth2\Auth;
 
-use Matomo\Dependencies\Oauth2\Nyholm\Psr7\Factory\Psr17Factory;
-use Matomo\Dependencies\Oauth2\Nyholm\Psr7Server\ServerRequestCreator;
+use Matomo\Dependencies\OAuth2\Nyholm\Psr7\Factory\Psr17Factory;
+use Matomo\Dependencies\OAuth2\Nyholm\Psr7Server\ServerRequestCreator;
 use Piwik\Access;
 use Piwik\Container\StaticContainer;
 use Piwik\Plugins\OAuth2\Model\ClientModel;
 use Piwik\Plugins\OAuth2\OAuth2;
 use Piwik\Plugins\OAuth2\Service\ServerFactory;
 use Piwik\Plugins\UsersManager\Model as UserModel;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\ServerRequestInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Exception\OAuthServerException;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\ServerRequestInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Exception\OAuthServerException;
 
 class ResourceServerAuthenticator
 {

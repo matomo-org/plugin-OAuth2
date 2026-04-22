@@ -1,11 +1,11 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Event;
+namespace Matomo\Dependencies\OAuth2\League\Event;
 
 use LogicException;
-use Matomo\Dependencies\Oauth2\Psr\EventDispatcher\EventDispatcherInterface;
-use Matomo\Dependencies\Oauth2\Psr\EventDispatcher\ListenerProviderInterface;
+use Matomo\Dependencies\OAuth2\Psr\EventDispatcher\EventDispatcherInterface;
+use Matomo\Dependencies\OAuth2\Psr\EventDispatcher\ListenerProviderInterface;
 class UnableToSubscribeListener extends LogicException
 {
     public static function becauseTheListenerProviderDoesNotAcceptListeners(ListenerProviderInterface $configuredListenerProvider) : UnableToSubscribeListener
