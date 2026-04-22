@@ -88,6 +88,7 @@
     "ScopeWriteDescription": "Matomo write level access",
     "ScopeAdminDescription": "Matomo admin level access",
     "ScopeSuperUserDescription": "Matomo superuser level access",
+    "ScopeSuperUserShort": "Superuser",
     "SystemSettingOAuthAccessTokenLifetimeTitle": "Access token lifetime (seconds)",
     "SystemSettingOAuthAccessTokenLifetimeDescription": "Define how long an access token remains valid after it is issued.",
     "SystemSettingOAuthRefreshTokenLifetimeTitle": "Refresh token lifetime (seconds)",

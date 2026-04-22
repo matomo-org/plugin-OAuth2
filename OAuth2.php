@@ -15,6 +15,7 @@ use Piwik\Common;
 use Piwik\Db;
 use Piwik\DbHelper;
 use Piwik\Option;
+use Piwik\Piwik;
 use Piwik\Plugin;
 use Piwik\Plugins\OAuth2\Access\OAuth2Access;
 use Piwik\Plugins\OAuth2\Auth\Oauth2Auth;
@@ -27,6 +28,17 @@ class OAuth2 extends Plugin
     public const OAUTH2_PRIVATE_OPTION_KEY = 'oauth2_private';
     public const OAUTH2_PUBLIC_OPTION_KEY = 'oauth2_public';
     public const OAUTH2_ENCRYPTION_OPTION_KEY = 'oauth2_encryption';
+
+    public static function getScopeDescriptions(): array
+    {
+        return [
+            'matomo:read' => Piwik::translate('OAuth2_ScopeReadDescription'),
+            'matomo:write' => Piwik::translate('OAuth2_ScopeWriteDescription'),
+            'matomo:admin' => Piwik::translate('OAuth2_ScopeAdminDescription'),
+            'matomo:superuser' => Piwik::translate('OAuth2_ScopeSuperUserDescription'),
+        ];
+    }
+
     public function registerEvents()
     {
         return [
@@ -155,6 +167,10 @@ class OAuth2 extends Plugin
         $translationKeys[] = 'OAuth2_ClientSecretVisibleHelp';
         $translationKeys[] = 'OAuth2_AdminDescriptionPlaceholder';
         $translationKeys[] = 'OAuth2_AdminRotatedNotification';
+        $translationKeys[] = 'OAuth2_ScopeSuperUserShort';
+        $translationKeys[] = 'UsersManager_PrivView';
+        $translationKeys[] = 'UsersManager_PrivWrite';
+        $translationKeys[] = 'UsersManager_PrivAdmin';
     }
 
     public function getTablesInstalled(&$allTablesInstalled)
