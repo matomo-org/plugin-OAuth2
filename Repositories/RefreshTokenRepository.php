@@ -9,8 +9,8 @@
 
 namespace Piwik\Plugins\OAuth2\Repositories;
 
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\RefreshTokenEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\RefreshTokenEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
 use Piwik\Plugins\OAuth2\Entities\RefreshTokenEntity;
 use Piwik\Plugins\OAuth2\Model\RefreshTokenModel;
 
