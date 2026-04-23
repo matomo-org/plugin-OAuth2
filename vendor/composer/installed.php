@@ -1,11 +1,11 @@
 <?php return array(
     'root' => array(
-        'pretty_version' => 'dev-5.x-dev',
-        'version' => 'dev-5.x-dev',
+        'pretty_version' => 'dev-PG-5111-upgrade-library',
+        'version' => 'dev-PG-5111-upgrade-library',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
-        'reference' => 'f7758318afd2797439906b0fd45b44b2df2ef16b',
+        'reference' => '91d91cfcf694401067d5bf2123a71cea8299022b',
         'name' => 'matomo/oauth2',
         'dev' => true,
     ),
@@ -86,12 +86,12 @@
             ),
         ),
         'matomo/oauth2' => array(
-            'pretty_version' => 'dev-5.x-dev',
-            'version' => 'dev-5.x-dev',
+            'pretty_version' => 'dev-PG-5111-upgrade-library',
+            'version' => 'dev-PG-5111-upgrade-library',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
-            'reference' => 'f7758318afd2797439906b0fd45b44b2df2ef16b',
+            'reference' => '91d91cfcf694401067d5bf2123a71cea8299022b',
             'dev_requirement' => false,
         ),
         'nyholm/psr7' => array(

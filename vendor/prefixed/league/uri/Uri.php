@@ -1294,7 +1294,7 @@ final class Uri implements Conditionable, UriInterface
      * @param \Stringable|string|null $scheme
      * @return static
      */
-    public function withScheme($scheme)
+    public function withScheme($scheme) : self
     {
         $scheme = $this->formatScheme($this->filterString($scheme));
         switch ($scheme) {
@@ -1337,7 +1337,7 @@ final class Uri implements Conditionable, UriInterface
      * @param \Stringable|string|null $password
      * @return static
      */
-    public function withUserInfo($user, #[SensitiveParameter] $password = null)
+    public function withUserInfo($user, #[SensitiveParameter] $password = null) : self
     {
         $user = Encoder::encodeUser($this->filterString($user));
         $pass = Encoder::encodePassword($this->filterString($password));
@@ -1356,7 +1356,7 @@ final class Uri implements Conditionable, UriInterface
      * @param \Stringable|string|null $user
      * @return static
      */
-    public function withUsername($user)
+    public function withUsername($user) : self
     {
         return $this->withUserInfo($user, $this->pass);
     }
@@ -1364,7 +1364,7 @@ final class Uri implements Conditionable, UriInterface
      * @param \Stringable|string|null $password
      * @return static
      */
-    public function withPassword(#[SensitiveParameter] $password)
+    public function withPassword(#[SensitiveParameter] $password) : self
     {
         return $this->withUserInfo($this->user, $password);
     }
@@ -1372,7 +1372,7 @@ final class Uri implements Conditionable, UriInterface
      * @param \Stringable|string|null $host
      * @return static
      */
-    public function withHost($host)
+    public function withHost($host) : self
     {
         $host = $this->formatHost($this->filterString($host));
         switch ($host) {
@@ -1385,7 +1385,7 @@ final class Uri implements Conditionable, UriInterface
     /**
      * @return static
      */
-    public function withPort(?int $port)
+    public function withPort(?int $port) : self
     {
         $port = $this->formatPort($port);
         switch ($port) {
@@ -1399,7 +1399,7 @@ final class Uri implements Conditionable, UriInterface
      * @param \Stringable|string $path
      * @return static
      */
-    public function withPath($path)
+    public function withPath($path) : self
     {
         if ($this->filterString($path) === null) {
             throw new SyntaxError('The path component cannot be null.');
@@ -1416,7 +1416,7 @@ final class Uri implements Conditionable, UriInterface
      * @param \Stringable|string|null $query
      * @return static
      */
-    public function withQuery($query)
+    public function withQuery($query) : self
     {
         $query = Encoder::encodeQueryOrFragment($this->filterString($query));
         switch ($query) {
@@ -1430,7 +1430,7 @@ final class Uri implements Conditionable, UriInterface
      * @param \Stringable|string|null $fragment
      * @return static
      */
-    public function withFragment($fragment)
+    public function withFragment($fragment) : self
     {
         if ($fragment instanceof FragmentDirective) {
             $fragment = ':~:' . $fragment->toString();
