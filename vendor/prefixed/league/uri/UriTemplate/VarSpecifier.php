@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri\UriTemplate;
+namespace Matomo\Dependencies\OAuth2\League\Uri\UriTemplate;
 
-use Matomo\Dependencies\Oauth2\League\Uri\Exceptions\SyntaxError;
+use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\SyntaxError;
 use function preg_match;
 /**
  * @internal The class exposes the internal representation of a Var Specifier

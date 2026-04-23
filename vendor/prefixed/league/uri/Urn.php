@@ -9,15 +9,15 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri;
+namespace Matomo\Dependencies\OAuth2\League\Uri;
 
 use Closure;
 use JsonSerializable;
-use Matomo\Dependencies\Oauth2\League\Uri\Contracts\Conditionable;
-use Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriComponentInterface;
-use Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriInterface;
-use Matomo\Dependencies\Oauth2\League\Uri\Exceptions\SyntaxError;
-use Matomo\Dependencies\Oauth2\League\Uri\UriTemplate\Template;
+use Matomo\Dependencies\OAuth2\League\Uri\Contracts\Conditionable;
+use Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriComponentInterface;
+use Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface;
+use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\SyntaxError;
+use Matomo\Dependencies\OAuth2\League\Uri\UriTemplate\Template;
 use Stringable;
 use Uri\Rfc3986\Uri as Rfc3986Uri;
 use Uri\WhatWg\Url as WhatWgUrl;

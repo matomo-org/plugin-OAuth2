@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri;
+namespace Matomo\Dependencies\OAuth2\League\Uri;
 
-use Matomo\Dependencies\Oauth2\League\Uri\Exceptions\ConversionFailed;
-use Matomo\Dependencies\Oauth2\League\Uri\Exceptions\MissingFeature;
-use Matomo\Dependencies\Oauth2\League\Uri\Exceptions\SyntaxError;
-use Matomo\Dependencies\Oauth2\League\Uri\Idna\Converter as IdnaConverter;
+use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\ConversionFailed;
+use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\MissingFeature;
+use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\SyntaxError;
+use Matomo\Dependencies\OAuth2\League\Uri\Idna\Converter as IdnaConverter;
 use Stringable;
 use Throwable;
 use function array_map;

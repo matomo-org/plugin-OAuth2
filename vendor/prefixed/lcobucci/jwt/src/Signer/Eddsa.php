@@ -1,9 +1,9 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer;
 
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer;
 use SodiumException;
 use function sodium_crypto_sign_detached;
 use function sodium_crypto_sign_verify_detached;

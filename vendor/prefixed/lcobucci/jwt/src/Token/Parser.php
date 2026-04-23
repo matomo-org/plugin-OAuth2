@@ -1,12 +1,12 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Token;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Token;
 
 use DateTimeImmutable;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Decoder;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Parser as ParserInterface;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Token as TokenInterface;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Decoder;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Parser as ParserInterface;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Token as TokenInterface;
 use function array_key_exists;
 use function count;
 use function explode;

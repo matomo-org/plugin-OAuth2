@@ -8,16 +8,16 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\Traits;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\Traits;
 
 use DateTimeImmutable;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Configuration;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Key\InMemory;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Rsa\Sha256;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Token;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\CryptKeyInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ClientEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\ScopeEntityInterface;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Configuration;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Key\InMemory;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Rsa\Sha256;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Token;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\CryptKeyInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ClientEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ScopeEntityInterface;
 use RuntimeException;
 use SensitiveParameter;
 trait AccessTokenTrait

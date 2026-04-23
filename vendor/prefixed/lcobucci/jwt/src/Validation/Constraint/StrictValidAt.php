@@ -1,15 +1,15 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\Constraint;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Validation\Constraint;
 
 use DateInterval;
 use DateTimeInterface;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Token;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\UnencryptedToken;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\ConstraintViolation;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Validation\ValidAt as ValidAtInterface;
-use Matomo\Dependencies\Oauth2\Psr\Clock\ClockInterface as Clock;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Token;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\UnencryptedToken;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Validation\ConstraintViolation;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Validation\ValidAt as ValidAtInterface;
+use Matomo\Dependencies\OAuth2\Psr\Clock\ClockInterface as Clock;
 final class StrictValidAt implements ValidAtInterface
 {
     private readonly DateInterval $leeway;

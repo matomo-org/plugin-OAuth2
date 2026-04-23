@@ -9,18 +9,18 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri;
+namespace Matomo\Dependencies\OAuth2\League\Uri;
 
-use Matomo\Dependencies\Oauth2\Deprecated;
-use Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriException;
-use Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriInterface;
-use Matomo\Dependencies\Oauth2\League\Uri\Exceptions\MissingFeature;
-use Matomo\Dependencies\Oauth2\League\Uri\Exceptions\SyntaxError;
-use Matomo\Dependencies\Oauth2\League\Uri\UriTemplate\Template;
-use Matomo\Dependencies\Oauth2\League\Uri\UriTemplate\TemplateCanNotBeExpanded;
-use Matomo\Dependencies\Oauth2\League\Uri\UriTemplate\VariableBag;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\UriFactoryInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\UriInterface as Psr7UriInterface;
+use Matomo\Dependencies\OAuth2\Deprecated;
+use Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriException;
+use Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface;
+use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\MissingFeature;
+use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\SyntaxError;
+use Matomo\Dependencies\OAuth2\League\Uri\UriTemplate\Template;
+use Matomo\Dependencies\OAuth2\League\Uri\UriTemplate\TemplateCanNotBeExpanded;
+use Matomo\Dependencies\OAuth2\League\Uri\UriTemplate\VariableBag;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\UriFactoryInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\UriInterface as Psr7UriInterface;
 use Stringable;
 use Uri\InvalidUriException;
 use Uri\Rfc3986\Uri as Rfc3986Uri;

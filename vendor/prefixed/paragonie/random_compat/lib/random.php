@@ -1,6 +1,6 @@
 <?php
 
-namespace Matomo\Dependencies\Oauth2;
+namespace Matomo\Dependencies\OAuth2;
 
 /**
  * Random_* Compatibility Library

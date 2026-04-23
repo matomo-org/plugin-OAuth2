@@ -9,18 +9,18 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri;
+namespace Matomo\Dependencies\OAuth2\League\Uri;
 
-use Matomo\Dependencies\Oauth2\Deprecated;
+use Matomo\Dependencies\OAuth2\Deprecated;
 use JsonSerializable;
-use Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriAccess;
-use Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriInterface;
-use Matomo\Dependencies\Oauth2\League\Uri\Exceptions\MissingFeature;
-use Matomo\Dependencies\Oauth2\League\Uri\Idna\Converter as IdnaConverter;
-use Matomo\Dependencies\Oauth2\League\Uri\IPv4\Converter as IPv4Converter;
-use Matomo\Dependencies\Oauth2\League\Uri\IPv6\Converter as IPv6Converter;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\UriFactoryInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\UriInterface as Psr7UriInterface;
+use Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriAccess;
+use Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface;
+use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\MissingFeature;
+use Matomo\Dependencies\OAuth2\League\Uri\Idna\Converter as IdnaConverter;
+use Matomo\Dependencies\OAuth2\League\Uri\IPv4\Converter as IPv4Converter;
+use Matomo\Dependencies\OAuth2\League\Uri\IPv6\Converter as IPv6Converter;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\UriFactoryInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\UriInterface as Psr7UriInterface;
 use Stringable;
 use function array_pop;
 use function array_reduce;

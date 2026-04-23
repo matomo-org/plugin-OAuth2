@@ -1,9 +1,9 @@
 <?php
 
-namespace Matomo\Dependencies\Oauth2\Psr\Http\Server;
+namespace Matomo\Dependencies\OAuth2\Psr\Http\Server;
 
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\ResponseInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\ServerRequestInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\ResponseInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\ServerRequestInterface;
 /**
  * Handles a server request and produces a response.
  *

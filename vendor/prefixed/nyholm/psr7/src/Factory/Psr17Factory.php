@@ -1,26 +1,26 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Nyholm\Psr7\Factory;
+namespace Matomo\Dependencies\OAuth2\Nyholm\Psr7\Factory;
 
-use Matomo\Dependencies\Oauth2\Nyholm\Psr7\Request;
-use Matomo\Dependencies\Oauth2\Nyholm\Psr7\Response;
-use Matomo\Dependencies\Oauth2\Nyholm\Psr7\ServerRequest;
-use Matomo\Dependencies\Oauth2\Nyholm\Psr7\Stream;
-use Matomo\Dependencies\Oauth2\Nyholm\Psr7\UploadedFile;
-use Matomo\Dependencies\Oauth2\Nyholm\Psr7\Uri;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\RequestFactoryInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\RequestInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\ResponseFactoryInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\ResponseInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\ServerRequestFactoryInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\ServerRequestInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\StreamFactoryInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\StreamInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\UploadedFileFactoryInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\UploadedFileInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\UriFactoryInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\UriInterface;
+use Matomo\Dependencies\OAuth2\Nyholm\Psr7\Request;
+use Matomo\Dependencies\OAuth2\Nyholm\Psr7\Response;
+use Matomo\Dependencies\OAuth2\Nyholm\Psr7\ServerRequest;
+use Matomo\Dependencies\OAuth2\Nyholm\Psr7\Stream;
+use Matomo\Dependencies\OAuth2\Nyholm\Psr7\UploadedFile;
+use Matomo\Dependencies\OAuth2\Nyholm\Psr7\Uri;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\RequestFactoryInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\RequestInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\ResponseFactoryInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\ResponseInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\ServerRequestFactoryInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\ServerRequestInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\StreamFactoryInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\StreamInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\UploadedFileFactoryInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\UploadedFileInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\UriFactoryInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\UriInterface;
 /**
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
  * @author Martijn van der Ven <martijn@vanderven.se>

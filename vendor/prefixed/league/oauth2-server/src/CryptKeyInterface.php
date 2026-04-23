@@ -1,7 +1,7 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server;
 
 interface CryptKeyInterface
 {

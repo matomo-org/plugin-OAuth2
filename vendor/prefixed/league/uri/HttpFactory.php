@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri;
+namespace Matomo\Dependencies\OAuth2\League\Uri;
 
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\UriFactoryInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\UriInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\UriFactoryInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\UriInterface;
 final class HttpFactory implements UriFactoryInterface
 {
     public function createUri(string $uri = '') : UriInterface

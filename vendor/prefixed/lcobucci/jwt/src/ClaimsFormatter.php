@@ -1,7 +1,7 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT;
 
 interface ClaimsFormatter
 {

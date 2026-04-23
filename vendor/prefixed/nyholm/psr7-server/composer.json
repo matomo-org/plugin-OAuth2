@@ -29,7 +29,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Matomo\\Dependencies\\Oauth2\\Nyholm\\Psr7Server\\": "src\/"
+            "Matomo\\Dependencies\\OAuth2\\Nyholm\\Psr7Server\\": "src\/"
         }
     },
     "autoload-dev": {

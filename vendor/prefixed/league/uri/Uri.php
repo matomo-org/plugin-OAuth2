@@ -9,24 +9,24 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri;
+namespace Matomo\Dependencies\OAuth2\League\Uri;
 
 use Closure;
-use Matomo\Dependencies\Oauth2\Deprecated;
+use Matomo\Dependencies\OAuth2\Deprecated;
 use finfo;
-use Matomo\Dependencies\Oauth2\League\Uri\Contracts\Conditionable;
-use Matomo\Dependencies\Oauth2\League\Uri\Contracts\FragmentDirective;
-use Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriComponentInterface;
-use Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriException;
-use Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriInterface;
-use Matomo\Dependencies\Oauth2\League\Uri\Exceptions\ConversionFailed;
-use Matomo\Dependencies\Oauth2\League\Uri\Exceptions\MissingFeature;
-use Matomo\Dependencies\Oauth2\League\Uri\Exceptions\SyntaxError;
-use Matomo\Dependencies\Oauth2\League\Uri\Idna\Converter as IdnaConverter;
-use Matomo\Dependencies\Oauth2\League\Uri\IPv4\Converter as IPv4Converter;
-use Matomo\Dependencies\Oauth2\League\Uri\IPv6\Converter as IPv6Converter;
-use Matomo\Dependencies\Oauth2\League\Uri\UriTemplate\TemplateCanNotBeExpanded;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\UriInterface as Psr7UriInterface;
+use Matomo\Dependencies\OAuth2\League\Uri\Contracts\Conditionable;
+use Matomo\Dependencies\OAuth2\League\Uri\Contracts\FragmentDirective;
+use Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriComponentInterface;
+use Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriException;
+use Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface;
+use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\ConversionFailed;
+use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\MissingFeature;
+use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\SyntaxError;
+use Matomo\Dependencies\OAuth2\League\Uri\Idna\Converter as IdnaConverter;
+use Matomo\Dependencies\OAuth2\League\Uri\IPv4\Converter as IPv4Converter;
+use Matomo\Dependencies\OAuth2\League\Uri\IPv6\Converter as IPv6Converter;
+use Matomo\Dependencies\OAuth2\League\Uri\UriTemplate\TemplateCanNotBeExpanded;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\UriInterface as Psr7UriInterface;
 use RuntimeException;
 use SensitiveParameter;
 use SplFileInfo;

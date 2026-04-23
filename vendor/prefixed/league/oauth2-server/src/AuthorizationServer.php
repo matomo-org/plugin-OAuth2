@@ -8,23 +8,23 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server;
 
 use DateInterval;
-use Matomo\Dependencies\Oauth2\Defuse\Crypto\Key;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\EventEmitting\EmitterAwareInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\EventEmitting\EmitterAwarePolyfill;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Exception\OAuthServerException;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Grant\GrantTypeInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\AccessTokenRepositoryInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\ClientRepositoryInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\ScopeRepositoryInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\RequestTypes\AuthorizationRequestInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\ResponseTypes\AbstractResponseType;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\ResponseTypes\BearerTokenResponse;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\ResponseInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\ServerRequestInterface;
+use Matomo\Dependencies\OAuth2\Defuse\Crypto\Key;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\EventEmitting\EmitterAwareInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\EventEmitting\EmitterAwarePolyfill;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Exception\OAuthServerException;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Grant\GrantTypeInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\AccessTokenRepositoryInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\ClientRepositoryInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\ScopeRepositoryInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\RequestTypes\AuthorizationRequestInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\ResponseTypes\AbstractResponseType;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\ResponseTypes\BearerTokenResponse;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\ResponseInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\ServerRequestInterface;
 use SensitiveParameter;
 class AuthorizationServer implements EmitterAwareInterface
 {

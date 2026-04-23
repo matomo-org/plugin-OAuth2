@@ -1,7 +1,7 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Psr\EventDispatcher;
+namespace Matomo\Dependencies\OAuth2\Psr\EventDispatcher;
 
 /**
  * Defines a dispatcher for events.

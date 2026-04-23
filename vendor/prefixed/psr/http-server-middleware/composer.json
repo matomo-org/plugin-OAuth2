@@ -25,7 +25,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Matomo\\Dependencies\\Oauth2\\Psr\\Http\\Server\\": "src\/"
+            "Matomo\\Dependencies\\OAuth2\\Psr\\Http\\Server\\": "src\/"
         }
     },
     "extra": {

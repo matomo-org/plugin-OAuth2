@@ -1,8 +1,8 @@
 <?php
 
-namespace Matomo\Dependencies\Oauth2\Defuse\Crypto;
+namespace Matomo\Dependencies\OAuth2\Defuse\Crypto;
 
-use Matomo\Dependencies\Oauth2\Defuse\Crypto\Exception as Ex;
+use Matomo\Dependencies\OAuth2\Defuse\Crypto\Exception as Ex;
 final class Key
 {
     const KEY_CURRENT_VERSION = "\xde\xf0\x00\x00";

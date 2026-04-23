@@ -1,11 +1,11 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Encoding;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Encoding;
 
 use DateTimeImmutable;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\ClaimsFormatter;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Token\RegisteredClaims;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\ClaimsFormatter;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Token\RegisteredClaims;
 use function array_key_exists;
 final class UnixTimestampDates implements ClaimsFormatter
 {

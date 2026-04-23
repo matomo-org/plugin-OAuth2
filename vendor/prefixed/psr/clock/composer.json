@@ -21,7 +21,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Matomo\\Dependencies\\Oauth2\\Psr\\Clock\\": "src\/"
+            "Matomo\\Dependencies\\OAuth2\\Psr\\Clock\\": "src\/"
         }
     }
 }

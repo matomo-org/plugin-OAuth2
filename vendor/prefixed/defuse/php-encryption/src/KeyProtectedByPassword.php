@@ -1,8 +1,8 @@
 <?php
 
-namespace Matomo\Dependencies\Oauth2\Defuse\Crypto;
+namespace Matomo\Dependencies\OAuth2\Defuse\Crypto;
 
-use Matomo\Dependencies\Oauth2\Defuse\Crypto\Exception as Ex;
+use Matomo\Dependencies\OAuth2\Defuse\Crypto\Exception as Ex;
 final class KeyProtectedByPassword
 {
     const PASSWORD_KEY_CURRENT_VERSION = "\xde\xf1\x00\x00";

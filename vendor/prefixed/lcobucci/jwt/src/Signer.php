@@ -1,12 +1,12 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT;
 
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\CannotSignPayload;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Ecdsa\ConversionFailed;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\InvalidKeyProvided;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Key;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\CannotSignPayload;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Ecdsa\ConversionFailed;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\InvalidKeyProvided;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Key;
 interface Signer
 {
     /**

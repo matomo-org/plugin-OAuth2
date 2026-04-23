@@ -1,6 +1,6 @@
 <?php
 
-namespace Matomo\Dependencies\Oauth2\Psr\Clock;
+namespace Matomo\Dependencies\OAuth2\Psr\Clock;
 
 use DateTimeImmutable;
 interface ClockInterface

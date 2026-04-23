@@ -10,17 +10,17 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\Grant;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\Grant;
 
 use DateInterval;
 use Exception;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Exception\OAuthServerException;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\RequestAccessTokenEvent;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\RequestEvent;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\RequestRefreshTokenEvent;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\ServerRequestInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Exception\OAuthServerException;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\RequestAccessTokenEvent;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\RequestEvent;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\RequestRefreshTokenEvent;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\ServerRequestInterface;
 use function implode;
 use function in_array;
 use function json_decode;

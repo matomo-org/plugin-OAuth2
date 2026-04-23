@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri\Exceptions;
+namespace Matomo\Dependencies\OAuth2\League\Uri\Exceptions;
 
-use Matomo\Dependencies\Oauth2\League\Uri\Idna\Error;
-use Matomo\Dependencies\Oauth2\League\Uri\Idna\Result;
+use Matomo\Dependencies\OAuth2\League\Uri\Idna\Error;
+use Matomo\Dependencies\OAuth2\League\Uri\Idna\Result;
 use Stringable;
 final class ConversionFailed extends SyntaxError
 {

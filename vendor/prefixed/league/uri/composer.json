@@ -53,7 +53,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Matomo\\Dependencies\\Oauth2\\League\\Uri\\": ""
+            "Matomo\\Dependencies\\OAuth2\\League\\Uri\\": ""
         }
     },
     "conflict": {

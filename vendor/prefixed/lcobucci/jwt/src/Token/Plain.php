@@ -1,10 +1,10 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Token;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Token;
 
 use DateTimeInterface;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\UnencryptedToken;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\UnencryptedToken;
 use function in_array;
 final class Plain implements UnencryptedToken
 {

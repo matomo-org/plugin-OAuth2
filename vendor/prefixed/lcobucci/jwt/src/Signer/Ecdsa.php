@@ -1,10 +1,10 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer;
 
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Ecdsa\MultibyteStringConverter;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Ecdsa\SignatureConverter;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Ecdsa\MultibyteStringConverter;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Ecdsa\SignatureConverter;
 use const OPENSSL_KEYTYPE_EC;
 abstract class Ecdsa extends OpenSSL
 {
