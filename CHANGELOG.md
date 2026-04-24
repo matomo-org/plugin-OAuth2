@@ -1,6 +1,7 @@
 5.0.2 - 2026-04-27
 - Updated API documentation
 - Added code to show scope in the list view
+- Updated and scoped dependencies to support lower and higher PHP (>=8.1) versions
 
 5.0.1 - 2026-04-17
 - Fixes README.md
