@@ -1,11 +1,12 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\Clock;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\Clock;
 
 use DateTimeImmutable;
 use DateTimeZone;
 use function date_default_timezone_get;
+/** @immutable */
 final class SystemClock implements Clock
 {
     public function __construct(private readonly DateTimeZone $timezone)

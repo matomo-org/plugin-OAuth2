@@ -10,11 +10,11 @@
 namespace Piwik\Plugins\OAuth2\Service;
 
 use DateInterval;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\AuthorizationServer;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\CryptKey;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Grant\ClientCredentialsGrant;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Grant\RefreshTokenGrant;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\ResourceServer;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\AuthorizationServer;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\CryptKey;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Grant\ClientCredentialsGrant;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Grant\RefreshTokenGrant;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\ResourceServer;
 use Piwik\Piwik;
 use Piwik\Plugins\OAuth2\OAuth2;
 use Piwik\Plugins\OAuth2\Repositories\AccessTokenRepository;

@@ -1,9 +1,9 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Event;
+namespace Matomo\Dependencies\OAuth2\League\Event;
 
-use Matomo\Dependencies\Oauth2\Psr\EventDispatcher\ListenerProviderInterface;
+use Matomo\Dependencies\OAuth2\Psr\EventDispatcher\ListenerProviderInterface;
 class PrioritizedListenerRegistry implements ListenerRegistry, ListenerProviderInterface
 {
     /** @var array<string,PrioritizedListenersForEvent> */

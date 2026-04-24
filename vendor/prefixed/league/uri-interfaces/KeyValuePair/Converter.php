@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri\KeyValuePair;
+namespace Matomo\Dependencies\OAuth2\League\Uri\KeyValuePair;
 
-use Matomo\Dependencies\Oauth2\League\Uri\Contracts\UriComponentInterface;
-use Matomo\Dependencies\Oauth2\League\Uri\Exceptions\SyntaxError;
+use Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriComponentInterface;
+use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\SyntaxError;
 use Stringable;
 use function array_combine;
 use function explode;

@@ -1,9 +1,9 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Event;
+namespace Matomo\Dependencies\OAuth2\League\Event;
 
-use Matomo\Dependencies\Oauth2\Psr\EventDispatcher\EventDispatcherInterface;
+use Matomo\Dependencies\OAuth2\Psr\EventDispatcher\EventDispatcherInterface;
 class BufferedEventDispatcher implements EventDispatcherInterface, ListenerRegistry
 {
     use EventGeneratorBehavior {

@@ -9,8 +9,8 @@
 
 namespace Piwik\Plugins\OAuth2\tests\Integration;
 
-use Matomo\Dependencies\Oauth2\Nyholm\Psr7\Response;
-use Matomo\Dependencies\Oauth2\Nyholm\Psr7\ServerRequest;
+use Matomo\Dependencies\OAuth2\Nyholm\Psr7\Response;
+use Matomo\Dependencies\OAuth2\Nyholm\Psr7\ServerRequest;
 use Piwik\Auth\Password;
 use Piwik\Container\StaticContainer;
 use Piwik\Date;

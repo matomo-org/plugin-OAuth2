@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri\Idna;
+namespace Matomo\Dependencies\OAuth2\League\Uri\Idna;
 
 use ReflectionClass;
 use ReflectionClassConstant;

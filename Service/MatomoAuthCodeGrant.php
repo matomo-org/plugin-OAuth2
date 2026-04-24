@@ -10,11 +10,11 @@
 namespace Piwik\Plugins\OAuth2\Service;
 
 use DateInterval;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\AccessTokenEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\RefreshTokenEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Grant\AuthCodeGrant;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\AuthCodeRepositoryInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\AccessTokenEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\RefreshTokenEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Grant\AuthCodeGrant;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\AuthCodeRepositoryInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\RefreshTokenRepositoryInterface;
 
 class MatomoAuthCodeGrant extends AuthCodeGrant
 {

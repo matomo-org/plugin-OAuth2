@@ -1,10 +1,10 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Token;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Token;
 
 use InvalidArgumentException;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Exception;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Exception;
 final class InvalidTokenStructure extends InvalidArgumentException implements Exception
 {
     public static function missingOrNotEnoughSeparators() : self

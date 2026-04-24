@@ -1,10 +1,10 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Nyholm\Psr7;
+namespace Matomo\Dependencies\OAuth2\Nyholm\Psr7;
 
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\MessageInterface;
-use Matomo\Dependencies\Oauth2\Psr\Http\Message\StreamInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\MessageInterface;
+use Matomo\Dependencies\OAuth2\Psr\Http\Message\StreamInterface;
 /**
  * Trait implementing functionality common to requests and responses.
  *

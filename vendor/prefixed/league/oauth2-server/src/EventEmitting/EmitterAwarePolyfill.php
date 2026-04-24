@@ -1,10 +1,10 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\EventEmitting;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\EventEmitting;
 
-use Matomo\Dependencies\Oauth2\League\Event\ListenerRegistry;
-use Matomo\Dependencies\Oauth2\Psr\EventDispatcher\EventDispatcherInterface;
+use Matomo\Dependencies\OAuth2\League\Event\ListenerRegistry;
+use Matomo\Dependencies\OAuth2\Psr\EventDispatcher\EventDispatcherInterface;
 trait EmitterAwarePolyfill
 {
     private EventEmitter $emitter;

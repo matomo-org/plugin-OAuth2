@@ -1,9 +1,9 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Rsa;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Rsa;
 
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Rsa;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Rsa;
 use const OPENSSL_ALGO_SHA256;
 final class Sha256 extends Rsa
 {

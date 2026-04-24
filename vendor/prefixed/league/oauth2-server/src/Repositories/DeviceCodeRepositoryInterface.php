@@ -8,10 +8,10 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server\Repositories;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories;
 
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Entities\DeviceCodeEntityInterface;
-use Matomo\Dependencies\Oauth2\League\OAuth2\Server\Exception\UniqueTokenIdentifierConstraintViolationException;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\DeviceCodeEntityInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Exception\UniqueTokenIdentifierConstraintViolationException;
 interface DeviceCodeRepositoryInterface extends RepositoryInterface
 {
     /**

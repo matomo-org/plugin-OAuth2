@@ -11,7 +11,7 @@ declare (strict_types=1);
  *
  * @link https://github.com/web-token/jwt-framework/blob/v1.2/src/Component/Core/Util/ECSignature.php
  */
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Ecdsa;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Ecdsa;
 
 use function assert;
 use function bin2hex;

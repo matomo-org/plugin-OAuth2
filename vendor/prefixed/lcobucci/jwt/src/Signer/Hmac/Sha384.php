@@ -1,9 +1,9 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Hmac;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Hmac;
 
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Signer\Hmac;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Hmac;
 final class Sha384 extends Hmac
 {
     public function algorithmId() : string

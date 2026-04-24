@@ -1,8 +1,8 @@
 <?php
 
-namespace Matomo\Dependencies\Oauth2\Defuse\Crypto;
+namespace Matomo\Dependencies\OAuth2\Defuse\Crypto;
 
-use Matomo\Dependencies\Oauth2\Defuse\Crypto\Exception as Ex;
+use Matomo\Dependencies\OAuth2\Defuse\Crypto\Exception as Ex;
 /*
  * We're using static class inheritance to get access to protected methods
  * inside Crypto. To make it easy to know where the method we're calling can be

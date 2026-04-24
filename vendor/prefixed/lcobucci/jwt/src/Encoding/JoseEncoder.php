@@ -1,12 +1,12 @@
 <?php
 
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\Lcobucci\JWT\Encoding;
+namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Encoding;
 
 use JsonException;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Decoder;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\Encoder;
-use Matomo\Dependencies\Oauth2\Lcobucci\JWT\SodiumBase64Polyfill;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Decoder;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Encoder;
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\SodiumBase64Polyfill;
 use function json_decode;
 use function json_encode;
 use const JSON_THROW_ON_ERROR;

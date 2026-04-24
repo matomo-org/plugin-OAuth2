@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\Uri\Contracts;
+namespace Matomo\Dependencies\OAuth2\League\Uri\Contracts;
 
 use Countable;
-use Matomo\Dependencies\Oauth2\Deprecated;
+use Matomo\Dependencies\OAuth2\Deprecated;
 use Iterator;
 use IteratorAggregate;
 use Stringable;

@@ -10,7 +10,7 @@
  * @link        https://github.com/thephpleague/oauth2-server
  */
 declare (strict_types=1);
-namespace Matomo\Dependencies\Oauth2\League\OAuth2\Server;
+namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server;
 
 use LogicException;
 use OpenSSLAsymmetricKey;
@@ -58,7 +58,7 @@ class CryptKey implements CryptKeyInterface
                 throw new LogicException('Unable to read key from file ' . $keyPath);
             }
         } else {
-            throw new LogicException('Invalid crypt key supplied');
+            throw new LogicException('Invalid key supplied');
         }
         if ($keyPermissionsCheck === \true && \PHP_OS_FAMILY !== 'Windows') {
             // Verify the permissions of the key
