@@ -58,7 +58,13 @@ class ScopeRepository implements ScopeRepositoryInterface
 
         $allowed = $this->getAllowedScopeIds();
         if ($clientEntity instanceof ClientEntity && !empty($clientEntity->getAllowedScopes())) {
-            $allowed = array_values(array_intersect($allowed, $clientEntity->getAllowedScopes()));
+            // Scopes are hierarchical: a client allowed `matomo:write` implicitly accepts
+            // `matomo:read` too, so expand each configured scope to its lower tiers.
+            $expanded = [];
+            foreach ($clientEntity->getAllowedScopes() as $configured) {
+                $expanded = array_merge($expanded, OAuth2::expandScopeHierarchically($configured));
+            }
+            $allowed = array_values(array_intersect($allowed, array_unique($expanded)));
         }
 
         if (empty($scopes)) {

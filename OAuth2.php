@@ -39,6 +39,48 @@ class OAuth2 extends Plugin
         ];
     }
 
+    /**
+     * Single source of truth for scope hierarchy: scope → {role, level}. Level is the
+     * authoritative ordering (lower = less privilege); declaration order is irrelevant.
+     * A higher scope implicitly grants every scope at or below its level.
+     *
+     * @return array<string, array{role: string, level: int}>
+     */
+    public static function getScopeAccessLevels(): array
+    {
+        return [
+            'matomo:read'      => ['role' => 'view',      'level' => 1],
+            'matomo:write'     => ['role' => 'write',     'level' => 2],
+            'matomo:admin'     => ['role' => 'admin',     'level' => 3],
+            'matomo:superuser' => ['role' => 'superuser', 'level' => 4],
+        ];
+    }
+
+    /**
+     * Returns the given scope plus every lower-privilege scope, ordered by level.
+     * Empty array for unknown scopes.
+     *
+     * @return string[]
+     */
+    public static function expandScopeHierarchically(string $scope): array
+    {
+        $levels = self::getScopeAccessLevels();
+        if (!isset($levels[$scope])) {
+            return [];
+        }
+        $ceiling = $levels[$scope]['level'];
+
+        $byLevel = [];
+        foreach ($levels as $identifier => $info) {
+            if ($info['level'] <= $ceiling) {
+                $byLevel[$info['level']] = $identifier;
+            }
+        }
+        ksort($byLevel);
+
+        return array_values($byLevel);
+    }
+
     public function registerEvents()
     {
         return [
@@ -348,14 +390,17 @@ class OAuth2 extends Plugin
 
     private function modifyAccessBasedOnScope(?array $idSitesAccess, ?string $scope): array
     {
-        $levels = ['view' => 1, 'write' => 2, 'admin' => 3, 'superuser' => 4];
-        $scopeToLevelMapping = ['matomo:read' => 'view', 'matomo:write' => 'write', 'matomo:admin' => 'admin', 'matomo:superuser' => 'superuser'];
-        if (empty($scopeToLevelMapping[$scope])) {
+        $hierarchy = self::getScopeAccessLevels();
+        if (!isset($hierarchy[$scope])) {
             return [];
         }
+        $levels = [];
+        foreach ($hierarchy as $info) {
+            $levels[$info['role']] = $info['level'];
+        }
 
-        $target = $scopeToLevelMapping[$scope];
-        $targetLevel = $levels[$target];
+        $target = $hierarchy[$scope]['role'];
+        $targetLevel = $hierarchy[$scope]['level'];
 
         foreach ($levels as $access => $level) {
             if ($level <= $targetLevel) {

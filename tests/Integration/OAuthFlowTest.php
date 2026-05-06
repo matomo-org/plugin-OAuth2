@@ -17,6 +17,7 @@ use Piwik\Date;
 use Piwik\Db;
 use Piwik\Plugins\OAuth2\API;
 use Piwik\Plugins\OAuth2\Entities\UserEntity;
+use Piwik\Plugins\OAuth2\Model\AccessTokenModel;
 use Piwik\Plugins\OAuth2\Model\AuthCodeModel;
 use Piwik\Plugins\OAuth2\OAuth2;
 use Piwik\Plugins\OAuth2\Repositories\AccessTokenRepository;
@@ -186,6 +187,60 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame(Fixture::ADMIN_USER_LOGIN, $storedToken['user_login']);
         $this->assertSame($client['client']['client_id'], $storedToken['client_id']);
+    }
+
+    public function test_clientCredentialsFlow_acceptsLowerScopeThanConfiguredClientScope()
+    {
+        $client = $this->api->createClient(
+            'Machine client',
+            ['client_credentials'],
+            'matomo:write',
+            [],
+            'Server to server client',
+            'confidential'
+        );
+
+        $response = $this->serverFactory->makeAuthorizationServer()->respondToAccessTokenRequest(
+            (new ServerRequest('POST', 'https://matomo.example/token'))->withParsedBody([
+                'grant_type' => 'client_credentials',
+                'client_id' => $client['client']['client_id'],
+                'client_secret' => $client['secret'],
+                'scope' => 'matomo:read',
+            ]),
+            new Response()
+        );
+
+        $storedToken = Db::fetchRow(
+            'SELECT * FROM ' . \Piwik\Common::prefixTable('oauth2_access_token') . ' ORDER BY created_at DESC LIMIT 1'
+        );
+        $storedToken = (new AccessTokenModel())->find($storedToken['token_id']);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame(['matomo:read'], $storedToken['scopes']);
+    }
+
+    public function test_clientCredentialsFlow_rejectsHigherScopeThanConfiguredClientScope()
+    {
+        $client = $this->api->createClient(
+            'Machine client',
+            ['client_credentials'],
+            'matomo:write',
+            [],
+            'Server to server client',
+            'confidential'
+        );
+
+        $this->expectException(\Matomo\Dependencies\Oauth2\League\OAuth2\Server\Exception\OAuthServerException::class);
+
+        $this->serverFactory->makeAuthorizationServer()->respondToAccessTokenRequest(
+            (new ServerRequest('POST', 'https://matomo.example/token'))->withParsedBody([
+                'grant_type' => 'client_credentials',
+                'client_id' => $client['client']['client_id'],
+                'client_secret' => $client['secret'],
+                'scope' => 'matomo:admin',
+            ]),
+            new Response()
+        );
     }
 
     private function createConfidentialAuthCodeClient(): array

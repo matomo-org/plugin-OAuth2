@@ -29,19 +29,29 @@
             </div>
 
             <div class="permissions">
-                {{ 'OAuth2_RequestedScopes'|translate }}
+                {% if scopes|length > 1 %}{{ 'OAuth2_SelectScope'|translate }}{% else %}{{ 'OAuth2_RequestedScopes'|translate }}{% endif %}
             </div>
-            <div class="alert alert-warning">
-                {% for scope in scopes %}
-                    <div class="scope">{{ scope }}</div>
-                    {% if scopeDescriptions[scope] %} <div class="scope-help">{{ scopeDescriptions[scope] }}</div>{% endif %}
-                {% endfor %}
-            </div>
-
-            <div class="form-help"><span class="text">{{ 'OAuth2_AuthorizeHelpText'|translate }}</span></div>
-
             <form method="post">
                 <input type="hidden" name="nonce" value="{{ nonce|e('html_attr') }}" />
+                <div class="alert alert-warning{% if scopes|length > 1 %} scope-options{% endif %}">
+                    {% for scope in scopes %}
+                        {% if scopes|length > 1 %}
+                            <label class="scope-option">
+                                <input type="radio" name="selected_scope" value="{{ scope|e('html_attr') }}"{% if loop.first %} checked{% endif %} required />
+                                <span class="scope-option-text">
+                                    <span class="scope">{{ scope }}</span>
+                                    {% if scopeDescriptions[scope] %}<span class="scope-help">{{ scopeDescriptions[scope] }}</span>{% endif %}
+                                </span>
+                            </label>
+                        {% else %}
+                            <div class="scope">{{ scope }}</div>
+                            {% if scopeDescriptions[scope] %}<div class="scope-help">{{ scopeDescriptions[scope] }}</div>{% endif %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <div class="form-help"><span class="text">{{ 'OAuth2_AuthorizeHelpText'|translate }}</span></div>
+
                 <button type="submit" class="btn btn-primary" name="decision" value="allow">{{ 'OAuth2_Allow'|translate }}</button>
                 <button type="submit" class="btn btn-secondary" name="decision" value="deny">{{ 'OAuth2_Deny'|translate }}</button>
             </form>

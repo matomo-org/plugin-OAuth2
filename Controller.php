@@ -20,6 +20,7 @@ use Piwik\Plugin\Manager;
 use Piwik\Plugins\OAuth2\Entities\ClientEntity;
 use Piwik\Plugins\OAuth2\Entities\UserEntity;
 use Piwik\Plugins\OAuth2\Model\ClientModel;
+use Piwik\Plugins\OAuth2\OAuth2;
 use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
 use Piwik\Plugins\OAuth2\Service\ServerFactory;
 use Piwik\Plugins\UsersManager\Model as UserModel;
@@ -81,22 +82,32 @@ class Controller extends ControllerAdmin
         $userEntity->setIdentifier($login);
         $authRequest->setUser($userEntity);
 
-        $scopes = array_map(function ($scope) {
+        $requestedScopes = array_values(array_map(static function ($scope) {
             return $scope->getIdentifier();
-        }, $authRequest->getScopes());
+        }, $authRequest->getScopes()));
 
         $client = $authRequest->getClient();
         $clientScopes = [];
         if ($client instanceof ClientEntity) {
             $clientScopes = array_values($client->getAllowedScopes());
         }
-        $scopes = array_values($scopes);
 
-        if (count($scopes) !== 1 || count($clientScopes) !== 1 || $clientScopes[0] !== $scopes[0]) {
+        // Scopes are hierarchical (matomo:admin implies matomo:write and matomo:read), so
+        // a client configured for X implicitly also permits every scope below X. The user
+        // picks one of the requested scopes that fall within that implicit ceiling.
+        $implicitClientScopes = [];
+        foreach ($clientScopes as $configured) {
+            $implicitClientScopes = array_merge($implicitClientScopes, OAuth2::expandScopeHierarchically($configured));
+        }
+        $implicitClientScopes = array_values(array_intersect(
+            array_unique($implicitClientScopes),
+            $this->scopeRepository->getAllowedScopeIds()
+        ));
+
+        $selectableScopes = array_values(array_intersect($requestedScopes, $implicitClientScopes));
+        if (empty($selectableScopes)) {
             return $this->renderUnauthorized(Piwik::translate('OAuth2_InvalidClientScope'));
         }
-
-        $this->checkDoesUserHasAccessAsPerScope($scopes[0]);
 
         if ($this->isPostRequest()) {
             $decision = Request::fromRequest()->getStringParameter('decision', '');
@@ -105,6 +116,22 @@ class Controller extends ControllerAdmin
             if (!Nonce::verifyNonce('Oauth2.authorize', $nonce)) {
                 return $this->renderUnauthorized(Piwik::translate('OAuth2_InvalidAuthorizationRequest'));
             }
+
+            $selectedScope = count($selectableScopes) === 1
+                ? $selectableScopes[0]
+                : Request::fromRequest()->getStringParameter('selected_scope', '');
+
+            if (!in_array($selectedScope, $selectableScopes, true)) {
+                return $this->renderUnauthorized(Piwik::translate('OAuth2_InvalidClientScope'));
+            }
+
+            $this->checkDoesUserHasAccessAsPerScope($selectedScope);
+
+            $narrowedScope = $this->scopeRepository->getScopeEntityByIdentifier($selectedScope);
+            if ($narrowedScope === null) {
+                return $this->renderUnauthorized(Piwik::translate('OAuth2_InvalidClientScope'));
+            }
+            $authRequest->setScopes([$narrowedScope]);
 
             $authRequest->setAuthorizationApproved($decision === 'allow');
 
@@ -135,7 +162,7 @@ class Controller extends ControllerAdmin
             'clientId' => $client->getIdentifier(),
             'userLogin' => $login,
             'userEmail' => $user['email'] ?? '',
-            'scopes' => $scopes,
+            'scopes' => $selectableScopes,
             'scopeDescriptions' => $this->scopeRepository->describeScopes(),
             'nonce' => Nonce::getNonce('Oauth2.authorize'),
             'termsAndCondition' => $termsAndConditionUrl,

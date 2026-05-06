@@ -6,6 +6,7 @@
     "AuthorizeTextTitle": "is requesting access to your Matomo account",
     "AuthorizeHelpText": "You can revoke access at any time from your Matomo account settings.",
     "RequestedScopes": "Requested scopes",
+    "SelectScope": "Select the scope to grant",
     "Allow": "Allow",
     "Deny": "Deny",
     "AdminHeading": "OAuth 2.0 Clients",
