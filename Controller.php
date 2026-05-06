@@ -24,6 +24,7 @@ use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
 use Piwik\Plugins\OAuth2\Service\ServerFactory;
 use Piwik\Plugins\UsersManager\Model as UserModel;
 use Piwik\Request;
+use Piwik\SettingsPiwik;
 use Matomo\Dependencies\OAuth2\Psr\Http\Message\ResponseInterface;
 use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Exception\OAuthServerException;
 
@@ -164,6 +165,43 @@ class Controller extends ControllerAdmin
         } catch (\Throwable $e) {
             $response = $response->withStatus(500)->withBody((new Psr17Factory())->createStream(Piwik::translate('OAuth2_ServerError')));
         }
+
+        return $this->emitResponse($response);
+    }
+
+    public function authorizationServerMetadata()
+    {
+        $issuer = rtrim(SettingsPiwik::getPiwikUrl(), '/');
+        $endpoint = $issuer . '/index.php';
+
+        $grantTypes = [];
+        if ($this->settings->enableAuthorizationCode->getValue()) {
+            $grantTypes[] = 'authorization_code';
+        }
+        if ($this->settings->enableClientCredentials->getValue()) {
+            $grantTypes[] = 'client_credentials';
+        }
+        if ($this->settings->enableRefreshTokens->getValue()) {
+            $grantTypes[] = 'refresh_token';
+        }
+
+        $metadata = [
+            'issuer' => $issuer,
+            'authorization_endpoint' => $endpoint . '?module=OAuth2&action=authorize',
+            'token_endpoint' => $endpoint . '?module=OAuth2&action=token',
+            'scopes_supported' => array_keys($this->scopeRepository->describeScopes()),
+            'response_types_supported' => ['code'],
+            'response_modes_supported' => ['query'],
+            'grant_types_supported' => $grantTypes,
+            'token_endpoint_auth_methods_supported' => ['client_secret_basic', 'client_secret_post', 'none'],
+            'code_challenge_methods_supported' => ['S256', 'plain'],
+        ];
+
+        $response = (new Response())
+            ->withStatus(200)
+            ->withHeader('Content-Type', 'application/json')
+            ->withHeader('Cache-Control', 'public, max-age=3600')
+            ->withBody((new Psr17Factory())->createStream(json_encode($metadata, JSON_UNESCAPED_SLASHES)));
 
         return $this->emitResponse($response);
     }
