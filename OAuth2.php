@@ -171,6 +171,7 @@ class OAuth2 extends Plugin
         $translationKeys[] = 'UsersManager_PrivView';
         $translationKeys[] = 'UsersManager_PrivWrite';
         $translationKeys[] = 'UsersManager_PrivAdmin';
+        $translationKeys[] = 'OAuth2_AdminClientDescriptionAdditionalHelpText';
     }
 
     public function getTablesInstalled(&$allTablesInstalled)

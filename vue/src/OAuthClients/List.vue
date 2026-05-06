@@ -36,7 +36,7 @@
       :content-title="translate('OAuth2_AdminHeading')"
       :feature="translate('OAuth2_AdminHeading')"
     >
-      <p>{{ translate('OAuth2_AdminClientsDescriptions') }}</p>
+      <p v-html="$sanitize(adminClientsDescription)" />
       <table
         v-content-table
       >
@@ -169,6 +169,14 @@ export default defineComponent({
       type: Object as PropType<Record<string, string>>,
       required: true,
     },
+    authorizeUrl: {
+      type: String,
+      required: true,
+    },
+    tokenUrl: {
+      type: String,
+      required: true,
+    },
   },
   emits: ['create', 'edit', 'deleted', 'updated'],
   components: {
@@ -191,6 +199,14 @@ export default defineComponent({
         refresh_token: this.translate('OAuth2_AdminGrantRefreshToken'),
       } as Record<string, string>,
     };
+  },
+  computed: {
+    adminClientsDescription(): string {
+      const authorizeUrl = `<a href="${this.$sanitize(this.authorizeUrl)}"><code>${this.$sanitize(this.authorizeUrl)}</code></a>`;
+      const tokenUrl = `<a href="${this.$sanitize(this.tokenUrl)}"><code>${this.$sanitize(this.tokenUrl)}</code></a>`;
+
+      return `${this.translate('OAuth2_AdminClientsDescriptions')} ${this.translate('OAuth2_AdminClientDescriptionAdditionalHelpText', authorizeUrl, tokenUrl)}`;
+    },
   },
   methods: {
     getShortScopeLabel(scope: string) {

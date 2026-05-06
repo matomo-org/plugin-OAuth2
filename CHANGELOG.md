@@ -1,3 +1,6 @@
+5.0.3 - 2026-05-11
+- Added code to show token and authorize URL at the top of list screen 
+
 5.0.2 - 2026-04-27
 - Updated API documentation
 - Added code to show scope in the list view

@@ -65,6 +65,7 @@
     "AdminResumeConfirm": "Are you sure you want to resume client %s?",
     "AdminDeleteConfirm": "Are you sure you want to delete client %s?",
     "AdminClientsDescriptions": "OAuth clients allow external applications to securely access Matomo data on behalf of a user. Create and manage clients here to integrate Matomo with your own systems or third-party tools.",
+    "AdminClientDescriptionAdditionalHelpText": "To authenticate and securely access your Matomo data, you may need the Auth URL %1$s and Token URL %2$s.",
     "AuthorizationCodeGrantDisabled": "Authorization code grant is disabled.",
     "ClientSecret": "Client secret",
     "ClientSecretHelp": "Copy the client secret now, it will not be shown again.",

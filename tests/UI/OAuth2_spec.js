@@ -31,6 +31,17 @@ describe("OAuth2Admin", function () {
             $('#client_id').val('fixedValueForTest');
             $('.client-secret-code').html('fixedSecretValueForTest');
             $('.created-at').html('2026-03-16 00:00:00');
+            $('.oauth2-admin-list p a').each(function () {
+                const href = $(this).attr('href') || '';
+
+                if (href.includes('action=authorize')) {
+                    $(this).attr('href', 'https://matomo.example.com/index.php?module=OAuth2&action=authorize');
+                    $(this).find('code').text('https://matomo.example.com/index.php?module=OAuth2&action=authorize');
+                } else if (href.includes('action=token')) {
+                    $(this).attr('href', 'https://matomo.example.com/index.php?module=OAuth2&action=token');
+                    $(this).find('code').text('https://matomo.example.com/index.php?module=OAuth2&action=token');
+                }
+            });
         });
         expect(await page.screenshotSelector('.pageWrap,#notificationContainer')).to.matchImage(name);
     }

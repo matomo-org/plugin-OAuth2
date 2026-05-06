@@ -24,6 +24,7 @@ use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
 use Piwik\Plugins\OAuth2\Service\ServerFactory;
 use Piwik\Plugins\UsersManager\Model as UserModel;
 use Piwik\Request;
+use Piwik\Url;
 use Matomo\Dependencies\OAuth2\Psr\Http\Message\ResponseInterface;
 use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Exception\OAuthServerException;
 
@@ -43,12 +44,16 @@ class Controller extends ControllerAdmin
     {
         Piwik::checkUserHasSuperUserAccess();
 
+        $baseUrl = Url::getCurrentUrlWithoutFileName();
+
         $viewData = [
             'clients' => array_map(static function (array $client) {
                 unset($client['secret_hash']);
                 return $client;
             }, $this->clientModel->all()),
             'scopes' => $this->scopeRepository->describeScopes(),
+            'authorizeUrl' => $baseUrl . 'index.php?module=OAuth2&action=authorize',
+            'tokenUrl' => $baseUrl . 'index.php?module=OAuth2&action=token',
         ];
 
         return $this->renderTemplate('index', $viewData);
