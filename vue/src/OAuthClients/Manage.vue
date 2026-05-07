@@ -4,6 +4,8 @@
       v-if="!isEditMode"
       :clients="clients"
       :scopes="scopes"
+      :authorize-url="authorizeUrl"
+      :token-url="tokenUrl"
       @create="createClient"
       @edit="editClient"
       @deleted="onClientDeleted"
@@ -36,6 +38,14 @@ export default defineComponent({
     },
     scopes: {
       type: Object as () => Record<string, string>,
+      required: true,
+    },
+    authorizeUrl: {
+      type: String,
+      required: true,
+    },
+    tokenUrl: {
+      type: String,
       required: true,
     },
   },

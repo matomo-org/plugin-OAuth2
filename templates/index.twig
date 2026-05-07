@@ -6,5 +6,7 @@
     <div vue-entry="OAuth2.Oauth2AdminApp"
          initial-clients="{{ clients|json_encode|e('html_attr') }}"
          scopes="{{ scopes|json_encode|e('html_attr') }}"
+         authorize-url="{{ authorizeUrl|e('html_attr') }}"
+         token-url="{{ tokenUrl|e('html_attr') }}"
     ></div>
 {% endblock %}
