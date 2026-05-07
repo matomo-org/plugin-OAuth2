@@ -202,8 +202,8 @@ export default defineComponent({
   },
   computed: {
     adminClientsDescription(): string {
-      const authorizeUrl = `<a href="${this.$sanitize(this.authorizeUrl)}"><code>${this.$sanitize(this.authorizeUrl)}</code></a>`;
-      const tokenUrl = `<a href="${this.$sanitize(this.tokenUrl)}"><code>${this.$sanitize(this.tokenUrl)}</code></a>`;
+      const authorizeUrl = `<a href="${this.authorizeUrl}"><code>${this.authorizeUrl}</code></a>`;
+      const tokenUrl = `<a href="${this.tokenUrl}"><code>${this.tokenUrl}</code></a>`;
 
       return `${this.translate('OAuth2_AdminClientsDescriptions')} ${this.translate('OAuth2_AdminClientDescriptionAdditionalHelpText', authorizeUrl, tokenUrl)}`;
     },
