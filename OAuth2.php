@@ -165,6 +165,8 @@ class OAuth2 extends Plugin
         $translationKeys[] = 'OAuth2_AdminResumeConfirm';
         $translationKeys[] = 'OAuth2_ClientSecretMaskedHelp';
         $translationKeys[] = 'OAuth2_ClientSecretVisibleHelp';
+        $translationKeys[] = 'OAuth2_ClientSecretDisplayedNotification';
+        $translationKeys[] = 'OAuth2_InvalidOrExpiredAccessToken';
         $translationKeys[] = 'OAuth2_AdminDescriptionPlaceholder';
         $translationKeys[] = 'OAuth2_AdminRotatedNotification';
         $translationKeys[] = 'OAuth2_ScopeSuperUserShort';

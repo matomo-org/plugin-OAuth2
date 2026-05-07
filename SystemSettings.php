@@ -32,8 +32,8 @@ class SystemSettings extends BaseSystemSettings
             $field->description = Piwik::translate('OAuth2_SystemSettingOAuthAccessTokenLifetimeDescription');
             $field->uiControl = FieldConfig::UI_CONTROL_TEXT;
             $field->validate = function ($value) {
-                if ($value <= 0) {
-                    throw new \Exception(Piwik::translate('OAuth2_InvalidValueException'));
+                if ($value <= 0 || !is_numeric($value)) {
+                    throw new \Exception(Piwik::translate('OAuth2_InvalidNumericValueException'));
                 }
             };
         });
@@ -43,8 +43,8 @@ class SystemSettings extends BaseSystemSettings
             $field->description = Piwik::translate('OAuth2_SystemSettingOAuthRefreshTokenLifetimeDescription');
             $field->uiControl = FieldConfig::UI_CONTROL_TEXT;
             $field->validate = function ($value) {
-                if ($value <= 0) {
-                    throw new \Exception(Piwik::translate('OAuth2_InvalidValueException'));
+                if ($value <= 0 || !is_numeric($value)) {
+                    throw new \Exception(Piwik::translate('OAuth2_InvalidNumericValueException'));
                 }
             };
         });
@@ -54,8 +54,8 @@ class SystemSettings extends BaseSystemSettings
             $field->description = Piwik::translate('OAuth2_SystemSettingOAuthAuthorizationCodeLifetimeDescription');
             $field->uiControl = FieldConfig::UI_CONTROL_TEXT;
             $field->validate = function ($value) {
-                if ($value <= 0) {
-                    throw new \Exception(Piwik::translate('OAuth2_InvalidValueException'));
+                if ($value <= 0 || !is_numeric($value)) {
+                    throw new \Exception(Piwik::translate('OAuth2_InvalidNumericValueException'));
                 }
             };
         });

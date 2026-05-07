@@ -60,12 +60,19 @@ describe("OAuth2Admin", function () {
         await page.waitForTimeout(100);
     }
 
-    async function submitForm()
+    async function submitForm(expectSecretMessage = false)
     {
         await page.waitForSelector('.oauth2-admin form button.btn', { visible: true });
         await page.click('.oauth2-admin form button.btn');
         await page.waitForNetworkIdle();
         await page.waitForTimeout(300);
+        if (expectSecretMessage) {
+            const successHtml = await page.$eval('.success-msg-created', (element) => element.innerHTML);
+
+            expect(successHtml).to.contain('The client secret is <code>');
+            expect(successHtml).to.contain('Copy the client secret now, it will not be shown again');
+        }
+
         await page.evaluate(function () {
             $('.success-msg-created').html('Client fixedValueForTest created');
         });
@@ -133,7 +140,7 @@ describe("OAuth2Admin", function () {
     it('should create a confidential client and show the secret once', async function () {
         await page.goto(createUrl);
         await fillClientForm('Confidential UI client', 'Confidential', 'https://confidential.example/callback');
-        await submitForm();
+        await submitForm(true);
         await capturePage('create_confidential_success');
     });
 

@@ -69,6 +69,7 @@
     "AuthorizationCodeGrantDisabled": "Authorization code grant is disabled.",
     "ClientSecret": "Client secret",
     "ClientSecretHelp": "Copy the client secret now, it will not be shown again.",
+    "ClientSecretDisplayedNotification": "The client secret is %1$s.",
     "ClientSecretVisibleHelp": "Use this secret to authenticate the client securely. It is only shown in full when it is created or rotated.",
     "ClientSecretMaskedHelp": "This secret is hidden after it is created or rotated. If you did not copy it, rotate the secret to generate a new one.",
     "ClientCredentialsExceptionPublicClient": "Public clients cannot use the client_credentials grant type",
@@ -102,6 +103,7 @@
     "SystemSettingOAuthEnableAClientCredentialsTitle": "Enable client credentials grant",
     "SystemSettingOAuthEnableRefreshTokenTitle": "Enable refresh tokens",
     "InvalidValueException": "Invalid value, it should be greater than 0.",
+    "InvalidNumericValueException": "Invalid value, it should be a numeric value, greater than 0.",
     "TokenEndpointException": "Token endpoint only accepts POST"
   }
 }
