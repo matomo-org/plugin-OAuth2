@@ -196,6 +196,41 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         );
     }
 
+    /**
+     * @dataProvider getInvalidRedirectUris
+     */
+    public function test_createClient_rejectsInvalidRedirectUris($redirectUris)
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid redirect_uri');
+
+        $this->api->createClient(
+            'Invalid redirect client',
+            ['authorization_code', 'refresh_token'],
+            'matomo:read',
+            $redirectUris,
+            'Invalid redirect test',
+            'confidential'
+        );
+    }
+
+    public function test_createClient_allowsRedirectUriWithUrlInQueryString()
+    {
+        $result = $this->api->createClient(
+            'Valid redirect client',
+            ['authorization_code', 'refresh_token'],
+            'matomo:read',
+            ['https://example.com/callback?redirect=https://other.example/path'],
+            'Valid redirect test',
+            'confidential'
+        );
+
+        $this->assertSame(
+            ['https://example.com/callback?redirect=https://other.example/path'],
+            $result['client']['redirect_uris']
+        );
+    }
+
     public function test_rotateSecret_invalidatesPreviousSecret()
     {
         $result = $this->createConfidentialClient();
@@ -353,6 +388,24 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
     private function setSuperUser(): void
     {
         FakeAccess::clearAccess(true);
+    }
+
+    public function getInvalidRedirectUris(): array
+    {
+        return [
+            ["https://example.com/callback\thttps://example.com/other"],
+            ["https://example.com/callback https://example.com/other"],
+            ["https://example.com/callback\\t"],
+            ["https://example.com/callback\\n"],
+            ["https://example.com/callbackhttps://example.org/other"],
+            ["https://example.com/callback,https://example.org/other"],
+            [" https://example.com/callback"],
+            ["https://example.com/callback "],
+            [["https://example.com/callback\t"]],
+            [["https://example.com/callback\\t"]],
+            [["https://example.com/callback https://example.com/other"]],
+            [["https://example.com/callbackhttps://example.org/other"]],
+        ];
     }
 
     private function setRegularUser(): void

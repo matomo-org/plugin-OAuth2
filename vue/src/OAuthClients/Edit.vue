@@ -367,7 +367,8 @@ export default defineComponent({
           }).then((response) => {
             if (response?.secret) {
               this.visibleSecret = response.secret;
-              const message = this.translate('OAuth2_AdminRotatedNotification');
+              const code = `<code>${this.visibleSecret}</code>`;
+              const message = `${this.translate('OAuth2_AdminRotatedNotification')}<br>${this.translate('OAuth2_ClientSecretDisplayedNotification', code)}`;
               this.showNotification(`<span class="success-msg-created">${message}</span>`, 'success', 'transient');
             }
           }).finally(() => {
@@ -404,8 +405,9 @@ export default defineComponent({
         const clientMessage = this.isEditMode
           ? this.translate('OAuth2_AdminUpdated', safeClientName)
           : this.translate('OAuth2_AdminCreated', safeClientName);
+        const code = `<code>${this.visibleSecret}</code>`;
         const secretMessage = response.secret
-          ? this.translate('OAuth2_ClientSecretHelp')
+          ? `${this.translate('OAuth2_ClientSecretHelp')}<br>${this.translate('OAuth2_ClientSecretDisplayedNotification', code)}`
           : '';
         const message = [clientMessage, secretMessage].filter(Boolean).join(' ');
 

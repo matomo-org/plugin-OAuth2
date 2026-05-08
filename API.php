@@ -262,13 +262,7 @@ class API extends \Piwik\Plugin\API
     ): array {
         $type = $type === 'public' ? 'public' : 'confidential';
 
-        $redirects = is_array($redirectUris) ? $redirectUris : preg_split('/[\r\n]+/', (string) $redirectUris);
-        if ($redirects === false) {
-            $redirects = [];
-        }
-        $redirects = array_values(array_filter(array_map('trim', $redirects), static function ($value) {
-            return $value !== '';
-        }));
+        $redirects = $this->parseRedirectUris($redirectUris);
 
         $grantTypes = array_values(array_filter(array_map('trim', (array) $grantTypes), static function ($value) {
             return $value !== '';
@@ -296,6 +290,45 @@ class API extends \Piwik\Plugin\API
             'type' => $type,
             'active' => $active,
         ];
+    }
+
+    private function parseRedirectUris($redirectUris): array
+    {
+        if (is_array($redirectUris)) {
+            $rawRedirects = $redirectUris;
+        } else {
+            $rawRedirects = preg_split("/\r\n|\n|\r/", (string) $redirectUris);
+            if ($rawRedirects === false) {
+                $rawRedirects = [];
+            }
+        }
+
+        $redirects = [];
+
+        foreach ($rawRedirects as $rawRedirectUri) {
+            $rawRedirectUri = is_string($rawRedirectUri) ? $rawRedirectUri : (string) $rawRedirectUri;
+
+            if (trim($rawRedirectUri) === '') {
+                continue;
+            }
+
+            $parsedRedirectUri = parse_url($rawRedirectUri);
+
+            if (
+                $rawRedirectUri !== trim($rawRedirectUri)
+                || preg_match('/\s/', $rawRedirectUri) === 1
+                || str_contains($rawRedirectUri, '\\')
+                || $parsedRedirectUri === false
+                || preg_match('~https?://~i', (string) ($parsedRedirectUri['path'] ?? '')) === 1
+                || preg_match('~https?://~i', (string) ($parsedRedirectUri['fragment'] ?? '')) === 1
+            ) {
+                throw new \InvalidArgumentException(Piwik::translate('OAuth2_InvalidRedirectUri') . ': ' . $rawRedirectUri);
+            }
+
+            $redirects[] = $rawRedirectUri;
+        }
+
+        return array_values($redirects);
     }
 
     private function validateRedirectUris(array $redirectUris, array $grantTypes): void
