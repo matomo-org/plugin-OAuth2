@@ -1,3 +1,8 @@
+5.0.4 - 2026-05-25
+- Added code to log activity on auth approve and deny
+- Added code to log warning on auth failure
+- Improved isRevoked checked to check for client status also
+
 5.0.3 - 2026-05-11
 - Added code to show token and authorize URL at the top of list screen
 - Added better validation check for redirect URL, setting values and show client secret along with success message

@@ -9,6 +9,7 @@
 
 namespace Piwik\Plugins\OAuth2\tests\Integration;
 
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Exception\OAuthServerException;
 use Matomo\Dependencies\OAuth2\Nyholm\Psr7\Response;
 use Matomo\Dependencies\OAuth2\Nyholm\Psr7\ServerRequest;
 use Piwik\Auth\Password;
@@ -141,6 +142,42 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         $this->assertArrayNotHasKey('refresh_token', $payload);
         $this->assertSame(Fixture::ADMIN_USER_LOGIN, $storedToken['user_login']);
         $this->assertSame($client['client']['client_id'], $storedToken['client_id']);
+    }
+
+    public function test_accessTokenForPausedClientIsRejected()
+    {
+        $client = $this->api->createClient(
+            'Machine client',
+            ['client_credentials'],
+            'matomo:write',
+            [],
+            'Server to server client',
+            'confidential'
+        );
+
+        $response = $this->serverFactory->makeAuthorizationServer()->respondToAccessTokenRequest(
+            (new ServerRequest('POST', 'https://matomo.example/token'))->withParsedBody([
+                'grant_type' => 'client_credentials',
+                'client_id' => $client['client']['client_id'],
+                'client_secret' => $client['secret'],
+                'scope' => 'matomo:write',
+            ]),
+            new Response()
+        );
+        $payload = json_decode((string) $response->getBody(), true);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertNotEmpty($payload['access_token']);
+
+        $this->api->setClientActive($client['client']['client_id'], '0');
+
+        $this->expectException(OAuthServerException::class);
+        $this->serverFactory->makeResourceServer()->validateAuthenticatedRequest(
+            (new ServerRequest('GET', 'https://matomo.example/index.php'))->withHeader(
+                'Authorization',
+                'Bearer ' . $payload['access_token']
+            )
+        );
     }
 
     public function test_clientCredentialsFlow_preservesOriginalOwnerAfterAnotherSuperUserEditsClient()
