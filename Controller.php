@@ -13,6 +13,7 @@ use Matomo\Dependencies\OAuth2\Nyholm\Psr7\Factory\Psr17Factory;
 use Matomo\Dependencies\OAuth2\Nyholm\Psr7\Response;
 use Matomo\Dependencies\OAuth2\Nyholm\Psr7Server\ServerRequestCreator;
 use Piwik\Common;
+use Piwik\Log;
 use Piwik\Nonce;
 use Piwik\Piwik;
 use Piwik\Plugin\ControllerAdmin;
@@ -75,8 +76,10 @@ class Controller extends ControllerAdmin
         try {
             $authRequest = $authServer->validateAuthorizationRequest($psrRequest);
         } catch (OAuthServerException $e) {
+            $this->logOAuthRequestFailure('authorize', $e);
             return $this->emitResponse($e->generateHttpResponse(new Response()));
         } catch (\Throwable $e) {
+            $this->logOAuthRequestFailure('authorize', $e);
             return $this->renderUnauthorized(Piwik::translate('OAuth2_InvalidAuthorizationRequest'));
         }
 
@@ -110,13 +113,19 @@ class Controller extends ControllerAdmin
                 return $this->renderUnauthorized(Piwik::translate('OAuth2_InvalidAuthorizationRequest'));
             }
 
-            $authRequest->setAuthorizationApproved($decision === 'allow');
+            $isApproved = $decision === 'allow';
+            $authRequest->setAuthorizationApproved($isApproved);
+            Piwik::postEvent('OAuth2.authorize.decision.end', [
+                $this->buildAuthorizationActivityData($authRequest->getClient(), $login, $scopes, $isApproved),
+            ]);
 
             try {
                 $response = $authServer->completeAuthorizationRequest($authRequest, new Response());
             } catch (OAuthServerException $e) {
+                $this->logOAuthRequestFailure('authorize', $e);
                 $response = $e->generateHttpResponse(new Response());
             } catch (\Throwable $e) {
+                $this->logOAuthRequestFailure('authorize', $e);
                 $response = (new Response())->withStatus(500)->withBody((new Psr17Factory())->createStream(Piwik::translate('OAuth2_ServerError')));
             }
 
@@ -165,8 +174,10 @@ class Controller extends ControllerAdmin
         try {
             $response = $authServer->respondToAccessTokenRequest($psrRequest, $response);
         } catch (OAuthServerException $e) {
+            $this->logOAuthRequestFailure('token', $e);
             $response = $e->generateHttpResponse($response);
         } catch (\Throwable $e) {
+            $this->logOAuthRequestFailure('token', $e);
             $response = $response->withStatus(500)->withBody((new Psr17Factory())->createStream(Piwik::translate('OAuth2_ServerError')));
         }
 
@@ -201,6 +212,37 @@ class Controller extends ControllerAdmin
     {
         http_response_code(400);
         return $message;
+    }
+
+    private function buildAuthorizationActivityData($client, string $login, array $scopes, bool $isApproved): array
+    {
+        $clientData = [
+            'id' => method_exists($client, 'getIdentifier') ? $client->getIdentifier() : null,
+            'name' => method_exists($client, 'getName') ? $client->getName() : null,
+        ];
+
+        if ($client instanceof ClientEntity) {
+            $clientData['type'] = $client->type;
+            $clientData['active'] = $client->active;
+        }
+
+        return [
+            'version' => 'v1',
+            'client' => $clientData,
+            'userLogin' => $login,
+            'scopes' => array_values($scopes),
+            'decision' => $isApproved ? 'allowed' : 'denied',
+        ];
+    }
+
+    private function logOAuthRequestFailure(string $endpoint, \Throwable $exception): void
+    {
+        Log::warning(
+            'OAuth 2.0 %s request failed: %s (%s)',
+            $endpoint,
+            get_class($exception),
+            (string) $exception->getCode()
+        );
     }
 
     private function checkDoesUserHasAccessAsPerScope(string $scope): void
