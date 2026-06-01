@@ -118,7 +118,9 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             'matomo:write',
             [],
             'Server to server client',
-            'confidential'
+            'confidential',
+            '1',
+            Fixture::ADMIN_USER_PASSWORD
         );
 
         $response = $this->serverFactory->makeAuthorizationServer()->respondToAccessTokenRequest(
@@ -152,7 +154,9 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             'matomo:write',
             [],
             'Server to server client',
-            'confidential'
+            'confidential',
+            '1',
+            Fixture::ADMIN_USER_PASSWORD
         );
 
         $response = $this->serverFactory->makeAuthorizationServer()->respondToAccessTokenRequest(
@@ -188,7 +192,9 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             'matomo:write',
             [],
             'Server to server client',
-            'confidential'
+            'confidential',
+            '1',
+            Fixture::ADMIN_USER_PASSWORD
         );
         $this->createSuperUser('otherSuperUser');
 
@@ -201,7 +207,8 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             [],
             'Edited by another superuser',
             'confidential',
-            '1'
+            '1',
+            'test-password'
         );
 
         FakeAccess::clearAccess(true);
@@ -233,7 +240,9 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             'matomo:read',
             ['https://confidential-client.example/callback'],
             'Authorization code client',
-            'confidential'
+            'confidential',
+            '1',
+            Fixture::ADMIN_USER_PASSWORD
         );
         return $client;
     }

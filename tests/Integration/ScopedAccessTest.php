@@ -15,6 +15,7 @@ use Piwik\Plugins\OAuth2\API;
 use Piwik\Plugins\OAuth2\Auth\Oauth2Auth;
 use Piwik\Plugins\OAuth2\OAuth2;
 use Piwik\Plugins\OAuth2\tests\Fixtures\OAuth2Fixture;
+use Piwik\Plugins\UsersManager\API as UsersManagerAPI;
 use Piwik\Tests\Framework\Fixture;
 
 /**
@@ -65,11 +66,35 @@ class ScopedAccessTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCa
         $this->api->getClients();
     }
 
+    public function test_readScopedToken_cannotGrantUserAccessAfterAccessReload()
+    {
+        $subject = 'oauth_subject';
+        $victim = 'oauth_victim';
+        $idSite = self::$fixture->idSite;
+
+        $usersManager = UsersManagerAPI::getInstance();
+        $usersManager->addUser($subject, 'Password123', 'oauth-subject@example.com', false, $idSite);
+        $usersManager->addUser($victim, 'Password123', 'oauth-victim@example.com', false, $idSite);
+        $usersManager->setUserAccess($subject, 'admin', [$idSite]);
+        $usersManager->setUserAccess($victim, 'view', [$idSite]);
+
+        $this->authenticateReadScopedToken($subject, false, 'UsersManager', 'setUserAccess');
+
+        $this->expectException(\Piwik\NoAccessException::class);
+
+        $usersManager->setUserAccess($victim, 'admin', [$idSite]);
+    }
+
     private function authenticateReadScopedSuperUserToken(string $pluginName, string $methodName): void
     {
+        $this->authenticateReadScopedToken(Fixture::ADMIN_USER_LOGIN, true, $pluginName, $methodName);
+    }
+
+    private function authenticateReadScopedToken(string $login, bool $isSuperUser, string $pluginName, string $methodName): void
+    {
         $auth = new Oauth2Auth(
-            Fixture::ADMIN_USER_LOGIN,
-            true,
+            $login,
+            $isSuperUser,
             'scoped-token',
             'scoped-client',
             ['matomo:read']

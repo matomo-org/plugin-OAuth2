@@ -1,21 +1,10 @@
 <template>
   <div class="oauth2-admin oauth2-admin-edit">
-    <div
-      class="ui-confirm"
-      ref="confirmRotateClient"
+    <PasswordConfirmation
+      v-model="showPasswordConfirmModal"
+      @confirmed="onPasswordConfirmed"
     >
-      <h2>{{ confirmRotateLabel }} </h2>
-      <input
-        role="yes"
-        type="button"
-        :value="translate('General_Yes')"
-      />
-      <input
-        role="no"
-        type="button"
-        :value="translate('General_No')"
-      />
-    </div>
+    </PasswordConfirmation>
     <ContentBlock
       :content-title="contentTitle"
     >
@@ -194,7 +183,7 @@ import {
   NotificationsStore,
   CopyToClipboard,
 } from 'CoreHome';
-import { Field } from 'CorePluginsAdmin';
+import { Field, PasswordConfirmation } from 'CorePluginsAdmin';
 import { Client, ClientForm } from '../types';
 
 const notificationId = 'oauth2clientedit';
@@ -236,6 +225,7 @@ export default defineComponent({
   components: {
     ContentBlock,
     Field,
+    PasswordConfirmation,
   },
   data() {
     const typeOptions = {
@@ -256,6 +246,8 @@ export default defineComponent({
       grantOptions,
       form: getDefaultForm(this.scopes),
       visibleSecret: this.initialSecret,
+      showPasswordConfirmModal: false,
+      passwordConfirmAction: '',
     };
   },
   created() {
@@ -358,24 +350,8 @@ export default defineComponent({
       }
 
       this.confirmRotateLabel = this.translate('OAuth2_AdminRotateConfirm', this.form.name || this.clientId);
-      Matomo.helper.modalConfirm(this.$refs.confirmRotateClient as HTMLElement, {
-        yes: () => {
-          this.loading = true;
-          AjaxHelper.fetch({
-            method: 'OAuth2.rotateSecret',
-            clientId: this.clientId,
-          }).then((response) => {
-            if (response?.secret) {
-              this.visibleSecret = response.secret;
-              const code = `<code>${this.visibleSecret}</code>`;
-              const message = `${this.translate('OAuth2_AdminRotatedNotification')}<br>${this.translate('OAuth2_ClientSecretDisplayedNotification', code)}`;
-              this.showNotification(`<span class="success-msg-created">${message}</span>`, 'success', 'transient');
-            }
-          }).finally(() => {
-            this.loading = false;
-          });
-        },
-      });
+      this.passwordConfirmAction = 'rotate';
+      this.showPasswordConfirmModal = true;
     },
     submit() {
       this.removeNotifications();
@@ -383,6 +359,43 @@ export default defineComponent({
         return;
       }
 
+      this.confirmRotateLabel = this.isEditMode
+        ? this.translate('OAuth2_AdminUpdate')
+        : this.translate('OAuth2_AdminCreateTitle');
+      this.passwordConfirmAction = 'save';
+      this.showPasswordConfirmModal = true;
+    },
+    onPasswordConfirmed(passwordConfirmation: string) {
+      this.showPasswordConfirmModal = false;
+      if (this.passwordConfirmAction === 'rotate') {
+        this.doRotateSecret(passwordConfirmation);
+      } else if (this.passwordConfirmAction === 'save') {
+        this.saveClient(passwordConfirmation);
+      }
+      this.passwordConfirmAction = '';
+    },
+    doRotateSecret(passwordConfirmation: string) {
+      this.loading = true;
+      AjaxHelper.fetch({
+        method: 'OAuth2.rotateSecret',
+        clientId: this.clientId,
+      },
+      {
+        postParams: {
+          passwordConfirmation,
+        },
+      }).then((response) => {
+        if (response?.secret) {
+          this.visibleSecret = response.secret;
+          const code = `<code>${this.visibleSecret}</code>`;
+          const message = `${this.translate('OAuth2_AdminRotatedNotification')}<br>${this.translate('OAuth2_ClientSecretDisplayedNotification', code)}`;
+          this.showNotification(`<span class="success-msg-created">${message}</span>`, 'success', 'transient');
+        }
+      }).finally(() => {
+        this.loading = false;
+      });
+    },
+    saveClient(passwordConfirmation: string) {
       this.loading = true;
       const params = {
         method: this.isEditMode ? 'OAuth2.updateClient' : 'OAuth2.createClient',
@@ -399,7 +412,7 @@ export default defineComponent({
         params.clientId = this.clientId;
       }
 
-      AjaxHelper.fetch(params).then((response) => {
+      AjaxHelper.fetch(params, { postParams: { passwordConfirmation } }).then((response) => {
         this.visibleSecret = response.secret || '';
         const safeClientName = Matomo.helper.htmlEntities(response.client.name || '');
         const clientMessage = this.isEditMode

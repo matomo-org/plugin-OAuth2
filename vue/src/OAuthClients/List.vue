@@ -1,21 +1,10 @@
 <template>
   <div class="oauth2-admin oauth2-admin-list">
-    <div
-      class="ui-confirm"
-      ref="confirmDeleteClient"
+    <PasswordConfirmation
+      v-model="showDeleteConfirmModal"
+      @confirmed="onDeleteConfirmed"
     >
-      <h2>{{ confirmDeleteLabel }} </h2>
-      <input
-        role="yes"
-        type="button"
-        :value="translate('General_Yes')"
-      />
-      <input
-        role="no"
-        type="button"
-        :value="translate('General_No')"
-      />
-    </div>
+    </PasswordConfirmation>
     <div
       class="ui-confirm"
       ref="confirmToggleClient"
@@ -154,6 +143,7 @@ import {
   NotificationType,
   NotificationsStore,
 } from 'CoreHome';
+import { PasswordConfirmation } from 'CorePluginsAdmin';
 import { Client } from '../types';
 
 const notificationId = 'oauth2clientlist';
@@ -181,6 +171,7 @@ export default defineComponent({
   emits: ['create', 'edit', 'deleted', 'updated'],
   components: {
     ContentBlock,
+    PasswordConfirmation,
   },
   directives: {
     ContentTable,
@@ -189,6 +180,8 @@ export default defineComponent({
     return {
       confirmDeleteLabel: '',
       confirmToggleLabel: '',
+      clientToDelete: null as Client|null,
+      showDeleteConfirmModal: false,
       typeOptions: {
         confidential: this.translate('OAuth2_AdminConfidential'),
         public: this.translate('OAuth2_AdminPublic'),
@@ -281,20 +274,33 @@ export default defineComponent({
     deleteClient(client: Client) {
       const safeClientName = Matomo.helper.htmlEntities(client.name || client.client_id);
       this.confirmDeleteLabel = this.translate('OAuth2_AdminDeleteConfirm', safeClientName);
+      this.clientToDelete = client;
+      this.showDeleteConfirmModal = true;
+    },
+    onDeleteConfirmed(passwordConfirmation: string) {
+      this.showDeleteConfirmModal = false;
+      const client = this.clientToDelete;
+      this.clientToDelete = null;
 
-      Matomo.helper.modalConfirm(this.$refs.confirmDeleteClient as HTMLElement, {
-        yes: () => {
-          AjaxHelper.fetch({
-            method: 'OAuth2.deleteClient',
-            clientId: client.client_id,
-          }).then((response) => {
-            if (response?.deleted) {
-              this.removeNotifications();
-              this.showNotification(this.translate('OAuth2_AdminDeleted', safeClientName), 'success');
-              this.$emit('deleted', client.client_id);
-            }
-          });
+      if (!client) {
+        return;
+      }
+
+      const safeClientName = Matomo.helper.htmlEntities(client.name || client.client_id);
+      AjaxHelper.fetch({
+        method: 'OAuth2.deleteClient',
+        clientId: client.client_id,
+      },
+      {
+        postParams: {
+          passwordConfirmation,
         },
+      }).then((response) => {
+        if (response?.deleted) {
+          this.removeNotifications();
+          this.showNotification(this.translate('OAuth2_AdminDeleted', safeClientName), 'success');
+          this.$emit('deleted', client.client_id);
+        }
       });
     },
   },

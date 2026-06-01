@@ -44,6 +44,7 @@ class OAuth2 extends Plugin
         return [
             'API.Request.authenticate' => 'onApiAuthenticate',
             'API.Request.dispatch' => 'onApiRequestDispatch',
+            'Access.modifyUserAccess' => 'onModifyUserAccess',
             'Db.getTablesInstalled' => 'getTablesInstalled',
             'Vue.getComponents' => 'registerVueComponents',
             'Translate.getClientSideTranslationKeys' => 'getClientSideTranslationKeys',
@@ -80,15 +81,28 @@ class OAuth2 extends Plugin
             return;
         }
 
-        $scopes = (array) ($auth->scopes ?? []);
         $access = Access::getInstance();
         OAuth2Access::loadSitesIfNeededFor($access);
         $siteAccess = OAuth2Access::getSiteAccessFor($access);
-        $siteAccess = $this->modifyAccessBasedOnScope($siteAccess, $scopes[0] ?? null);
+        $siteAccess = $this->modifyAccessBasedOnScope($siteAccess, $auth->getPrimaryScope());
         if ($access->hasSuperUserAccess() && empty($siteAccess['superuser'])) {
             $access->setSuperUserAccess(false);
         }
         OAuth2Access::setSiteAccessFor($access, $siteAccess);
+    }
+
+    public function onModifyUserAccess(&$idsitesByAccess, $login): void
+    {
+        $auth = StaticContainer::get('Piwik\Auth');
+        if (!$auth instanceof Oauth2Auth || $auth->getLogin() !== $login) {
+            return;
+        }
+
+        if ($auth->isSubjectSuperUser() && !$auth->allowsSuperUserAccess()) {
+            $idsitesByAccess['superuser'] = \Piwik\Plugins\SitesManager\API::getInstance()->getAllSitesId();
+        }
+
+        $idsitesByAccess = $this->modifyAccessBasedOnScope($idsitesByAccess, $auth->getPrimaryScope());
     }
 
     public function registerVueComponents(&$components)
