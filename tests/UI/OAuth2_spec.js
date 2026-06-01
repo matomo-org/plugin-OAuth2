@@ -64,6 +64,13 @@ describe("OAuth2Admin", function () {
     {
         await page.waitForSelector('.oauth2-admin form button.btn', { visible: true });
         await page.click('.oauth2-admin form button.btn');
+        const confirmPasswordModal = await page.waitForSelector('.confirm-password-modal.modal.open', { visible: true, timeout: 1000 }).catch(() => null);
+
+        if (confirmPasswordModal) {
+            await page.type('.confirm-password-modal input[type=password]', superUserPassword);
+            await page.click('.confirm-password-modal .confirm-password-btn');
+        }
+
         await page.waitForNetworkIdle();
         await page.waitForTimeout(300);
         if (expectSecretMessage) {
