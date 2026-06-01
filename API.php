@@ -97,8 +97,17 @@ class API extends \Piwik\Plugin\API
      * @return array{client: array<string, mixed>, secret: string|null} The sanitized client record and the generated plaintext
      *                                                                  secret when the created client is confidential.
      */
-    public function createClient(string $name, array $grantTypes, string $scope, $redirectUris = [], string $description = '', string $type = 'confidential', string $active = '1', string $passwordConfirmation = ''): array
-    {
+    public function createClient(
+        string $name,
+        array $grantTypes,
+        string $scope,
+        $redirectUris = [],
+        string $description = '',
+        string $type = 'confidential',
+        string $active = '1',
+        #[\SensitiveParameter]
+        string $passwordConfirmation = ''
+    ): array {
         Piwik::checkUserHasSuperUserAccess();
         $this->confirmCurrentUserPassword($passwordConfirmation);
 
@@ -144,8 +153,18 @@ class API extends \Piwik\Plugin\API
      * @return array{client: array<string, mixed>, secret: string|null} The sanitized updated client record and a newly generated
      *                                                                  plaintext secret when the client becomes confidential.
      */
-    public function updateClient(string $clientId, string $name, array $grantTypes, string $scope, $redirectUris = [], string $description = '', string $type = 'confidential', string $active = '1', string $passwordConfirmation = ''): array
-    {
+    public function updateClient(
+        string $clientId,
+        string $name,
+        array $grantTypes,
+        string $scope,
+        $redirectUris = [],
+        string $description = '',
+        string $type = 'confidential',
+        string $active = '1',
+        #[\SensitiveParameter]
+        string $passwordConfirmation = ''
+    ): array {
         Piwik::checkUserHasSuperUserAccess();
         $this->confirmCurrentUserPassword($passwordConfirmation);
 
@@ -189,8 +208,11 @@ class API extends \Piwik\Plugin\API
      * @param string $passwordConfirmation Current user's password confirmation.
      * @return array{client_id: string, secret: string} The client ID and the newly generated plaintext secret.
      */
-    public function rotateSecret(string $clientId, string $passwordConfirmation = ''): array
-    {
+    public function rotateSecret(
+        string $clientId,
+        #[\SensitiveParameter]
+        string $passwordConfirmation = ''
+    ): array {
         Piwik::checkUserHasSuperUserAccess();
         $this->confirmCurrentUserPassword($passwordConfirmation);
 
@@ -234,8 +256,11 @@ class API extends \Piwik\Plugin\API
      * @param string $passwordConfirmation Current user's password confirmation.
      * @return array{deleted: true} Confirmation that the client and its related OAuth2 records were deleted.
      */
-    public function deleteClient(string $clientId, string $passwordConfirmation = ''): array
-    {
+    public function deleteClient(
+        string $clientId,
+        #[\SensitiveParameter]
+        string $passwordConfirmation = ''
+    ): array {
         Piwik::checkUserHasSuperUserAccess();
         $this->confirmCurrentUserPassword($passwordConfirmation);
 
