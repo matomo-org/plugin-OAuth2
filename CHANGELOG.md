@@ -1,3 +1,6 @@
+5.1.0 - 2026-06-08
+- Added password confirmation for add, edit, delete and rotate token action. 
+
 5.0.4 - 2026-05-25
 - Added code to log activity on auth approve and deny
 - Added code to log warning on auth failure

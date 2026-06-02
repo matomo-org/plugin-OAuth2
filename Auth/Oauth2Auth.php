@@ -79,7 +79,22 @@ class Oauth2Auth implements Auth
 
     public function authenticate()
     {
-        $code = $this->isSuperUser ? AuthResult::SUCCESS_SUPERUSER_AUTH_CODE : AuthResult::SUCCESS;
+        $code = $this->allowsSuperUserAccess() ? AuthResult::SUCCESS_SUPERUSER_AUTH_CODE : AuthResult::SUCCESS;
         return new AuthResult($code, $this->login, $this->tokenAuth);
+    }
+
+    public function getPrimaryScope(): ?string
+    {
+        return $this->scopes[0] ?? null;
+    }
+
+    public function isSubjectSuperUser(): bool
+    {
+        return $this->isSuperUser;
+    }
+
+    public function allowsSuperUserAccess(): bool
+    {
+        return $this->isSuperUser && $this->getPrimaryScope() === 'matomo:superuser';
     }
 }

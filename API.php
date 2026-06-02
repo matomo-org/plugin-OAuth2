@@ -93,12 +93,23 @@ class API extends \Piwik\Plugin\API
      * @param string          $description   Optional description for administrators.
      * @param string          $type          `confidential` (default, requires secret) or `public` (no client secret).
      * @param string          $active        `'1'` to enable the client or `'0'` to disable it.
+     * @param string          $passwordConfirmation Current user's password confirmation.
      * @return array{client: array<string, mixed>, secret: string|null} The sanitized client record and the generated plaintext
      *                                                                  secret when the created client is confidential.
      */
-    public function createClient(string $name, array $grantTypes, string $scope, $redirectUris = [], string $description = '', string $type = 'confidential', string $active = '1'): array
-    {
+    public function createClient(
+        string $name,
+        array $grantTypes,
+        string $scope,
+        $redirectUris = [],
+        string $description = '',
+        string $type = 'confidential',
+        string $active = '1',
+        #[\SensitiveParameter]
+        string $passwordConfirmation = ''
+    ): array {
         Piwik::checkUserHasSuperUserAccess();
+        $this->confirmCurrentUserPassword($passwordConfirmation);
 
         $data = $this->buildValidatedClientData(
             $name,
@@ -138,12 +149,24 @@ class API extends \Piwik\Plugin\API
      * @param string          $description  Optional description for administrators.
      * @param string          $type         `confidential` (default, requires secret) or `public` (no client secret).
      * @param string          $active       `'1'` to enable the client or `'0'` to disable it.
+     * @param string          $passwordConfirmation Current user's password confirmation.
      * @return array{client: array<string, mixed>, secret: string|null} The sanitized updated client record and a newly generated
      *                                                                  plaintext secret when the client becomes confidential.
      */
-    public function updateClient(string $clientId, string $name, array $grantTypes, string $scope, $redirectUris = [], string $description = '', string $type = 'confidential', string $active = '1'): array
-    {
+    public function updateClient(
+        string $clientId,
+        string $name,
+        array $grantTypes,
+        string $scope,
+        $redirectUris = [],
+        string $description = '',
+        string $type = 'confidential',
+        string $active = '1',
+        #[\SensitiveParameter]
+        string $passwordConfirmation = ''
+    ): array {
         Piwik::checkUserHasSuperUserAccess();
+        $this->confirmCurrentUserPassword($passwordConfirmation);
 
         $clientId = $this->assertValidClientId($clientId);
 
@@ -176,18 +199,22 @@ class API extends \Piwik\Plugin\API
         return $result;
     }
 
-    // TODO: Do we require password for confirmation?
     /**
      * Generates and persists a new secret for the given OAuth2 client (super users only).
      *
      * The previous secret stops working immediately. The new plaintext secret is returned once and must be saved by the caller.
      *
      * @param string $clientId 32-character hexadecimal client identifier.
+     * @param string $passwordConfirmation Current user's password confirmation.
      * @return array{client_id: string, secret: string} The client ID and the newly generated plaintext secret.
      */
-    public function rotateSecret(string $clientId): array
-    {
+    public function rotateSecret(
+        string $clientId,
+        #[\SensitiveParameter]
+        string $passwordConfirmation = ''
+    ): array {
         Piwik::checkUserHasSuperUserAccess();
+        $this->confirmCurrentUserPassword($passwordConfirmation);
 
         $clientId = $this->assertValidClientId($clientId);
         $client = $this->getClient($clientId);
@@ -222,16 +249,20 @@ class API extends \Piwik\Plugin\API
         ];
     }
 
-    // TODO: Do we require password for confirmation?
     /**
      * Deletes an OAuth2 client and its related access tokens, refresh tokens, and auth codes (super users only).
      *
      * @param string $clientId 32-character hexadecimal client identifier.
+     * @param string $passwordConfirmation Current user's password confirmation.
      * @return array{deleted: true} Confirmation that the client and its related OAuth2 records were deleted.
      */
-    public function deleteClient(string $clientId): array
-    {
+    public function deleteClient(
+        string $clientId,
+        #[\SensitiveParameter]
+        string $passwordConfirmation = ''
+    ): array {
         Piwik::checkUserHasSuperUserAccess();
+        $this->confirmCurrentUserPassword($passwordConfirmation);
 
         $clientId = $this->assertValidClientId($clientId);
 

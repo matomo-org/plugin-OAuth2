@@ -76,7 +76,11 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             'Regular user client',
             ['authorization_code', 'refresh_token'],
             'matomo:read',
-            ['https://client.example/callback']
+            ['https://client.example/callback'],
+            '',
+            'confidential',
+            '1',
+            Fixture::ADMIN_USER_PASSWORD
         );
     }
 
@@ -88,7 +92,7 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         $this->expectExceptionMessage('checkUserHasSuperUserAccess');
 
         $this->setRegularUser();
-        $this->api->rotateSecret($client['client']['client_id']);
+        $this->api->rotateSecret($client['client']['client_id'], Fixture::ADMIN_USER_PASSWORD);
     }
 
     public function test_deleteClient_failsForNonSuperUsers()
@@ -99,7 +103,7 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         $this->expectExceptionMessage('checkUserHasSuperUserAccess');
 
         $this->setRegularUser();
-        $this->api->deleteClient($client['client']['client_id']);
+        $this->api->deleteClient($client['client']['client_id'], Fixture::ADMIN_USER_PASSWORD);
     }
 
     public function test_setClientActive_failsForNonSuperUsers()
@@ -170,7 +174,9 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             'matomo:read',
             ['https://public-client.example/callback'],
             'Public client description',
-            'public'
+            'public',
+            '1',
+            Fixture::ADMIN_USER_PASSWORD
         );
 
         $stored = $this->clientModel->find($result['client']['client_id']);
@@ -192,7 +198,9 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             'matomo:read',
             [],
             '',
-            'public'
+            'public',
+            '1',
+            Fixture::ADMIN_USER_PASSWORD
         );
     }
 
@@ -210,7 +218,9 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             'matomo:read',
             $redirectUris,
             'Invalid redirect test',
-            'confidential'
+            'confidential',
+            '1',
+            Fixture::ADMIN_USER_PASSWORD
         );
     }
 
@@ -222,7 +232,9 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             'matomo:read',
             ['https://example.com/callback?redirect=https://other.example/path'],
             'Valid redirect test',
-            'confidential'
+            'confidential',
+            '1',
+            Fixture::ADMIN_USER_PASSWORD
         );
 
         $this->assertSame(
@@ -235,7 +247,7 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
     {
         $result = $this->createConfidentialClient();
 
-        $rotated = $this->api->rotateSecret($result['client']['client_id']);
+        $rotated = $this->api->rotateSecret($result['client']['client_id'], Fixture::ADMIN_USER_PASSWORD);
 
         $this->assertSame($result['client']['client_id'], $rotated['client_id']);
         $this->assertNotSame($result['secret'], $rotated['secret']);
@@ -259,7 +271,7 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
     {
         $result = $this->createConfidentialClient();
 
-        $deleted = $this->api->deleteClient($result['client']['client_id']);
+        $deleted = $this->api->deleteClient($result['client']['client_id'], Fixture::ADMIN_USER_PASSWORD);
 
         $this->assertSame(['deleted' => true], $deleted);
         $this->assertNull($this->clientModel->find($result['client']['client_id']));
@@ -288,7 +300,8 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             ['https://updated.example/callback'],
             'Updated description',
             'confidential',
-            '0'
+            '0',
+            Fixture::ADMIN_USER_PASSWORD
         );
 
         $this->assertSame('Updated client', $updated['client']['name']);
@@ -314,7 +327,8 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             ['https://updated.example/callback'],
             'Updated description',
             'confidential',
-            '1'
+            '1',
+            'test-password'
         );
 
         $this->assertSame(Fixture::ADMIN_USER_LOGIN, $updated['client']['owner_login']);
@@ -332,7 +346,9 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             'matomo:read',
             ['https://public-client.example/callback'],
             'Public client description',
-            'public'
+            'public',
+            '1',
+            Fixture::ADMIN_USER_PASSWORD
         );
 
         $updated = $this->api->updateClient(
@@ -342,7 +358,9 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             'matomo:read',
             ['https://public-client.example/callback'],
             'Updated public client description',
-            'confidential'
+            'confidential',
+            '1',
+            Fixture::ADMIN_USER_PASSWORD
         );
 
         $this->assertSame('confidential', $updated['client']['type']);
@@ -367,7 +385,9 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             'matomo:read',
             ['https://client.example/callback'],
             'Now public client description',
-            'public'
+            'public',
+            '1',
+            Fixture::ADMIN_USER_PASSWORD
         );
 
         $stored = $this->clientModel->find($result['client']['client_id']);
@@ -423,7 +443,9 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             'matomo:read',
             ['https://client.example/callback'],
             'Confidential client description',
-            'confidential'
+            'confidential',
+            '1',
+            Fixture::ADMIN_USER_PASSWORD
         );
     }
 

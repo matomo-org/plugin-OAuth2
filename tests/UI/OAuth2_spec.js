@@ -64,6 +64,13 @@ describe("OAuth2Admin", function () {
     {
         await page.waitForSelector('.oauth2-admin form button.btn', { visible: true });
         await page.click('.oauth2-admin form button.btn');
+        const confirmPasswordModal = await page.waitForSelector('.confirm-password-modal.modal.open', { visible: true, timeout: 1000 }).catch(() => null);
+
+        if (confirmPasswordModal) {
+            await page.type('.confirm-password-modal input[type=password]', superUserPassword);
+            await page.click('.confirm-password-modal .confirm-password-btn');
+        }
+
         await page.waitForNetworkIdle();
         await page.waitForTimeout(300);
         if (expectSecretMessage) {
@@ -76,6 +83,18 @@ describe("OAuth2Admin", function () {
         await page.evaluate(function () {
             $('.success-msg-created').html('Client fixedValueForTest created');
         });
+    }
+
+    async function enablePasswordConfirmationForUITest()
+    {
+        testEnvironment.enablePasswordConfirmationForUITests = true;
+        await testEnvironment.save();
+    }
+
+    async function disablePasswordConfirmationForUITest()
+    {
+        delete testEnvironment.enablePasswordConfirmationForUITests;
+        await testEnvironment.save();
     }
 
     async function fillClientForm(name, typeTitle, redirectUri)
@@ -135,6 +154,24 @@ describe("OAuth2Admin", function () {
         await page.goto(createUrl);
         await submitForm();
         await capturePage('create_client_validation');
+    });
+
+    it('should show the password confirmation box before saving a client', async function () {
+        await enablePasswordConfirmationForUITest();
+
+        try {
+            await page.goto(createUrl);
+            await fillClientForm('Confirmation UI client', 'Confidential', 'https://confirm.example/callback');
+            await page.waitForSelector('.oauth2-admin form button.btn', { visible: true });
+            await page.click('.oauth2-admin form button.btn');
+            await page.waitForSelector('.confirm-password-modal.modal.open', { visible: true });
+
+            expect(await page.$('.confirm-password-modal.modal.open')).to.be.ok;
+            expect(await page.$('.confirm-password-modal.modal.open input[type=password]')).to.be.ok;
+            expect(await page.$('.confirm-password-modal.modal.open .confirm-password-btn')).to.be.ok;
+        } finally {
+            await disablePasswordConfirmationForUITest();
+        }
     });
 
     it('should create a confidential client and show the secret once', async function () {
