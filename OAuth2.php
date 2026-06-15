@@ -373,24 +373,45 @@ class OAuth2 extends Plugin
         $target = $scopeToLevelMapping[$scope];
         $targetLevel = $levels[$target];
 
+        // Capture the subject's super user sites before the demotion loop empties them,
+        // so the capability reconciliation below can grant a super user every capability.
+        $superUserSites = $idSitesAccess['superuser'] ?? [];
+
         foreach ($levels as $access => $level) {
             if ($level <= $targetLevel) {
                 continue;
-            }
-            // Assign all the capabilities of a superuser too
-            if ($access === 'superuser' && !empty($idSitesAccess['superuser'])) {
-                $capabilityProvider = StaticContainer::get('Piwik\Access\CapabilitiesProvider');
-                foreach ($capabilityProvider->getAllCapabilities() as $capability) {
-                    if ($capability->hasRoleCapability($target)) {
-                        $idSitesAccess[$capability->getId()] = $idSitesAccess['superuser'];
-                    }
-                }
             }
             $idSitesAccess[$target] = array_values(array_unique(array_merge(
                 $idSitesAccess[$target] ?? [],
                 $idSitesAccess[$access] ?? []
             )));
             $idSitesAccess[$access] = [];
+        }
+
+        // Reconcile capabilities with the confined role. Core seeds capability keys
+        // (e.g. tagmanager_publish_live_container) from the subject's real role, so a
+        // lower-scoped token issued to a higher-privileged user would otherwise keep
+        // capabilities the scope forbids. Strip every capability the target role does
+        // not grant, for ALL subjects - not just super users. Skipped for the
+        // superuser scope, which is unconfined.
+        if ($targetLevel < $levels['superuser']) {
+            $capabilityProvider = StaticContainer::get('Piwik\Access\CapabilitiesProvider');
+            foreach ($capabilityProvider->getAllCapabilities() as $capability) {
+                $capabilityId = $capability->getId();
+                if (!$capability->hasRoleCapability($target)) {
+                    // Capability sits above the confined scope - drop it entirely.
+                    $idSitesAccess[$capabilityId] = [];
+                    continue;
+                }
+                // A super user implicitly holds every retained capability on the sites
+                // they administer, so seed those sites onto the capability.
+                if (!empty($superUserSites)) {
+                    $idSitesAccess[$capabilityId] = array_values(array_unique(array_merge(
+                        $idSitesAccess[$capabilityId] ?? [],
+                        $superUserSites
+                    )));
+                }
+            }
         }
 
         return $idSitesAccess;
