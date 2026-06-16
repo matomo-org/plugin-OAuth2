@@ -44,6 +44,18 @@ class ScopedAccessTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCa
         parent::tearDown();
     }
 
+    public function test_readScopedToken_grantsViewAccessWhenTokenRepresentsSuperUser()
+    {
+        $idSite = self::$fixture->idSite;
+
+        $this->authenticateReadScopedSuperUserToken('VisitsSummary', 'get');
+
+        $this->assertFalse(\Piwik\Access::getInstance()->hasSuperUserAccess());
+        $this->assertContains($idSite, \Piwik\Access::getInstance()->getSitesIdWithViewAccess());
+
+        Piwik::checkUserHasViewAccess($idSite);
+    }
+
     public function test_readScopedToken_cannotPerformWriteLevelChecksWhenTokenRepresentsSuperUser()
     {
         $this->authenticateReadScopedSuperUserToken('Annotations', 'add');

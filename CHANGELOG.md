@@ -1,3 +1,6 @@
+5.1.1 - 2026-06-17
+- Fixes scope-limited OAuth tokens owned by a super user failing all API requests with a "requires superuser access" error.
+
 5.1.0 - 2026-06-08
 - Added password confirmation for add, edit, delete and rotate token action. 
 

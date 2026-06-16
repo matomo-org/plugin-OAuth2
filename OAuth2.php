@@ -20,6 +20,7 @@ use Piwik\Plugin;
 use Piwik\Plugins\OAuth2\Access\OAuth2Access;
 use Piwik\Plugins\OAuth2\Auth\Oauth2Auth;
 use Piwik\Plugins\OAuth2\Auth\ResourceServerAuthenticator;
+use Piwik\Plugins\SitesManager\Model as SitesManagerModel;
 
 class OAuth2 extends Plugin
 {
@@ -99,7 +100,9 @@ class OAuth2 extends Plugin
         }
 
         if ($auth->isSubjectSuperUser() && !$auth->allowsSuperUserAccess()) {
-            $idsitesByAccess['superuser'] = \Piwik\Plugins\SitesManager\API::getInstance()->getAllSitesId();
+            // Read site IDs from the model directly; SitesManager\API::getAllSitesId() requires
+            // super user access, which the scope-limited token context doesn't have here.
+            $idsitesByAccess['superuser'] = (new SitesManagerModel())->getSitesId();
         }
 
         $idsitesByAccess = $this->modifyAccessBasedOnScope($idsitesByAccess, $auth->getPrimaryScope());
