@@ -1,4 +1,4 @@
-5.1.1 - 2026-06-22
+5.1.1 - 2026-06-17
 - Fixes scope-limited OAuth tokens owned by a super user failing all API requests with a "requires superuser access" error.
 - Added code to reconcile capability permission based on scope
 
