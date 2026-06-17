@@ -18,6 +18,56 @@ use Piwik\Plugins\OAuth2\tests\Fixtures\OAuth2Fixture;
 use Piwik\Plugins\UsersManager\API as UsersManagerAPI;
 use Piwik\Tests\Framework\Fixture;
 
+class WriteAdminCapability extends \Piwik\Access\Capability
+{
+    public const ID = 'oauth2_test_write_admin_cap';
+    public function getId(): string
+    {
+        return self::ID;
+    }
+    public function getName(): string
+    {
+        return 'write admin cap';
+    }
+    public function getCategory(): string
+    {
+        return 'test';
+    }
+    public function getDescription(): string
+    {
+        return 'lorem ipsum';
+    }
+    public function getIncludedInRoles(): array
+    {
+        return [\Piwik\Access\Role\Write::ID, \Piwik\Access\Role\Admin::ID];
+    }
+}
+
+class AdminOnlyCapability extends \Piwik\Access\Capability
+{
+    public const ID = 'oauth2_test_admin_only_cap';
+    public function getId(): string
+    {
+        return self::ID;
+    }
+    public function getName(): string
+    {
+        return 'admin only cap';
+    }
+    public function getCategory(): string
+    {
+        return 'test';
+    }
+    public function getDescription(): string
+    {
+        return 'lorem ipsum';
+    }
+    public function getIncludedInRoles(): array
+    {
+        return [\Piwik\Access\Role\Admin::ID];
+    }
+}
+
 /**
  * @group OAuth2
  * @group ScopedAccess
@@ -85,6 +135,63 @@ class ScopedAccessTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCa
         $usersManager->setUserAccess($victim, 'admin', [$idSite]);
     }
 
+    public function test_readScopedToken_stripsRoleCapabilitiesForNonSuperUserSubject()
+    {
+        $this->registerTestCapabilities();
+
+        $subject = 'oauth_admin_subject';
+        $idSite = self::$fixture->idSite;
+
+        $usersManager = UsersManagerAPI::getInstance();
+        $usersManager->addUser($subject, 'Password123', 'oauth-admin-subject@example.com', false, $idSite);
+        $usersManager->setUserAccess($subject, 'admin', [$idSite]);
+
+        // A read scoped token confines the admin subject to the view role, so it must
+        // keep neither the write-level nor the admin-level capability core seeded from
+        // the subject's real admin role.
+        $this->authenticateScopedToken($subject, false, ['matomo:read'], 'TagManager', 'getContainer');
+
+        $this->assertEmpty($this->getSitesIdWithCapability(WriteAdminCapability::ID));
+        $this->assertEmpty($this->getSitesIdWithCapability(AdminOnlyCapability::ID));
+    }
+
+    public function test_writeScopedToken_retainsWriteCapabilityButStripsAdminCapability()
+    {
+        $this->registerTestCapabilities();
+
+        $subject = 'oauth_admin_subject2';
+        $idSite = self::$fixture->idSite;
+
+        $usersManager = UsersManagerAPI::getInstance();
+        $usersManager->addUser($subject, 'Password123', 'oauth-admin-subject2@example.com', false, $idSite);
+        $usersManager->setUserAccess($subject, 'admin', [$idSite]);
+
+        // A write scoped token keeps capabilities the write role grants, but must drop
+        // the admin-only capability even though the subject is an admin.
+        $this->authenticateScopedToken($subject, false, ['matomo:write'], 'TagManager', 'getContainer');
+
+        $this->assertSame([$idSite], $this->getSitesIdWithCapability(WriteAdminCapability::ID));
+        $this->assertEmpty($this->getSitesIdWithCapability(AdminOnlyCapability::ID));
+    }
+
+    private function getSitesIdWithCapability(string $capability): array
+    {
+        $property = new \ReflectionProperty(\Piwik\Access::class, 'idsitesByAccess');
+        $property->setAccessible(true);
+        $idsitesByAccess = $property->getValue(\Piwik\Access::getInstance());
+
+        return $idsitesByAccess[$capability] ?? [];
+    }
+
+    private function registerTestCapabilities(): void
+    {
+        Piwik::addAction('Access.Capability.addCapabilities', function (&$capabilities) {
+            $capabilities[] = new WriteAdminCapability();
+            $capabilities[] = new AdminOnlyCapability();
+        });
+        \Piwik\Cache::flushAll();
+    }
+
     private function authenticateReadScopedSuperUserToken(string $pluginName, string $methodName): void
     {
         $this->authenticateReadScopedToken(Fixture::ADMIN_USER_LOGIN, true, $pluginName, $methodName);
@@ -92,15 +199,27 @@ class ScopedAccessTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCa
 
     private function authenticateReadScopedToken(string $login, bool $isSuperUser, string $pluginName, string $methodName): void
     {
+        $this->authenticateScopedToken($login, $isSuperUser, ['matomo:read'], $pluginName, $methodName);
+    }
+
+    private function authenticateScopedToken(string $login, bool $isSuperUser, array $scopes, string $pluginName, string $methodName): void
+    {
         $auth = new Oauth2Auth(
             $login,
             $isSuperUser,
             'scoped-token',
             'scoped-client',
-            ['matomo:read']
+            $scopes
         );
         StaticContainer::getContainer()->set('Piwik\Auth', $auth);
         $access = \Piwik\Access::getInstance();
+        // The test framework leaves the Access singleton in super user mode. For a
+        // non-super subject, clear it so reloadAccess derives access from the subject's
+        // real role (and seeds role capabilities), as in production. A super subject must
+        // keep super access here, as the scope reduction relies on it being applied after.
+        if (!$isSuperUser) {
+            $access->setSuperUserAccess(false);
+        }
         $access->reloadAccess($auth);
 
         $tokenAuthProperty = new \ReflectionProperty(\Piwik\Access::class, 'token_auth');
