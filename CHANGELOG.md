@@ -1,3 +1,7 @@
+5.2.0 - 2026-07-06
+- Added support for the `/.well-known/oauth-authorization-server` discovery endpoint (RFC 8414), serving the authorization server metadata as JSON.
+- Added the `OAuth2.authorizationServerMetadata` event so other plugins can extend the discovery document.
+
 5.1.1 - 2026-06-17
 - Fixes scope-limited OAuth tokens owned by a super user failing all API requests with a "requires superuser access" error.
 - Added code to reconcile capability permission based on scope

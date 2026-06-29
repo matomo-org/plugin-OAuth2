@@ -46,6 +46,79 @@ Optional cleaner routes can be added:
 /oauth2/token
 ```
 
+## Authorization Server Metadata (Discovery)
+
+The plugin exposes an [RFC 8414](https://datatracker.ietf.org/doc/html/rfc8414) **OAuth 2.0 Authorization Server Metadata** document so clients can discover the endpoints and capabilities automatically:
+
+```
+/.well-known/oauth-authorization-server
+```
+
+It returns JSON describing the issuer, authorization/token endpoints, supported scopes, grant types, response types, PKCE methods, and token endpoint authentication methods. The contents reflect your current OAuth 2.0 system settings (e.g. disabled grant types are omitted).
+
+Example response:
+
+```json
+{
+  "issuer": "https://matomo.example.com",
+  "authorization_endpoint": "https://matomo.example.com/index.php?module=OAuth2&action=authorize",
+  "token_endpoint": "https://matomo.example.com/index.php?module=OAuth2&action=token",
+  "scopes_supported": ["matomo:read", "matomo:write", "matomo:admin"],
+  "response_types_supported": ["code"],
+  "code_challenge_methods_supported": ["S256", "plain"],
+  "grant_types_supported": ["authorization_code", "client_credentials", "refresh_token"],
+  "token_endpoint_auth_methods_supported": ["client_secret_basic", "client_secret_post"]
+}
+```
+
+### Extending the metadata
+
+Other plugins (for example an MCP or AI integration) can add or override fields in the discovery document by listening to the `OAuth2.authorizationServerMetadata` event. It is fired after the base document is built and receives the metadata array by reference:
+
+```php
+public function registerEvents()
+{
+    return [
+        'OAuth2.authorizationServerMetadata' => 'extendAuthorizationServerMetadata',
+    ];
+}
+
+public function extendAuthorizationServerMetadata(array &$metadata)
+{
+    $metadata['registration_endpoint'] = 'https://matomo.example.com/index.php?module=MyPlugin&action=register';
+}
+```
+
+This is the recommended way to contribute optional RFC 8414 fields such as `registration_endpoint`, `introspection_endpoint`, `revocation_endpoint`, or `jwks_uri`.
+
+### Web server routing (required)
+
+The discovery path lives at the site root, so your web server must forward it to the plugin's metadata action (`index.php?module=OAuth2&action=metadata`). Use an **internal rewrite** (not a redirect), matching the **exact path with no trailing slash**.
+
+**Apache** (`.htaccess` in the Matomo root, or the vhost):
+
+```apache
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^\.well-known/oauth-authorization-server$ index.php?module=OAuth2&action=metadata [L,QSA]
+</IfModule>
+```
+
+**Nginx** (inside the Matomo `server { ... }` block):
+
+```nginx
+location = /.well-known/oauth-authorization-server {
+    rewrite ^ /index.php?module=OAuth2&action=metadata last;
+}
+```
+
+In both cases the rewrite is internal and preserves the original `REQUEST_URI`, which the plugin uses to derive the `issuer`. Do not use a redirect (`return 301` / `rewrite ... permanent`), as that would change the path and break discovery.
+
+Notes:
+
+- If Matomo is installed in a subdirectory, apply the same rule relative to that base path (e.g. `https://example.com/matomo/.well-known/oauth-authorization-server`).
+- Make sure no physical `.well-known/oauth-authorization-server` file or directory exists in the Matomo root, or the web server will serve it directly instead of routing to Matomo.
+
 ## Setup
 
 ### 1. Create an OAuth Client

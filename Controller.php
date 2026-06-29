@@ -22,6 +22,7 @@ use Piwik\Plugins\OAuth2\Entities\ClientEntity;
 use Piwik\Plugins\OAuth2\Entities\UserEntity;
 use Piwik\Plugins\OAuth2\Model\ClientModel;
 use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
+use Piwik\Plugins\OAuth2\Service\AuthorizationServerMetadata;
 use Piwik\Plugins\OAuth2\Service\ServerFactory;
 use Piwik\Plugins\UsersManager\Model as UserModel;
 use Piwik\Request;
@@ -36,7 +37,8 @@ class Controller extends ControllerAdmin
         private ScopeRepository $scopeRepository,
         private ServerFactory $serverFactory,
         private SystemSettings $settings,
-        private UserModel $userModel
+        private UserModel $userModel,
+        private AuthorizationServerMetadata $authorizationServerMetadata
     ) {
         parent::__construct();
     }
@@ -180,6 +182,49 @@ class Controller extends ControllerAdmin
             $this->logOAuthRequestFailure('token', $e);
             $response = $response->withStatus(500)->withBody((new Psr17Factory())->createStream(Piwik::translate('OAuth2_ServerError')));
         }
+
+        return $this->emitResponse($response);
+    }
+
+    /**
+     * Serves the OAuth 2.0 Authorization Server Metadata document (RFC 8414).
+     *
+     * This is a public endpoint. The web server is expected to forward
+     * `/.well-known/oauth-authorization-server` to this action; see the plugin README.
+     */
+    public function metadata()
+    {
+        // This is a public, cacheable document. Matomo's normal dispatch starts a session,
+        // which queues a session cookie and PHP's session cache-limiter headers
+        // (Expires/Pragma: no-cache). Strip those so the response is cookie-free and cleanly
+        // cacheable; the Cache-Control header sent below replaces the session's one.
+        if (!headers_sent()) {
+            header_remove('Set-Cookie');
+            header_remove('Expires');
+            header_remove('Pragma');
+        }
+
+        $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+        $psr17Factory = new Psr17Factory();
+
+        if ($method !== 'GET' && $method !== 'HEAD') {
+            $response = (new Response())
+                ->withStatus(405, 'Method Not Allowed')
+                ->withHeader('Allow', 'GET, HEAD')
+                ->withHeader('Content-Type', 'application/json; charset=utf-8')
+                ->withBody($psr17Factory->createStream((string) json_encode(['error' => 'Method not allowed.'])));
+
+            return $this->emitResponse($response);
+        }
+
+        $metadata = $this->authorizationServerMetadata->build();
+        $body = $method === 'HEAD' ? '' : (string) json_encode($metadata);
+
+        $response = (new Response())
+            ->withStatus(200)
+            ->withHeader('Content-Type', 'application/json; charset=utf-8')
+            ->withHeader('Cache-Control', 'public, max-age=3600')
+            ->withBody($psr17Factory->createStream($body));
 
         return $this->emitResponse($response);
     }
