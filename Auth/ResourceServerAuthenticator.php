@@ -55,6 +55,10 @@ class ResourceServerAuthenticator
         $scopes = (array) ($validated->getAttribute('oauth_scopes') ?? []);
         $tokenId = (string) $validated->getAttribute('oauth_access_token_id');
 
+        if (empty($scopes)) {
+            return;
+        }
+
         if (empty($login)) {
             $client = $this->clientModel->find($clientId);
             $login = $client['owner_login'] ?? '';

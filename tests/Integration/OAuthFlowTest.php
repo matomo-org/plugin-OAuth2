@@ -10,12 +10,16 @@
 namespace Piwik\Plugins\OAuth2\tests\Integration;
 
 use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Exception\OAuthServerException;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\CryptKey;
 use Matomo\Dependencies\OAuth2\Nyholm\Psr7\Response;
 use Matomo\Dependencies\OAuth2\Nyholm\Psr7\ServerRequest;
 use Piwik\Auth\Password;
 use Piwik\Container\StaticContainer;
 use Piwik\Date;
 use Piwik\Db;
+use Piwik\Plugins\OAuth2\Auth\ResourceServerAuthenticator;
+use Piwik\Plugins\OAuth2\Entities\AccessTokenEntity;
+use Piwik\Plugins\OAuth2\Entities\ClientEntity;
 use Piwik\Plugins\OAuth2\API;
 use Piwik\Plugins\OAuth2\Entities\UserEntity;
 use Piwik\Plugins\OAuth2\Model\AuthCodeModel;
@@ -146,6 +150,30 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         $this->assertSame($client['client']['client_id'], $storedToken['client_id']);
     }
 
+    public function test_clientCredentialsFlow_withoutScope_rejectsClientWhenReadScopeIsNotAllowed()
+    {
+        $client = $this->api->createClient(
+            'Write only machine client',
+            ['client_credentials'],
+            'matomo:write',
+            [],
+            'Server to server client',
+            'confidential',
+            '1',
+            Fixture::ADMIN_USER_PASSWORD
+        );
+
+        $this->expectException(OAuthServerException::class);
+        $this->serverFactory->makeAuthorizationServer()->respondToAccessTokenRequest(
+            (new ServerRequest('POST', 'https://matomo.example/token'))->withParsedBody([
+                'grant_type' => 'client_credentials',
+                'client_id' => $client['client']['client_id'],
+                'client_secret' => $client['secret'],
+            ]),
+            new Response()
+        );
+    }
+
     public function test_accessTokenForPausedClientIsRejected()
     {
         $client = $this->api->createClient(
@@ -232,6 +260,23 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         $this->assertSame($client['client']['client_id'], $storedToken['client_id']);
     }
 
+    public function test_prepareAuthenticationFromToken_rejectsZeroScopeBearerTokens()
+    {
+        $accessToken = new AccessTokenEntity();
+        $accessToken->setIdentifier('zero-scope-token');
+        $accessToken->setClient($this->makeClientEntity('zero-scope-client', Fixture::ADMIN_USER_LOGIN));
+        $accessToken->setUserIdentifier(Fixture::ADMIN_USER_LOGIN);
+        $accessToken->setExpiryDateTime(new \DateTimeImmutable('+1 hour'));
+        $accessToken->setPrivateKey(new CryptKey(OAuth2::getRSAKey('private'), null, true));
+
+        StaticContainer::get(AccessTokenRepository::class)->persistNewAccessToken($accessToken);
+
+        $authenticator = StaticContainer::get(ResourceServerAuthenticator::class);
+        $authenticator->prepareAuthenticationFromToken($accessToken->toString());
+
+        $this->assertFalse(StaticContainer::get('Piwik\Auth') instanceof \Piwik\Plugins\OAuth2\Auth\Oauth2Auth);
+    }
+
     private function createConfidentialAuthCodeClient(): array
     {
         $client = $this->api->createClient(
@@ -244,6 +289,18 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             '1',
             Fixture::ADMIN_USER_PASSWORD
         );
+        return $client;
+    }
+
+    private function makeClientEntity(string $clientId, string $ownerLogin): ClientEntity
+    {
+        $client = new ClientEntity();
+        $client->setIdentifier($clientId);
+        $client->setName('Zero scope client');
+        $client->setRedirectUris([]);
+        $client->setConfidential(true);
+        $client->ownerLogin = $ownerLogin;
+
         return $client;
     }
 
