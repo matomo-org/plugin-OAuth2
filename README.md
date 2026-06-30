@@ -126,7 +126,13 @@ Then run `ddev restart` to apply it. (If your project uses the `apache-fpm` webs
 
 Notes:
 
-- If Matomo is installed in a subdirectory, apply the same rule relative to that base path (e.g. `https://example.com/matomo/.well-known/oauth-authorization-server`).
+- **Subdirectory installs:** the `issuer` is the Matomo base URL including the subdirectory (e.g. `https://example.com/matomo`). Per [RFC 8414 §3.1](https://datatracker.ietf.org/doc/html/rfc8414#section-3.1), the well-known string is inserted between the host and the issuer's path component, so the canonical discovery URL is `https://example.com/.well-known/oauth-authorization-server/matomo`. Note this lives at the **domain root**, not under the Matomo directory, so the rewrite must go in the root server config and route to the subdirectory's front controller, e.g. Apache:
+
+    ```apache
+    RewriteRule ^\.well-known/oauth-authorization-server/matomo$ /matomo/index.php?module=OAuth2&action=metadata [L,QSA]
+    ```
+
+    The plugin derives the `issuer` correctly from either layout, so it also accepts the appended form `https://example.com/matomo/.well-known/oauth-authorization-server` — handy when you can only edit Matomo's own `.htaccess` — but the RFC 8414 form above is what spec-compliant clients request.
 - Make sure no physical `.well-known/oauth-authorization-server` file or directory exists in the Matomo root, or the web server will serve it directly instead of routing to Matomo.
 
 ## Setup

@@ -39,15 +39,14 @@ class AuthorizationServerMetadata
      */
     public function build(): array
     {
-        // The discovery document is served at "<issuer>/.well-known/oauth-authorization-server",
-        // so the issuer is the current request URL with that suffix removed. This resolves the
-        // host and any subdirectory automatically, regardless of how the route was rewritten.
+        // The issuer is the current request URL with the well-known segment removed.
+        // RFC 8414 (section 3.1) inserts that segment between the host and the issuer's path
+        // component (e.g. https://host/.well-known/oauth-authorization-server/sub => issuer
+        // https://host/sub), while the appended form (https://host/sub/.well-known/...) is also
+        // seen in practice. Removing the segment wherever it appears yields the issuer for both,
+        // and resolves the host and any subdirectory automatically.
         $currentUrl = Url::getCurrentUrlWithoutQueryString();
-        if (str_ends_with($currentUrl, self::WELL_KNOWN_PATH)) {
-            $currentUrl = substr($currentUrl, 0, -strlen(self::WELL_KNOWN_PATH));
-        }
-
-        $issuer = rtrim($currentUrl, '/');
+        $issuer = rtrim(str_replace(self::WELL_KNOWN_PATH, '', $currentUrl), '/');
         $baseUrl = $issuer . '/';
 
         $authorizationCodeEnabled = (bool) $this->settings->enableAuthorizationCode->getValue();

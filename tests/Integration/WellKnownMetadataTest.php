@@ -38,7 +38,7 @@ class WellKnownMetadataTest extends \Piwik\Tests\Framework\TestCase\IntegrationT
         // Resolve the host from the request without trusted-host validation so the
         // simulated requests below produce predictable issuer URLs.
         Config::getInstance()->General['enable_trusted_host_check'] = 0;
-        $this->simulateDiscoveryRequest('matomo.example', '');
+        $this->simulateRequest('matomo.example', AuthorizationServerMetadata::WELL_KNOWN_PATH);
     }
 
     public function test_build_returnsFullMetadataForDefaultConfiguration()
@@ -55,9 +55,21 @@ class WellKnownMetadataTest extends \Piwik\Tests\Framework\TestCase\IntegrationT
         $this->assertSame(['client_secret_basic', 'client_secret_post'], $metadata['token_endpoint_auth_methods_supported']);
     }
 
-    public function test_build_resolvesIssuerForSubdirectoryInstall()
+    public function test_build_resolvesIssuerForSubdirectoryInstall_rfc8414Form()
     {
-        $this->simulateDiscoveryRequest('matomo.example', '/analytics');
+        // RFC 8414: well-known string inserted between host and the issuer's path component.
+        $this->simulateRequest('matomo.example', AuthorizationServerMetadata::WELL_KNOWN_PATH . '/analytics');
+
+        $metadata = $this->makeMetadata()->build();
+
+        $this->assertSame('https://matomo.example/analytics', $metadata['issuer']);
+        $this->assertSame('https://matomo.example/analytics/index.php?module=OAuth2&action=token', $metadata['token_endpoint']);
+    }
+
+    public function test_build_resolvesIssuerForSubdirectoryInstall_appendedForm()
+    {
+        // Appended (OpenID-Connect style) form, also accepted.
+        $this->simulateRequest('matomo.example', '/analytics' . AuthorizationServerMetadata::WELL_KNOWN_PATH);
 
         $metadata = $this->makeMetadata()->build();
 
@@ -102,11 +114,11 @@ class WellKnownMetadataTest extends \Piwik\Tests\Framework\TestCase\IntegrationT
         $this->assertSame('https://matomo.example/oauth/token', $metadata['token_endpoint']);
     }
 
-    private function simulateDiscoveryRequest(string $host, string $basePath): void
+    private function simulateRequest(string $host, string $requestUri): void
     {
         $_SERVER['HTTPS'] = 'on';
         $_SERVER['HTTP_HOST'] = $host;
-        $_SERVER['REQUEST_URI'] = $basePath . AuthorizationServerMetadata::WELL_KNOWN_PATH;
+        $_SERVER['REQUEST_URI'] = $requestUri;
     }
 
     private function makeMetadata(): AuthorizationServerMetadata
