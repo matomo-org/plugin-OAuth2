@@ -114,6 +114,16 @@ location = /.well-known/oauth-authorization-server {
 
 In both cases the rewrite is internal and preserves the original `REQUEST_URI`, which the plugin uses to derive the `issuer`. Do not use a redirect (`return 301` / `rewrite ... permanent`), as that would change the path and break discovery.
 
+**DDEV** uses nginx-fpm by default. Add a config snippet so DDEV includes it inside the site's `server { ... }` block — create `.ddev/nginx/oauth2-well-known.conf`:
+
+```nginx
+location = /.well-known/oauth-authorization-server {
+    rewrite ^ /index.php?module=OAuth2&action=metadata last;
+}
+```
+
+Then run `ddev restart` to apply it. (If your project uses the `apache-fpm` webserver type instead, put the Apache `RewriteRule` above into `.ddev/apache/apache-site.conf` and restart.)
+
 Notes:
 
 - If Matomo is installed in a subdirectory, apply the same rule relative to that base path (e.g. `https://example.com/matomo/.well-known/oauth-authorization-server`).
