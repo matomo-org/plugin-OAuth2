@@ -64,7 +64,7 @@ class ScopeRepository implements ScopeRepositoryInterface
         if (empty($scopes)) {
             $defaultScope = 'matomo:read';
             if (!in_array($defaultScope, $allowed, true)) {
-                return [];
+                throw OAuthServerException::invalidScope($defaultScope);
             }
             $scopes = [$this->getScopeEntityByIdentifier($defaultScope)];
         }
