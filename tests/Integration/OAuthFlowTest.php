@@ -114,6 +114,95 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         );
     }
 
+    public function test_confidentialClientDowngradeRevokesPreviouslyIssuedCodeAndRefreshToken(): void
+    {
+        $client = $this->createConfidentialAuthCodeClient();
+        $authorizationServer = $this->serverFactory->makeAuthorizationServer();
+
+        $authorizationRequest = $authorizationServer->validateAuthorizationRequest(
+            (new ServerRequest('GET', 'https://matomo.example/authorize'))->withQueryParams([
+                'response_type' => 'code',
+                'client_id' => $client['client']['client_id'],
+                'redirect_uri' => 'https://confidential-client.example/callback',
+                'scope' => 'matomo:read',
+                'state' => 'test-state',
+            ])
+        );
+
+        $user = new UserEntity();
+        $user->setIdentifier(Fixture::ADMIN_USER_LOGIN);
+        $authorizationRequest->setUser($user);
+        $authorizationRequest->setAuthorizationApproved(true);
+
+        $authorizationResponse = $authorizationServer->completeAuthorizationRequest($authorizationRequest, new Response());
+        parse_str((string) parse_url($authorizationResponse->getHeaderLine('Location'), PHP_URL_QUERY), $redirectParams);
+
+        $this->assertNotEmpty($redirectParams['code']);
+
+        $baselineException = null;
+        try {
+            $authorizationServer->respondToAccessTokenRequest(
+                (new ServerRequest('POST', 'https://matomo.example/token'))->withParsedBody([
+                    'grant_type' => 'authorization_code',
+                    'client_id' => $client['client']['client_id'],
+                    'code' => $redirectParams['code'],
+                    'redirect_uri' => 'https://confidential-client.example/callback',
+                ]),
+                new Response()
+            );
+            $this->fail('Expected missing client_secret to be rejected before downgrade.');
+        } catch (OAuthServerException $e) {
+            $baselineException = $e;
+        }
+
+        $this->assertInstanceOf(OAuthServerException::class, $baselineException);
+
+        $tokenPayload = $this->exchangeAuthorizationCodeForTokens($client);
+
+        $this->api->updateClient(
+            $client['client']['client_id'],
+            'Now public client',
+            ['authorization_code', 'refresh_token'],
+            'matomo:read',
+            ['https://confidential-client.example/callback'],
+            'Downgraded for hardening test',
+            'public',
+            '1',
+            Fixture::ADMIN_USER_PASSWORD
+        );
+
+        $this->assertTrue($this->authCodeModel->isRevoked($redirectParams['code']));
+
+        try {
+            $authorizationServer->respondToAccessTokenRequest(
+                (new ServerRequest('POST', 'https://matomo.example/token'))->withParsedBody([
+                    'grant_type' => 'authorization_code',
+                    'client_id' => $client['client']['client_id'],
+                    'code' => $redirectParams['code'],
+                    'redirect_uri' => 'https://confidential-client.example/callback',
+                ]),
+                new Response()
+            );
+            $this->fail('Expected old authorization code to be rejected after downgrade.');
+        } catch (OAuthServerException $e) {
+            $this->assertTrue(true);
+        }
+
+        try {
+            $authorizationServer->respondToAccessTokenRequest(
+                (new ServerRequest('POST', 'https://matomo.example/token'))->withParsedBody([
+                    'grant_type' => 'refresh_token',
+                    'client_id' => $client['client']['client_id'],
+                    'refresh_token' => $tokenPayload['refresh_token'],
+                ]),
+                new Response()
+            );
+            $this->fail('Expected old refresh token to be rejected after downgrade.');
+        } catch (OAuthServerException $e) {
+            $this->assertTrue(true);
+        }
+    }
+
     public function test_authorizationCodeFlow_withRefreshEnabled_issuesRefreshTokenForUnrestrictedPublicClient()
     {
         // Baseline: a public client allowed to use refresh_token still gets one, so the
