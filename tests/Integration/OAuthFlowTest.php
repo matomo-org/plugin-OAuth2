@@ -114,6 +114,51 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         );
     }
 
+    public function test_authorizationCodeFlow_withRefreshEnabled_issuesRefreshTokenForUnrestrictedPublicClient()
+    {
+        // Baseline: a public client allowed to use refresh_token still gets one, so the
+        // absence in the restricted case below is due to the grant restriction, not PKCE.
+        $client = $this->api->createClient(
+            'Public refreshable client',
+            ['authorization_code', 'refresh_token'],
+            'matomo:read',
+            ['https://public-client.example/callback'],
+            'Public authorization code client',
+            'public',
+            '1',
+            Fixture::ADMIN_USER_PASSWORD
+        );
+
+        $tokenPayload = $this->exchangePublicClientAuthorizationCodeForTokens($client);
+
+        $this->assertNotEmpty($tokenPayload['refresh_token']);
+    }
+
+    public function test_authorizationCodeFlow_doesNotIssueRefreshTokenForPublicClientRestrictedToAuthorizationCode()
+    {
+        // Public client the admin restricted to authorization_code only. Even though
+        // refresh tokens are globally enabled, the per-client grant restriction must be
+        // enforced for public clients: no refresh token may be issued or redeemed.
+        $client = $this->api->createClient(
+            'Public auth code only client',
+            ['authorization_code'],
+            'matomo:read',
+            ['https://public-client.example/callback'],
+            'Public authorization code client',
+            'public',
+            '1',
+            Fixture::ADMIN_USER_PASSWORD
+        );
+
+        $tokenPayload = $this->exchangePublicClientAuthorizationCodeForTokens($client);
+
+        $this->assertArrayNotHasKey('refresh_token', $tokenPayload);
+        $this->assertSame(
+            0,
+            (int) Db::fetchOne('SELECT COUNT(*) FROM ' . \Piwik\Common::prefixTable('oauth2_refresh_token'))
+        );
+    }
+
     public function test_clientCredentialsFlow_returnsAccessTokenForConfidentialClient()
     {
         $client = $this->api->createClient(
@@ -290,6 +335,53 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             Fixture::ADMIN_USER_PASSWORD
         );
         return $client;
+    }
+
+    private function exchangePublicClientAuthorizationCodeForTokens(array $client): array
+    {
+        $codeVerifier = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
+        $codeChallenge = rtrim(strtr(base64_encode(hash('sha256', $codeVerifier, true)), '+/', '-_'), '=');
+
+        $authorizationServer = $this->serverFactory->makeAuthorizationServer();
+        $authorizationRequest = $authorizationServer->validateAuthorizationRequest(
+            (new ServerRequest('GET', 'https://matomo.example/authorize'))->withQueryParams([
+                'response_type' => 'code',
+                'client_id' => $client['client']['client_id'],
+                'redirect_uri' => 'https://public-client.example/callback',
+                'scope' => 'matomo:read',
+                'state' => 'test-state',
+                'code_challenge' => $codeChallenge,
+                'code_challenge_method' => 'S256',
+            ])
+        );
+
+        $user = new UserEntity();
+        $user->setIdentifier(Fixture::ADMIN_USER_LOGIN);
+        $authorizationRequest->setUser($user);
+        $authorizationRequest->setAuthorizationApproved(true);
+
+        $authorizationResponse = $authorizationServer->completeAuthorizationRequest($authorizationRequest, new Response());
+        parse_str((string) parse_url($authorizationResponse->getHeaderLine('Location'), PHP_URL_QUERY), $redirectParams);
+
+        $this->assertNotEmpty($redirectParams['code']);
+
+        $tokenResponse = $authorizationServer->respondToAccessTokenRequest(
+            (new ServerRequest('POST', 'https://matomo.example/token'))->withParsedBody([
+                'grant_type' => 'authorization_code',
+                'client_id' => $client['client']['client_id'],
+                'code' => $redirectParams['code'],
+                'redirect_uri' => 'https://public-client.example/callback',
+                'code_verifier' => $codeVerifier,
+            ]),
+            new Response()
+        );
+
+        $tokenPayload = json_decode((string) $tokenResponse->getBody(), true);
+
+        $this->assertSame(200, $tokenResponse->getStatusCode());
+        $this->assertNotEmpty($tokenPayload['access_token']);
+
+        return $tokenPayload;
     }
 
     private function makeClientEntity(string $clientId, string $ownerLogin): ClientEntity
