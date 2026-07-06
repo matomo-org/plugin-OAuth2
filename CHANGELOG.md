@@ -1,8 +1,10 @@
+5.2.1 - 2026-07-13
+- Added code to revoke tokens on client downgrade to public
+
 5.2.0 - 2026-07-06
 - Added support for the `/.well-known/oauth-authorization-server` discovery endpoint (RFC 8414), serving the authorization server metadata as JSON.
 - Added the `OAuth2.authorizationServerMetadata` event so other plugins can extend the discovery document.
 - Added code to improve grant policy check
-- Added code to revoke tokens on client downgrade to public
 
 5.1.1 - 2026-06-17
 - Fixes scope-limited OAuth tokens owned by a super user failing all API requests with a "requires superuser access" error.

@@ -1,7 +1,7 @@
 {
   "name": "OAuth2",
   "description": "Provide secure access to the Matomo API using scoped permissions. No static credentials.",
-  "version": "5.2.0",
+  "version": "5.2.1",
   "theme": false,
   "require": {
     "php": ">=8.1.0",
