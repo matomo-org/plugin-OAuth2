@@ -41,6 +41,17 @@ class RefreshTokenModel
         Db::query('UPDATE ' . $this->table . ' SET revoked = 1 WHERE token_id = ?', [$tokenId]);
     }
 
+    public function revokeByClient(string $clientId): void
+    {
+        Db::query(
+            'UPDATE ' . $this->table . ' rt
+             INNER JOIN ' . Common::prefixTable('oauth2_access_token') . ' at ON rt.access_token_id = at.token_id
+             SET rt.revoked = 1
+             WHERE at.client_id = ?',
+            [$clientId]
+        );
+    }
+
     public function isRevoked(string $tokenId): bool
     {
         $row = Db::fetchRow('SELECT revoked FROM ' . $this->table . ' WHERE token_id = ?', [$tokenId]);

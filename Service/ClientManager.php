@@ -68,12 +68,17 @@ class ClientManager
         $secret = null;
         $secretHash = $existingClient['secret_hash'] ?? null;
         $existingType = $this->normalizeType($existingClient['type'] ?? null);
+        $isDowngradingToPublic = $existingType === 'confidential' && $type === 'public';
 
         if ($existingType === 'public' && $type === 'confidential') {
             $secret = $this->generateSecret();
             $secretHash = password_hash($secret, PASSWORD_DEFAULT);
         } elseif ($type === 'public') {
             $secretHash = null;
+        }
+
+        if ($isDowngradingToPublic) {
+            $this->revokeIssuedCredentials($clientId);
         }
 
         $this->clientModel->update($clientId, [
@@ -151,5 +156,12 @@ class ClientManager
         if ($type === 'public' && in_array('client_credentials', $grantTypes, true)) {
             throw new \InvalidArgumentException('Public clients cannot use the client_credentials grant type');
         }
+    }
+
+    private function revokeIssuedCredentials(string $clientId): void
+    {
+        $this->refreshTokenModel->revokeByClient($clientId);
+        $this->accessTokenModel->revokeByClient($clientId);
+        $this->authCodeModel->revokeByClient($clientId);
     }
 }

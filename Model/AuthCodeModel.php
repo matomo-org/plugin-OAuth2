@@ -46,6 +46,11 @@ class AuthCodeModel
         Db::query('UPDATE ' . $this->table . ' SET revoked = 1 WHERE code_id = ?', [$codeId]);
     }
 
+    public function revokeByClient(string $clientId): void
+    {
+        Db::query('UPDATE ' . $this->table . ' SET revoked = 1 WHERE client_id = ?', [$clientId]);
+    }
+
     public function isRevoked(string $codeId): bool
     {
         $row = Db::fetchRow('SELECT revoked FROM ' . $this->table . ' WHERE code_id = ?', [$codeId]);

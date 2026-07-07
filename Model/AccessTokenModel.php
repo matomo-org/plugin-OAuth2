@@ -45,6 +45,11 @@ class AccessTokenModel
         Db::query('UPDATE ' . $this->table . ' SET revoked = 1 WHERE token_id = ?', [$tokenId]);
     }
 
+    public function revokeByClient(string $clientId): void
+    {
+        Db::query('UPDATE ' . $this->table . ' SET revoked = 1 WHERE client_id = ?', [$clientId]);
+    }
+
     public function isRevoked(string $tokenId): bool
     {
         $row = Db::fetchRow(

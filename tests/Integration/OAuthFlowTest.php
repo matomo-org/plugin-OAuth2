@@ -114,6 +114,126 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         );
     }
 
+    public function test_confidentialClientDowngradeRevokesPreviouslyIssuedCredentials(): void
+    {
+        $client = $this->createConfidentialAuthCodeClient();
+        $authorizationServer = $this->serverFactory->makeAuthorizationServer();
+
+        $authorizationRequest = $authorizationServer->validateAuthorizationRequest(
+            (new ServerRequest('GET', 'https://matomo.example/authorize'))->withQueryParams([
+                'response_type' => 'code',
+                'client_id' => $client['client']['client_id'],
+                'redirect_uri' => 'https://confidential-client.example/callback',
+                'scope' => 'matomo:read',
+                'state' => 'test-state',
+            ])
+        );
+
+        $user = new UserEntity();
+        $user->setIdentifier(Fixture::ADMIN_USER_LOGIN);
+        $authorizationRequest->setUser($user);
+        $authorizationRequest->setAuthorizationApproved(true);
+
+        $authorizationResponse = $authorizationServer->completeAuthorizationRequest($authorizationRequest, new Response());
+        parse_str((string) parse_url($authorizationResponse->getHeaderLine('Location'), PHP_URL_QUERY), $redirectParams);
+
+        $this->assertNotEmpty($redirectParams['code']);
+
+        // The redirect "code" is an encrypted payload, not the stored primary key, so capture the
+        // persisted code_id to check its revocation state directly. This is the only code for the
+        // freshly created client and it is never exchanged.
+        $codeIds = $this->authCodeIdsForClient($client['client']['client_id']);
+        $this->assertCount(1, $codeIds);
+        $unusedCodeId = $codeIds[0];
+
+        $baselineException = null;
+        try {
+            $authorizationServer->respondToAccessTokenRequest(
+                (new ServerRequest('POST', 'https://matomo.example/token'))->withParsedBody([
+                    'grant_type' => 'authorization_code',
+                    'client_id' => $client['client']['client_id'],
+                    'code' => $redirectParams['code'],
+                    'redirect_uri' => 'https://confidential-client.example/callback',
+                ]),
+                new Response()
+            );
+            $this->fail('Expected missing client_secret to be rejected before downgrade.');
+        } catch (OAuthServerException $e) {
+            $baselineException = $e;
+        }
+
+        $this->assertInstanceOf(OAuthServerException::class, $baselineException);
+
+        $tokenPayload = $this->exchangeAuthorizationCodeForTokens($client);
+
+        // Sanity check that the still-unused authorization code and the freshly issued access
+        // token are valid *before* the downgrade, so the assertions afterwards prove the
+        // downgrade is what revoked them (rather than them being invalid all along).
+        $this->assertFalse($this->authCodeModel->isRevoked($unusedCodeId));
+        $this->assertSame(
+            $client['client']['client_id'],
+            $this->serverFactory->makeResourceServer()->validateAuthenticatedRequest(
+                (new ServerRequest('GET', 'https://matomo.example/index.php'))
+                    ->withHeader('Authorization', 'Bearer ' . $tokenPayload['access_token'])
+            )->getAttribute('oauth_client_id')
+        );
+
+        $this->api->updateClient(
+            $client['client']['client_id'],
+            'Now public client',
+            ['authorization_code', 'refresh_token'],
+            'matomo:read',
+            ['https://confidential-client.example/callback'],
+            'Downgraded for hardening test',
+            'public',
+            '1',
+            Fixture::ADMIN_USER_PASSWORD
+        );
+
+        // The unused authorization code is revoked by the downgrade itself.
+        $this->assertTrue($this->authCodeModel->isRevoked($unusedCodeId));
+
+        // The previously issued access token must no longer authenticate against the resource server.
+        try {
+            $this->serverFactory->makeResourceServer()->validateAuthenticatedRequest(
+                (new ServerRequest('GET', 'https://matomo.example/index.php'))
+                    ->withHeader('Authorization', 'Bearer ' . $tokenPayload['access_token'])
+            );
+            $this->fail('Expected the previously issued access token to be rejected after downgrade.');
+        } catch (OAuthServerException $e) {
+            $this->assertTrue(true);
+        }
+
+        try {
+            $authorizationServer->respondToAccessTokenRequest(
+                (new ServerRequest('POST', 'https://matomo.example/token'))->withParsedBody([
+                    'grant_type' => 'authorization_code',
+                    'client_id' => $client['client']['client_id'],
+                    'code' => $redirectParams['code'],
+                    'redirect_uri' => 'https://confidential-client.example/callback',
+                ]),
+                new Response()
+            );
+            $this->fail('Expected old authorization code to be rejected after downgrade.');
+        } catch (OAuthServerException $e) {
+            $this->assertTrue(true);
+        }
+
+        try {
+            $authorizationServer->respondToAccessTokenRequest(
+                (new ServerRequest('POST', 'https://matomo.example/token'))->withParsedBody([
+                    'grant_type' => 'refresh_token',
+                    'client_id' => $client['client']['client_id'],
+                    'refresh_token' => $tokenPayload['refresh_token'],
+                ]),
+                new Response()
+            );
+            $this->fail('Expected old refresh token to be rejected after downgrade.');
+        } catch (OAuthServerException $e) {
+            $this->assertTrue(true);
+        }
+    }
+
     public function test_authorizationCodeFlow_withRefreshEnabled_issuesRefreshTokenForUnrestrictedPublicClient()
     {
         // Baseline: a public client allowed to use refresh_token still gets one, so the
@@ -396,6 +516,16 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         return $client;
     }
 
+    private function authCodeIdsForClient(string $clientId): array
+    {
+        $rows = Db::fetchAll(
+            'SELECT code_id FROM ' . \Piwik\Common::prefixTable('oauth2_auth_code') . ' WHERE client_id = ?',
+            [$clientId]
+        );
+
+        return array_column($rows, 'code_id');
+    }
+
     private function exchangeAuthorizationCodeForTokens(array $client): array
     {
         $authorizationServer = $this->serverFactory->makeAuthorizationServer();
@@ -414,6 +544,10 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         $authorizationRequest->setUser($user);
         $authorizationRequest->setAuthorizationApproved(true);
 
+        // The same client can already have other codes with an identical created_at second, so
+        // remember what exists before minting this one to identify the new code_id unambiguously.
+        $existingCodeIds = $this->authCodeIdsForClient($client['client']['client_id']);
+
         $authorizationResponse = $authorizationServer->completeAuthorizationRequest($authorizationRequest, new Response());
         $redirectLocation = $authorizationResponse->getHeaderLine('Location');
 
@@ -422,11 +556,12 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         $this->assertSame('test-state', $redirectParams['state']);
         $this->assertNotEmpty($redirectParams['code']);
 
-        $persistedCode = Db::fetchRow(
-            'SELECT * FROM ' . \Piwik\Common::prefixTable('oauth2_auth_code') . ' WHERE client_id = ? ORDER BY created_at DESC LIMIT 1',
-            [$client['client']['client_id']]
-        );
-        $this->assertNotNull($persistedCode);
+        $newCodeIds = array_values(array_diff(
+            $this->authCodeIdsForClient($client['client']['client_id']),
+            $existingCodeIds
+        ));
+        $this->assertCount(1, $newCodeIds);
+        $issuedCodeId = $newCodeIds[0];
 
         $tokenResponse = $authorizationServer->respondToAccessTokenRequest(
             (new ServerRequest('POST', 'https://matomo.example/token'))->withParsedBody([
@@ -446,7 +581,8 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         $this->assertNotEmpty($tokenPayload['access_token']);
         $this->assertNotEmpty($tokenPayload['refresh_token']);
         $this->assertArrayHasKey('expires_in', $tokenPayload);
-        $this->assertTrue($this->authCodeModel->isRevoked($redirectParams['code']));
+        // Redeeming the code marks the stored code_id as revoked (single-use).
+        $this->assertTrue($this->authCodeModel->isRevoked($issuedCodeId));
 
         return $tokenPayload;
     }
