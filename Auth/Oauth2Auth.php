@@ -19,6 +19,17 @@ class Oauth2Auth implements Auth
      */
     private $login;
 
+    /**
+     * The real subject the OAuth2 token was issued for. authenticate() only ever succeeds for
+     * this identity. setLogin() may mutate $login (the Piwik\Auth contract allows it, and core
+     * code such as PasswordVerifier does so), but the token's subject is fixed and must never
+     * change - otherwise an OAuth2-authenticated request could authenticate as an arbitrary
+     * account.
+     *
+     * @var string
+     */
+    private $subject;
+
     private bool $isSuperUser;
 
     private string $tokenAuth;
@@ -30,6 +41,7 @@ class Oauth2Auth implements Auth
     public function __construct(string $login, bool $isSuperUser, string $tokenId, string $clientId, array $scopes)
     {
         $this->login = $login;
+        $this->subject = $login;
         $this->isSuperUser = $isSuperUser;
         $this->tokenAuth = 'oauth2:' . $tokenId;
         $this->clientId = $clientId;
@@ -79,6 +91,13 @@ class Oauth2Auth implements Auth
 
     public function authenticate()
     {
+        // Only authenticate the identity the token was actually issued for. If the login was
+        // mutated to a different account (e.g. via setLogin() from PasswordVerifier), refuse -
+        // this token proves nothing about any other user.
+        if ($this->login !== $this->subject) {
+            return new AuthResult(AuthResult::FAILURE, $this->login, $this->tokenAuth);
+        }
+
         $code = $this->allowsSuperUserAccess() ? AuthResult::SUCCESS_SUPERUSER_AUTH_CODE : AuthResult::SUCCESS;
         return new AuthResult($code, $this->login, $this->tokenAuth);
     }
