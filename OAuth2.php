@@ -82,6 +82,17 @@ class OAuth2 extends Plugin
             return;
         }
 
+        // Oauth2Auth authenticates the bearer of an OAuth2 token; its password setters are
+        // no-ops and authenticate() always succeeds. UsersManager.createAppSpecificTokenAuth
+        // uses password confirmation as its ONLY authorization gate (no Access check) and
+        // accepts an arbitrary target userLogin, so under OAuth2 auth it would mint a full
+        // token_auth for any account. Block it here regardless of scope. This mirrors the
+        // dispatch guard LoginSaml installs for the same method. Fires for the top-level
+        // request and for API.getBulkRequest children alike.
+        if ($pluginName === 'UsersManager' && $methodName === 'createAppSpecificTokenAuth') {
+            throw new \Exception(Piwik::translate('OAuth2_CreateAppSpecificTokenAuthBlocked'));
+        }
+
         $access = Access::getInstance();
         OAuth2Access::loadSitesIfNeededFor($access);
         $siteAccess = OAuth2Access::getSiteAccessFor($access);
