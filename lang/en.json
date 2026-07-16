@@ -105,6 +105,7 @@
     "InvalidValueException": "Invalid value, it should be greater than 0.",
     "InvalidNumericValueException": "Invalid value, it should be a numeric value, greater than 0.",
     "TokenEndpointException": "Token endpoint only accepts POST",
-    "CreateAppSpecificTokenAuthBlocked": "Creating an app-specific token is not allowed when authenticating with an OAuth2 access token."
+    "CreateAppSpecificTokenAuthBlocked": "Creating an app-specific token is not allowed when authenticating with an OAuth2 access token.",
+    "UpdateUserBlocked": "Updating a user's password or email is not allowed when authenticating with an OAuth2 access token."
   }
 }

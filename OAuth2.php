@@ -93,6 +93,10 @@ class OAuth2 extends Plugin
             throw new \Exception(Piwik::translate('OAuth2_CreateAppSpecificTokenAuthBlocked'));
         }
 
+        if ($pluginName === 'UsersManager' && $methodName === 'updateUser') {
+            throw new \Exception(Piwik::translate('OAuth2_UpdateUserBlocked'));
+        }
+
         $access = Access::getInstance();
         OAuth2Access::loadSitesIfNeededFor($access);
         $siteAccess = OAuth2Access::getSiteAccessFor($access);

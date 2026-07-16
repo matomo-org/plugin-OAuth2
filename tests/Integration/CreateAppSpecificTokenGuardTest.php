@@ -25,16 +25,20 @@ use Piwik\Plugins\UsersManager\UsersManager;
 use Piwik\Tests\Framework\Fixture;
 
 /**
- * Regression tests for the OAuth2 privilege-escalation guard on
- * UsersManager.createAppSpecificTokenAuth.
+ * Regression tests for the OAuth2 privilege-escalation guards on the UsersManager
+ * credential-mutation methods createAppSpecificTokenAuth and updateUser.
  *
  * Oauth2Auth authenticates the bearer of an OAuth2 token; its password setters are no-ops
  * and authenticate() always succeeds for whatever login is set on it. Because
  * PasswordVerifier::isPasswordCorrect() reuses the globally installed Piwik\Auth adapter,
- * an OAuth2-authenticated request could otherwise mint a full-access token_auth for ANY
- * account through createAppSpecificTokenAuth (whose only authorization gate is that password
- * confirmation). The plugin blocks that method under Oauth2Auth via its API.Request.dispatch
- * listener; these tests pin that behaviour down.
+ * an OAuth2-authenticated request could otherwise:
+ *   - mint a full-access token_auth for ANY account through createAppSpecificTokenAuth
+ *     (whose only authorization gate is that password confirmation); and
+ *   - replace its OWN subject's password through updateUser (authorized for the subject via
+ *     checkUserHasSuperUserAccessOrIsTheUser, and gated only by the same defeated password
+ *     step-up), then log in normally for a full, unscoped session.
+ * The plugin blocks both methods under Oauth2Auth via its API.Request.dispatch listener;
+ * these tests pin that behaviour down.
  *
  * @group OAuth2
  * @group Plugins
@@ -129,6 +133,19 @@ class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\In
         (new OAuth2())->onApiRequestDispatch($parameters, 'UsersManager', 'createAppSpecificTokenAuth');
     }
 
+    public function test_guard_blocksUpdateUser_whenAuthenticatedViaOauth2()
+    {
+        // The token's own subject - updateUser authorizes the subject itself, so scope
+        // reduction alone does not stop it.
+        $this->installOauth2Context(self::VICTIM_LOGIN, false, ['matomo:read']);
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage(Piwik::translate('OAuth2_UpdateUserBlocked'));
+
+        $parameters = ['userLogin' => self::VICTIM_LOGIN];
+        (new OAuth2())->onApiRequestDispatch($parameters, 'UsersManager', 'updateUser');
+    }
+
     public function test_guard_allowsOtherUsersManagerMethods_whenAuthenticatedViaOauth2()
     {
         $this->installOauth2Context(self::ATTACKER_LOGIN, false, ['matomo:read']);
@@ -201,6 +218,65 @@ class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\In
     }
 
     /**
+     * The reported escalation: a matomo:read bearer issued for a super user changes ITS OWN
+     * subject's password using a deliberately wrong passwordConfirmation, then logs in normally
+     * for a full, unscoped session. The guard must reject the change and leave the original
+     * password intact.
+     */
+    public function test_endToEnd_oauth2BearerRequest_cannotChangeOwnSubjectPassword()
+    {
+        $this->installOauth2Context(self::VICTIM_LOGIN, false, ['matomo:read']);
+
+        $threw = false;
+        try {
+            Request::processRequest('UsersManager.updateUser', [
+                'userLogin'            => self::VICTIM_LOGIN,
+                'password'             => 'Attacker-Chosen-Password-123!',
+                'passwordConfirmation' => 'this-is-not-the-current-password',
+            ], []);
+        } catch (\Exception $e) {
+            $threw = true;
+            $this->assertStringContainsString(
+                Piwik::translate('OAuth2_UpdateUserBlocked'),
+                $e->getMessage()
+            );
+        }
+
+        $this->assertTrue($threw, 'Expected the dispatch guard to reject the password change');
+        $this->assertPasswordUnchangedFor(
+            self::VICTIM_LOGIN,
+            'VictimPassword123',
+            'Attacker-Chosen-Password-123!'
+        );
+    }
+
+    public function test_endToEnd_bulkRequestChild_cannotChangeOwnSubjectPassword()
+    {
+        $this->installOauth2Context(self::VICTIM_LOGIN, false, ['matomo:read']);
+
+        $childUrl = 'method=UsersManager.updateUser'
+            . '&userLogin=' . urlencode(self::VICTIM_LOGIN)
+            . '&password=' . urlencode('Attacker-Chosen-Password-123!')
+            . '&passwordConfirmation=' . urlencode('this-is-not-the-current-password');
+
+        // getBulkRequest swallows per-child exceptions into the response, so we assert on the
+        // security property directly: the stored password must be unchanged.
+        try {
+            Request::processRequest('API.getBulkRequest', [
+                'urls' => [$childUrl],
+            ], []);
+        } catch (\Exception $e) {
+            // acceptable - the important assertion is that the password was not replaced
+        }
+
+        $this->assertPasswordUnchangedFor(
+            self::VICTIM_LOGIN,
+            'VictimPassword123',
+            'Attacker-Chosen-Password-123!'
+        );
+    }
+
+    /**
      * Positive control: the guard only fires under Oauth2Auth. Genuine password authentication
      * with the correct password must still create a token for the caller's own account.
      */
@@ -245,6 +321,24 @@ class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\In
     private function hashedTokensFor(string $login): array
     {
         return (new UserModel())->getAllHashedTokensForLogins([$login]);
+    }
+
+    private function assertPasswordUnchangedFor(
+        string $login,
+        string $originalPassword,
+        string $attackerPassword
+    ): void {
+        $user = (new UserModel())->getUser($login);
+        $password = new Password();
+
+        $this->assertTrue(
+            $password->verify(UsersManager::getPasswordHash($originalPassword), $user['password']),
+            'The original password no longer verifies - it was replaced by the OAuth2 request'
+        );
+        $this->assertFalse(
+            $password->verify(UsersManager::getPasswordHash($attackerPassword), $user['password']),
+            'The attacker-chosen password verifies - the password was replaced'
+        );
     }
 }
 
