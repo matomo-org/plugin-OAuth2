@@ -1,6 +1,9 @@
 ## Changelog
 
-5.2.2 - 2026-07-20
+5.2.3 - 2026-07-20
+- Added code to harden check and disallow update user action
+
+5.2.2 - 2026-07-16
 - Added code to harden check and disallow app specific token action
 
 5.2.1 - 2026-07-13

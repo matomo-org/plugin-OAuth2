@@ -82,15 +82,23 @@ class OAuth2 extends Plugin
             return;
         }
 
-        // Oauth2Auth authenticates the bearer of an OAuth2 token; its password setters are
-        // no-ops and authenticate() always succeeds. UsersManager.createAppSpecificTokenAuth
-        // uses password confirmation as its ONLY authorization gate (no Access check) and
-        // accepts an arbitrary target userLogin, so under OAuth2 auth it would mint a full
-        // token_auth for any account. Block it here regardless of scope. This mirrors the
-        // dispatch guard LoginSaml installs for the same method. Fires for the top-level
-        // request and for API.getBulkRequest children alike.
-        if ($pluginName === 'UsersManager' && $methodName === 'createAppSpecificTokenAuth') {
-            throw new \Exception(Piwik::translate('OAuth2_CreateAppSpecificTokenAuthBlocked'));
+        // Not permitted for OAuth2-authenticated requests, regardless of scope.
+        $blockedUsersManagerMethods = [
+            'createAppSpecificTokenAuth' => 'OAuth2_CreateAppSpecificTokenAuthBlocked',
+            'updateUser'                 => 'OAuth2_UpdateUserBlocked',
+        ];
+        if ($pluginName === 'UsersManager' && isset($blockedUsersManagerMethods[$methodName])) {
+            throw new \Exception(Piwik::translate($blockedUsersManagerMethods[$methodName]));
+        }
+
+        // Not permitted for read-scope OAuth2 tokens; write and above may proceed.
+        $readScopeBlockedMethods = ['setUserPreference', 'initUserPreferenceWithDefault'];
+        if (
+            $pluginName === 'UsersManager'
+            && in_array($methodName, $readScopeBlockedMethods, true)
+            && !$this->scopeGrantsAtLeastWrite($auth->getPrimaryScope())
+        ) {
+            throw new \Exception(Piwik::translate('OAuth2_SetUserPreferenceBlocked'));
         }
 
         $access = Access::getInstance();
@@ -374,6 +382,16 @@ class OAuth2 extends Plugin
         }
 
         return null;
+    }
+
+    private function scopeGrantsAtLeastWrite(?string $scope): bool
+    {
+        $scopeToLevel = ['matomo:read' => 1, 'matomo:write' => 2, 'matomo:admin' => 3, 'matomo:superuser' => 4];
+
+        // Unknown/empty scopes are treated as below write.
+        $level = $scopeToLevel[$scope] ?? 0;
+
+        return $level >= $scopeToLevel['matomo:write'];
     }
 
     private function modifyAccessBasedOnScope(?array $idSitesAccess, ?string $scope): array
