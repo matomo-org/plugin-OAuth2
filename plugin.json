@@ -3,7 +3,7 @@
   "description": "Provide secure access to the Matomo API using scoped permissions. No static credentials.",
   "version": "5.2.3",
   "theme": false,
-"require": {
+  "require": {
     "php": ">=8.1.0",
     "matomo": ">=5.0.0-b1,<6.0.0-b1"
   },
