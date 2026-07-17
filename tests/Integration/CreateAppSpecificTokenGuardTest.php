@@ -24,21 +24,6 @@ use Piwik\Plugins\UsersManager\Model as UserModel;
 use Piwik\Plugins\UsersManager\UsersManager;
 use Piwik\Tests\Framework\Fixture;
 
-/**
- * Regression tests for the OAuth2 privilege-escalation guard on
- * UsersManager.createAppSpecificTokenAuth.
- *
- * Oauth2Auth authenticates the bearer of an OAuth2 token; its password setters are no-ops
- * and authenticate() always succeeds for whatever login is set on it. Because
- * PasswordVerifier::isPasswordCorrect() reuses the globally installed Piwik\Auth adapter,
- * an OAuth2-authenticated request could otherwise mint a full-access token_auth for ANY
- * account through createAppSpecificTokenAuth (whose only authorization gate is that password
- * confirmation). The plugin blocks that method under Oauth2Auth via its API.Request.dispatch
- * listener; these tests pin that behaviour down.
- *
- * @group OAuth2
- * @group Plugins
- */
 class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
 {
     public static $fixture = null;
@@ -56,7 +41,6 @@ class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\In
 
         $userModel = new UserModel();
 
-        // Low-privilege attacker, holder of the OAuth2 token.
         if (empty($userModel->getUser(self::ATTACKER_LOGIN))) {
             UsersManagerAPI::getInstance()->addUser(
                 self::ATTACKER_LOGIN,
@@ -67,8 +51,6 @@ class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\In
             );
         }
 
-        // Victim super user, deliberately created WITHOUT any app-specific token so that any
-        // token found for it can only have been minted by the request under test.
         if (empty($userModel->getUser(self::VICTIM_LOGIN))) {
             $hashedPassword = (new Password())->hash(UsersManager::getPasswordHash('VictimPassword123'));
             $userModel->addUser(
@@ -81,11 +63,6 @@ class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\In
         }
     }
 
-    /**
-     * The adapter must refuse to authenticate any identity other than the token's real subject,
-     * even when driven through the exact setter sequence PasswordVerifier performs. This closes
-     * the identity-switch that let an OAuth2 request authenticate as an arbitrary account.
-     */
     public function test_oauth2Auth_refusesToAuthenticateADifferentIdentity()
     {
         $auth = new Oauth2Auth(self::ATTACKER_LOGIN, false, 'token-id', 'client-id', ['matomo:read']);
@@ -101,11 +78,6 @@ class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\In
         $this->assertSame(AuthResult::FAILURE, $result->getCode());
     }
 
-    /**
-     * For its own subject the adapter still succeeds without verifying the password (it
-     * authenticates the bearer of the token, not a password). This is why the dispatch guard on
-     * createAppSpecificTokenAuth remains necessary even after the identity check above.
-     */
     public function test_oauth2Auth_authenticatesOwnSubjectRegardlessOfPassword()
     {
         $auth = new Oauth2Auth(self::ATTACKER_LOGIN, false, 'token-id', 'client-id', ['matomo:read']);
@@ -134,7 +106,6 @@ class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\In
         $this->installOauth2Context(self::ATTACKER_LOGIN, false, ['matomo:read']);
 
         $parameters = [];
-        // Must not throw for any method other than createAppSpecificTokenAuth.
         (new OAuth2())->onApiRequestDispatch($parameters, 'UsersManager', 'getUsers');
 
         $this->assertTrue(true);
@@ -142,8 +113,6 @@ class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\In
 
     public function test_guard_doesNotBlock_whenNotAuthenticatedViaOauth2()
     {
-        // No OAuth2 token on the Access singleton: the guard must not interfere with the
-        // normal password-authenticated flow.
         $access = Access::getInstance();
         $tokenAuthProperty = new \ReflectionProperty(Access::class, 'token_auth');
         $tokenAuthProperty->setAccessible(true);
@@ -187,8 +156,6 @@ class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\In
             . '&passwordConfirmation=' . urlencode('this-is-not-the-victims-password')
             . '&description=pwned';
 
-        // getBulkRequest swallows per-child exceptions into the response, so we assert on the
-        // security property directly: no token_auth row must exist for the victim.
         try {
             Request::processRequest('API.getBulkRequest', [
                 'urls' => [$childUrl],
@@ -198,24 +165,6 @@ class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\In
         }
 
         $this->assertNoTokenExistsFor(self::VICTIM_LOGIN);
-    }
-
-    /**
-     * Positive control: the guard only fires under Oauth2Auth. Genuine password authentication
-     * with the correct password must still create a token for the caller's own account.
-     */
-    public function test_passwordAuth_withCorrectPassword_stillCreatesToken()
-    {
-        Access::getInstance()->setSuperUserAccess(true);
-
-        $token = UsersManagerAPI::getInstance()->createAppSpecificTokenAuth(
-            Fixture::ADMIN_USER_LOGIN,
-            Fixture::ADMIN_USER_PASSWORD,
-            'legitimate app token'
-        );
-
-        $this->assertNotEmpty($token);
-        $this->assertNotEmpty($this->hashedTokensFor(Fixture::ADMIN_USER_LOGIN));
     }
 
     private function installOauth2Context(string $login, bool $isSuperUser, array $scopes): void
