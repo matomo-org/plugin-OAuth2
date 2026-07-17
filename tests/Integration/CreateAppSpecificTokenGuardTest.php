@@ -167,6 +167,10 @@ class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\In
 
     public function test_endToEnd_readScopeToken_cannotChangeOwnPreference()
     {
+        if (!class_exists(UserScopedSettingsAccessManager::class)) {
+            $this->markTestSkipped('UserScopedSettingsAccessManager is not available in this Matomo version');
+        }
+
         UsersManagerAPI::getInstance()->setUserPreference(
             self::ATTACKER_LOGIN,
             UsersManagerAPI::PREFERENCE_DEFAULT_REPORT,
