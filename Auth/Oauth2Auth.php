@@ -20,17 +20,21 @@ class Oauth2Auth implements Auth
     private $login;
 
     /**
-     * The real subject the OAuth2 token was issued for. authenticate() only ever succeeds for
-     * this identity. setLogin() may mutate $login (the Piwik\Auth contract allows it, and core
-     * code such as PasswordVerifier does so), but the token's subject is fixed and must never
-     * change - otherwise an OAuth2-authenticated request could authenticate as an arbitrary
-     * account.
+     * The identity the OAuth2 token was issued for. authenticate() only succeeds for this
+     * identity; $login may be mutated via setLogin() but the subject is fixed.
      *
      * @var string
      */
     private $subject;
 
     private bool $isSuperUser;
+
+    /**
+     * Set once a password has been supplied to this adapter (see setPassword()).
+     *
+     * @var bool
+     */
+    private bool $passwordVerificationRequested = false;
 
     private string $tokenAuth;
 
@@ -79,7 +83,10 @@ class Oauth2Auth implements Auth
         #[\SensitiveParameter]
         $password
     ) {
-        // not used
+        // OAuth2 authenticates by bearer token, not by password.
+        if ($password !== null && $password !== '') {
+            $this->passwordVerificationRequested = true;
+        }
     }
 
     public function setPasswordHash(
@@ -91,9 +98,12 @@ class Oauth2Auth implements Auth
 
     public function authenticate()
     {
-        // Only authenticate the identity the token was actually issued for. If the login was
-        // mutated to a different account (e.g. via setLogin() from PasswordVerifier), refuse -
-        // this token proves nothing about any other user.
+        // A token does not carry a password; refuse if asked to authenticate by one.
+        if ($this->passwordVerificationRequested) {
+            return new AuthResult(AuthResult::FAILURE, $this->login, $this->tokenAuth);
+        }
+
+        // Only authenticate the identity the token was issued for.
         if ($this->login !== $this->subject) {
             return new AuthResult(AuthResult::FAILURE, $this->login, $this->tokenAuth);
         }

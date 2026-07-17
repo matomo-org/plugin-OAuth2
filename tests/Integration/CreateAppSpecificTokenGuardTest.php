@@ -22,6 +22,7 @@ use Piwik\Plugins\OAuth2\tests\Fixtures\OAuth2Fixture;
 use Piwik\Plugins\UsersManager\API as UsersManagerAPI;
 use Piwik\Plugins\UsersManager\Model as UserModel;
 use Piwik\Plugins\UsersManager\UsersManager;
+use Piwik\Settings\Storage\UserScopedSettingsAccessManager;
 use Piwik\Tests\Framework\Fixture;
 
 class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
@@ -78,7 +79,17 @@ class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\In
         $this->assertSame(AuthResult::FAILURE, $result->getCode());
     }
 
-    public function test_oauth2Auth_authenticatesOwnSubjectRegardlessOfPassword()
+    public function test_oauth2Auth_authenticatesOwnSubject_whenNoPasswordSupplied()
+    {
+        $auth = new Oauth2Auth(self::ATTACKER_LOGIN, false, 'token-id', 'client-id', ['matomo:read']);
+
+        $result = $auth->authenticate();
+
+        $this->assertTrue($result->wasAuthenticationSuccessful());
+        $this->assertSame(self::ATTACKER_LOGIN, $result->getIdentity());
+    }
+
+    public function test_oauth2Auth_refusesPasswordVerification_forOwnSubject()
     {
         $auth = new Oauth2Auth(self::ATTACKER_LOGIN, false, 'token-id', 'client-id', ['matomo:read']);
 
@@ -86,8 +97,8 @@ class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\In
 
         $result = $auth->authenticate();
 
-        $this->assertTrue($result->wasAuthenticationSuccessful());
-        $this->assertSame(self::ATTACKER_LOGIN, $result->getIdentity());
+        $this->assertFalse($result->wasAuthenticationSuccessful());
+        $this->assertSame(AuthResult::FAILURE, $result->getCode());
     }
 
     public function test_guard_blocksCreateAppSpecificTokenAuth_whenAuthenticatedViaOauth2()
@@ -101,6 +112,39 @@ class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\In
         (new OAuth2())->onApiRequestDispatch($parameters, 'UsersManager', 'createAppSpecificTokenAuth');
     }
 
+    public function test_guard_blocksSetUserPreference_whenAuthenticatedViaOauth2()
+    {
+        $this->installOauth2Context(self::ATTACKER_LOGIN, false, ['matomo:read']);
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage(Piwik::translate('OAuth2_SetUserPreferenceBlocked'));
+
+        $parameters = ['userLogin' => self::ATTACKER_LOGIN];
+        (new OAuth2())->onApiRequestDispatch($parameters, 'UsersManager', 'setUserPreference');
+    }
+
+    public function test_guard_blocksInitUserPreferenceWithDefault_whenAuthenticatedViaOauth2()
+    {
+        $this->installOauth2Context(self::ATTACKER_LOGIN, false, ['matomo:read']);
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage(Piwik::translate('OAuth2_SetUserPreferenceBlocked'));
+
+        $parameters = ['userLogin' => self::ATTACKER_LOGIN];
+        (new OAuth2())->onApiRequestDispatch($parameters, 'UsersManager', 'initUserPreferenceWithDefault');
+    }
+
+    public function test_guard_allowsSetUserPreference_whenWriteScope()
+    {
+        $this->installOauth2Context(self::ATTACKER_LOGIN, false, ['matomo:write']);
+
+        // A write-scope token may set its own preferences - the guard must not fire.
+        $parameters = ['userLogin' => self::ATTACKER_LOGIN];
+        (new OAuth2())->onApiRequestDispatch($parameters, 'UsersManager', 'setUserPreference');
+
+        $this->assertTrue(true);
+    }
+
     public function test_guard_allowsOtherUsersManagerMethods_whenAuthenticatedViaOauth2()
     {
         $this->installOauth2Context(self::ATTACKER_LOGIN, false, ['matomo:read']);
@@ -109,6 +153,48 @@ class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\In
         (new OAuth2())->onApiRequestDispatch($parameters, 'UsersManager', 'getUsers');
 
         $this->assertTrue(true);
+    }
+
+    public function test_guard_allowsReadingOwnPreference_whenAuthenticatedViaOauth2()
+    {
+        $this->installOauth2Context(self::ATTACKER_LOGIN, false, ['matomo:read']);
+
+        $parameters = ['userLogin' => self::ATTACKER_LOGIN];
+        (new OAuth2())->onApiRequestDispatch($parameters, 'UsersManager', 'getUserPreference');
+
+        $this->assertTrue(true);
+    }
+
+    public function test_endToEnd_readScopeToken_cannotChangeOwnPreference()
+    {
+        UsersManagerAPI::getInstance()->setUserPreference(
+            self::ATTACKER_LOGIN,
+            UsersManagerAPI::PREFERENCE_DEFAULT_REPORT,
+            'MultiSites'
+        );
+
+        $this->installOauth2Context(self::ATTACKER_LOGIN, false, ['matomo:read']);
+
+        $threw = false;
+        try {
+            Request::processRequest('UsersManager.setUserPreference', [
+                'userLogin'       => self::ATTACKER_LOGIN,
+                'preferenceName'  => UsersManagerAPI::PREFERENCE_DEFAULT_REPORT,
+                'preferenceValue' => 'Live',
+            ], []);
+        } catch (\Exception $e) {
+            $threw = true;
+            $this->assertStringContainsString(
+                Piwik::translate('OAuth2_SetUserPreferenceBlocked'),
+                $e->getMessage()
+            );
+        }
+
+        $this->assertTrue($threw, 'Expected the dispatch guard to reject the request');
+
+        $stored = StaticContainer::get(UserScopedSettingsAccessManager::class)
+            ->get('UsersManager', self::ATTACKER_LOGIN, UsersManagerAPI::PREFERENCE_DEFAULT_REPORT, false);
+        $this->assertSame('MultiSites', $stored);
     }
 
     public function test_guard_doesNotBlock_whenNotAuthenticatedViaOauth2()
@@ -165,6 +251,32 @@ class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\In
         }
 
         $this->assertNoTokenExistsFor(self::VICTIM_LOGIN);
+    }
+
+    public function test_endToEnd_superUserScopeToken_cannotGrantSuperUserWithoutPassword()
+    {
+        $this->installOauth2Context(self::VICTIM_LOGIN, true, ['matomo:superuser']);
+
+        $threw = false;
+        try {
+            Request::processRequest('UsersManager.setSuperUserAccess', [
+                'userLogin'            => self::ATTACKER_LOGIN,
+                'hasSuperUserAccess'   => 1,
+                'passwordConfirmation' => 'not-the-victims-password',
+            ], []);
+        } catch (\Exception $e) {
+            $threw = true;
+            $this->assertStringContainsString(
+                Piwik::translate('UsersManager_CurrentPasswordNotCorrect'),
+                $e->getMessage()
+            );
+        }
+
+        $this->assertTrue($threw, 'Expected the password step-up to reject the request');
+        $this->assertFalse(
+            (new UserModel())->getUser(self::ATTACKER_LOGIN)['superuser_access'] == 1,
+            'Attacker must not have been granted super user access'
+        );
     }
 
     private function installOauth2Context(string $login, bool $isSuperUser, array $scopes): void
