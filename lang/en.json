@@ -44,6 +44,7 @@
     "AdminScope": "Allowed scope",
     "AdminScopes": "Allowed scopes",
     "AdminScopeHelp": "Scope defines the maximum access level granted to the OAuth token. For example, if the %1$sadmin%2$s scope is used, the token will have admin-level access at most, even if the authenticated user is a superuser.",
+    "AdminScopeReducedWarning": "You reduced the allowed scope, but access tokens already issued keep their previous scope until they expire. To restrict existing access immediately, Pause the client.",
     "AdminRedirectUris": "Redirect URIs (one per line)",
     "AdminRedirectUrisHelp": "Allowed redirect or callback URIs for the authorisation code flow (one per line, must match exactly).",
     "AdminActiveLabel": "Active",

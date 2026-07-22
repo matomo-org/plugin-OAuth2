@@ -1,5 +1,8 @@
 ## Changelog
 
+5.2.4 - 2026-07-27
+- Added code to warn users if scope is downgraded
+
 5.2.3 - 2026-07-20
 - Added code to harden check and disallow update user action
 
