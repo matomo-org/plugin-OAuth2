@@ -97,7 +97,7 @@ describe("OAuth2Admin", function () {
         await testEnvironment.save();
     }
 
-    async function fillClientForm(name, typeTitle, redirectUri)
+    async function fillClientForm(name, typeTitle, redirectUri, scopeTitle = 'Matomo read level access')
     {
         await page.evaluate(function (name) {
             $('#name').val(name).change();
@@ -110,7 +110,7 @@ describe("OAuth2Admin", function () {
             await selectValue(page, 'div[name="type"]', typeTitle);
         }
 
-        await selectValue(page,'div[name="scopes"]', 'Matomo read level access.');
+        await selectValue(page,'div[name="scopes"]', scopeTitle);
         await page.evaluate(function (redirectUri) {
             const redirectField = document.querySelector('#redirect_uris');
 
@@ -203,5 +203,38 @@ describe("OAuth2Admin", function () {
             $('.success-msg-created').html('Client fixedValueForTest created');
         });
         await capturePage('secret_not_shown_again');
+    });
+
+    it('should warn when an existing client scope is reduced', async function () {
+        // Create a client with admin scope, then reduce it to read on edit.
+        await page.goto(createUrl);
+        await fillClientForm('Scope narrowing client', 'Confidential', 'https://narrow.example/callback', 'Matomo admin level access');
+        await submitForm(true);
+
+        await page.goto(adminUrl);
+        await editFirstClient();
+        await selectValue(page, 'div[name="scopes"]', 'Matomo read level access');
+        await submitForm();
+
+        await page.waitForSelector('#notificationContainer .notification-warning', { visible: true });
+        const warningText = await page.$eval('#notificationContainer .notification-warning', (el) => el.innerText);
+
+        expect(warningText).to.contain('reduced the allowed scope');
+    });
+
+    it('should not warn when an existing client scope is not reduced', async function () {
+        // Editing without lowering the scope must not raise the warning.
+        await page.goto(createUrl);
+        await fillClientForm('Scope unchanged client', 'Confidential', 'https://unchanged.example/callback', 'Matomo read level access');
+        await submitForm(true);
+
+        await page.goto(adminUrl);
+        await editFirstClient();
+        await page.evaluate(function () {
+            $('#name').val('Scope unchanged client renamed').change();
+        });
+        await submitForm();
+
+        expect(await page.$('#notificationContainer .notification-warning')).to.be.null;
     });
 });

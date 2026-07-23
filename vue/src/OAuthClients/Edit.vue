@@ -245,6 +245,7 @@ export default defineComponent({
       typeOptions,
       grantOptions,
       form: getDefaultForm(this.scopes),
+      originalScope: '',
       visibleSecret: this.initialSecret,
       showPasswordConfirmModal: false,
       passwordConfirmAction: '',
@@ -331,6 +332,7 @@ export default defineComponent({
           redirect_uris: (client.redirect_uris || []).join('\n'),
           active: !!client.active,
         };
+        this.originalScope = this.form.scope;
       }).finally(() => {
         this.loading = false;
       });
@@ -395,8 +397,20 @@ export default defineComponent({
         this.loading = false;
       });
     },
+    scopeLevel(scope: string): number {
+      const levels: Record<string, number> = {
+        'matomo:read': 1,
+        'matomo:write': 2,
+        'matomo:admin': 3,
+        'matomo:superuser': 4,
+      };
+
+      return levels[scope] || 0;
+    },
     saveClient(passwordConfirmation: string) {
       this.loading = true;
+      const scopeWasReduced = this.isEditMode
+        && this.scopeLevel(this.form.scope) < this.scopeLevel(this.originalScope);
       const params = {
         method: this.isEditMode ? 'OAuth2.updateClient' : 'OAuth2.createClient',
         name: this.form.name.trim(),
@@ -434,8 +448,18 @@ export default defineComponent({
           idClient: response.client.client_id,
         });
 
+        this.originalScope = this.form.scope;
+
         setTimeout(() => {
           this.showNotification(`<span class="success-msg-created">${message}</span>`, 'success', 'transient');
+          if (scopeWasReduced) {
+            this.showNotification(
+              this.translate('OAuth2_AdminScopeReducedWarning'),
+              'warning',
+              'persistent',
+              `${notificationId}scopereduced`,
+            );
+          }
         }, 50);
       }).finally(() => {
         this.loading = false;
@@ -469,14 +493,15 @@ export default defineComponent({
     },
     removeNotifications() {
       NotificationsStore.remove(notificationId);
+      NotificationsStore.remove(`${notificationId}scopereduced`);
       NotificationsStore.remove('ajaxHelper');
     },
     showNotification(message: string, context: NotificationType['context'],
-      type: null|NotificationType['type'] = null) {
+      type: null|NotificationType['type'] = null, id: string = notificationId) {
       const notificationInstanceId = NotificationsStore.show({
         message,
         context,
-        id: notificationId,
+        id,
         type: type !== null ? type : 'toast',
       });
       setTimeout(() => {

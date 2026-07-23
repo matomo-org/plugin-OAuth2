@@ -187,6 +187,7 @@ class OAuth2 extends Plugin
         $translationKeys[] = 'OAuth2_AdminTypeHelp';
         $translationKeys[] = 'OAuth2_AdminGrantTypesHelp';
         $translationKeys[] = 'OAuth2_AdminScopeHelp';
+        $translationKeys[] = 'OAuth2_AdminScopeReducedWarning';
         $translationKeys[] = 'OAuth2_AdminRedirectUrisHelp';
         $translationKeys[] = 'OAuth2_AdminActiveHelp';
         $translationKeys[] = 'OAuth2_ErrorXNotProvided';
