@@ -108,6 +108,25 @@
       font-weight: 400;
       line-height: normal;
     }
+
+    .scope-option {
+      display: block;
+
+      & + .scope-option {
+        margin-top: 12px;
+      }
+
+      // undo the fixed single-line sizing materialize applies to radio label spans
+      [type="radio"] + .scope-option-label {
+        height: auto;
+        line-height: normal;
+      }
+
+      .scope,
+      .scope-help {
+        display: block;
+      }
+    }
   }
 
   .alert-warning::before {

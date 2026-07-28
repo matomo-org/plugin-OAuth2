@@ -25,19 +25,30 @@
                 {% if userEmail %}<div class="user-email">{{ userEmail }}</div>{% endif %}
             </div>
 
-            <div class="permissions">
-                {{ 'OAuth2_RequestedScopes'|translate }}
-            </div>
-            <div class="alert alert-warning">
-                {% for scope in scopes %}
-                    <div class="scope">{{ scope }}</div>
-                    {% if scopeDescriptions[scope] %} <div class="scope-help">{{ scopeDescriptions[scope] }}</div>{% endif %}
-                {% endfor %}
-            </div>
-
-            <div class="form-help"><span class="text">{{ 'OAuth2_AuthorizeHelpText'|translate }}</span></div>
-
             <form method="post">
+                <div class="permissions">
+                    {% if scopes|length > 1 %}{{ 'OAuth2_SelectScopeToGrant'|translate }}{% else %}{{ 'OAuth2_RequestedScopes'|translate }}{% endif %}
+                </div>
+                <div class="alert alert-warning">
+                    {% if scopes|length > 1 %}
+                        {% for scope in scopes %}
+                            <label class="scope-option">
+                                <input type="radio" name="selected_scope" class="with-gap" value="{{ scope }}"{% if loop.first %} checked{% endif %} />
+                                <span class="scope-option-label">
+                                    <span class="scope">{{ scope }}</span>
+                                    {% if scopeDescriptions[scope] %}<span class="scope-help">{{ scopeDescriptions[scope] }}</span>{% endif %}
+                                </span>
+                            </label>
+                        {% endfor %}
+                    {% else %}
+                        <div class="scope">{{ scopes[0] }}</div>
+                        {% if scopeDescriptions[scopes[0]] %} <div class="scope-help">{{ scopeDescriptions[scopes[0]] }}</div>{% endif %}
+                        <input type="hidden" name="selected_scope" value="{{ scopes[0] }}" />
+                    {% endif %}
+                </div>
+
+                <div class="form-help"><span class="text">{{ 'OAuth2_AuthorizeHelpText'|translate }}</span></div>
+
                 <input type="hidden" name="nonce" value="{{ nonce|e('html_attr') }}" />
                 <button type="submit" class="btn btn-primary" name="decision" value="allow">{{ 'OAuth2_Allow'|translate }}</button>
                 <button type="submit" class="btn btn-secondary" name="decision" value="deny">{{ 'OAuth2_Deny'|translate }}</button>

@@ -230,7 +230,7 @@ https://matomo.example.com/index.php?module=OAuth2&action=authorize
 The user will:
 
 1. Log in to Matomo
-2. Review requested permissions
+2. Review requested permissions (if the request lists multiple space-separated scopes, pick exactly one to grant — the least privileged scope is preselected)
 3. Click **Allow**
 
 Matomo will redirect back:
@@ -241,7 +241,7 @@ https://example-app.com/oauth/callback?code=AUTHORIZATION_CODE&state=abc123
 
 ## Exchange Authorization Code for Tokens
 
-**Note:** The scope should be same as client scope and only one scope is allowed at the moment.
+**Note:** The authorize request may list multiple space-separated scopes (e.g. `scope=matomo:read matomo:write`). The user grants exactly one of them on the consent screen, and the issued tokens always carry that single scope.
 
 ### PKCE Token Request
 
