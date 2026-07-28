@@ -138,6 +138,25 @@ class Controller extends ControllerAdmin
             $isApproved = $decision === 'allow';
             $authRequest->setAuthorizationApproved($isApproved);
 
+            /**
+             * Triggered after a user allowed or denied an OAuth 2.0 authorization request on the
+             * consent screen, before the authorization code is issued.
+             *
+             * Used by the plugin itself to record the decision in the activity log, and available
+             * to other plugins that need to audit or react to granted and denied access.
+             *
+             * @param array $activityData Details of the decision:
+             *
+             *                            - `version`: the payload version, currently `v1`.
+             *                            - `client`: the OAuth client, with `id` and `name`, plus
+             *                              `type` and `active` for clients of this plugin.
+             *                            - `userLogin`: the login of the user who decided.
+             *                            - `scopes`: the scopes that were granted. The user grants
+             *                              exactly one scope, so this holds a single scope, and it
+             *                              is the scope the user selected rather than the full list
+             *                              the client requested.
+             *                            - `decision`: either `allowed` or `denied`.
+             */
             Piwik::postEvent('OAuth2.authorize.decision.end', [
                 $this->buildAuthorizationActivityData($authRequest->getClient(), $login, [$selectedScope], $isApproved),
             ]);
