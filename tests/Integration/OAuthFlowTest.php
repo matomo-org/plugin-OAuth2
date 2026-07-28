@@ -315,10 +315,10 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         $this->assertSame($client['client']['client_id'], $storedToken['client_id']);
     }
 
-    public function test_clientCredentialsFlow_withoutScope_fallsBackToReadWithinTheClientMaximum()
+    public function test_clientCredentialsFlow_withoutScope_rejectsClientWhenReadScopeIsNotAllowed()
     {
-        // the configured scope is a maximum, so a write client also permits the default read
-        // scope and no longer has to name a scope explicitly to get a token
+        // the client scope is only treated as a maximum for scopes a user consented to, so a
+        // client credentials client still has to be configured for the scope it receives
         $client = $this->api->createClient(
             'Write only machine client',
             ['client_credentials'],
@@ -330,7 +330,8 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             Fixture::ADMIN_USER_PASSWORD
         );
 
-        $response = $this->serverFactory->makeAuthorizationServer()->respondToAccessTokenRequest(
+        $this->expectException(OAuthServerException::class);
+        $this->serverFactory->makeAuthorizationServer()->respondToAccessTokenRequest(
             (new ServerRequest('POST', 'https://matomo.example/token'))->withParsedBody([
                 'grant_type' => 'client_credentials',
                 'client_id' => $client['client']['client_id'],
@@ -338,13 +339,6 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             ]),
             new Response()
         );
-
-        $storedToken = Db::fetchRow(
-            'SELECT * FROM ' . \Piwik\Common::prefixTable('oauth2_access_token') . ' ORDER BY created_at DESC LIMIT 1'
-        );
-
-        $this->assertSame(200, $response->getStatusCode());
-        $this->assertSame(['matomo:read'], json_decode($storedToken['scopes'], true));
     }
 
     public function test_accessTokenForPausedClientIsRejected()

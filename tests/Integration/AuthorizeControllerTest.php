@@ -9,6 +9,7 @@
 
 namespace Piwik\Plugins\OAuth2\tests\Integration;
 
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Exception\OAuthServerException;
 use Matomo\Dependencies\OAuth2\Nyholm\Psr7\Response;
 use Matomo\Dependencies\OAuth2\Nyholm\Psr7\ServerRequest;
 use Piwik\Common;
@@ -148,10 +149,14 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
         $this->assertStringNotContainsString('matomo:admin', $html);
     }
 
-    public function test_finalizeScopes_acceptsAScopeBelowTheClientMaximum()
+    /**
+     * @dataProvider getUserAuthorizedGrantTypes
+     */
+    public function test_finalizeScopes_acceptsAScopeBelowTheClientMaximumForUserAuthorizedGrants(string $grantType)
     {
         // the consent screen may grant less than the client is configured for, so the token
-        // endpoint has to accept the downgraded scope when the code is exchanged
+        // endpoint has to accept the downgraded scope when the code is exchanged, and again
+        // when the resulting refresh token is used
         $clientEntity = new ClientEntity();
         $clientEntity->allowedScopes = ['matomo:admin'];
 
@@ -159,7 +164,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
 
         $finalized = $scopeRepository->finalizeScopes(
             [$scopeRepository->getScopeEntityByIdentifier('matomo:read')],
-            'authorization_code',
+            $grantType,
             $clientEntity,
             Fixture::ADMIN_USER_LOGIN
         );
@@ -167,6 +172,29 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
         $this->assertSame(['matomo:read'], array_map(static function ($scope) {
             return $scope->getIdentifier();
         }, $finalized));
+    }
+
+    public function getUserAuthorizedGrantTypes(): array
+    {
+        return [['authorization_code'], ['refresh_token']];
+    }
+
+    public function test_finalizeScopes_requiresTheExactClientScopeForClientCredentials()
+    {
+        // there is no user to pick a lower scope, so the configured scope stays a requirement
+        $clientEntity = new ClientEntity();
+        $clientEntity->allowedScopes = ['matomo:admin'];
+
+        $scopeRepository = StaticContainer::get(ScopeRepository::class);
+
+        $this->expectException(OAuthServerException::class);
+
+        $scopeRepository->finalizeScopes(
+            [$scopeRepository->getScopeEntityByIdentifier('matomo:read')],
+            'client_credentials',
+            $clientEntity,
+            Fixture::ADMIN_USER_LOGIN
+        );
     }
 
     public function test_get_rejectsRequestWhenTheClientAllowsNoneOfTheRequestedScopes()

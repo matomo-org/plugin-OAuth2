@@ -58,7 +58,16 @@ class ScopeRepository implements ScopeRepositoryInterface
 
         $allowed = $this->getAllowedScopeIds();
         if ($clientEntity instanceof ClientEntity && !empty($clientEntity->getAllowedScopes())) {
-            $allowed = array_values(array_intersect($allowed, self::expandScopes($clientEntity->getAllowedScopes())));
+            $clientScopes = $clientEntity->getAllowedScopes();
+
+            // A user can consent to less than the client is configured for, so codes and the
+            // refresh tokens that follow them may carry a lower scope. Client credentials have no
+            // user to make that choice, so those clients keep getting exactly what is configured.
+            if (in_array($grantType, ['authorization_code', 'refresh_token'], true)) {
+                $clientScopes = self::expandScopes($clientScopes);
+            }
+
+            $allowed = array_values(array_intersect($allowed, $clientScopes));
         }
 
         if (empty($scopes)) {
