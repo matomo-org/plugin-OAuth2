@@ -79,7 +79,9 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
             $_SERVER['REQUEST_METHOD'] = $this->backupRequestMethod;
         }
 
-        Common::$headersSentInTests = [];
+        if ($this->recordsSentHeaders()) {
+            Common::$headersSentInTests = [];
+        }
 
         parent::tearDown();
     }
@@ -178,14 +180,16 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
             ['decision' => 'allow', 'selected_scope' => 'matomo:write', 'nonce' => Nonce::getNonce('Oauth2.authorize')]
         );
 
-        $redirectParams = $this->parseRedirect();
-        $this->assertNotEmpty($redirectParams['code']);
-        $this->assertSame('test-state', $redirectParams['state']);
-        $this->assertResponseCodeSent(302, 'Found');
-
+        // the issued code carries only the selected scope
+        $this->assertSame(['matomo:write'], $this->storedAuthCodeScopes($client['client']['client_id']));
         $this->assertCount(1, $capturedEvents);
         $this->assertSame(['matomo:write'], $capturedEvents[0]['scopes']);
         $this->assertSame('allowed', $capturedEvents[0]['decision']);
+
+        $redirectParams = $this->parseRedirectOrSkip();
+        $this->assertNotEmpty($redirectParams['code']);
+        $this->assertSame('test-state', $redirectParams['state']);
+        $this->assertResponseCodeSent(302, 'Found');
 
         // the narrowed code passes finalizeScopes at the token endpoint and yields a matomo:write token
         $tokenPayload = $this->exchangeCodeForTokens($client, $redirectParams['code']);
@@ -239,13 +243,13 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
             ['decision' => 'deny', 'selected_scope' => 'matomo:read', 'nonce' => Nonce::getNonce('Oauth2.authorize')]
         );
 
-        $redirectParams = $this->parseRedirect();
-        $this->assertSame('access_denied', $redirectParams['error']);
-
         $this->assertCount(1, $capturedEvents);
         $this->assertSame(['matomo:read'], $capturedEvents[0]['scopes']);
         $this->assertSame('denied', $capturedEvents[0]['decision']);
         $this->assertSame(0, $this->countAuthCodes($client['client']['client_id']));
+
+        $redirectParams = $this->parseRedirectOrSkip();
+        $this->assertSame('access_denied', $redirectParams['error']);
     }
 
     public function test_post_readsTheDecisionFromThePostBodyOnly()
@@ -263,11 +267,12 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
             'nonce' => Nonce::getNonce('Oauth2.authorize'),
         ]);
 
-        $redirectParams = $this->parseRedirect();
-        $this->assertSame('access_denied', $redirectParams['error']);
-        $this->assertArrayNotHasKey('code', $redirectParams);
         $this->assertSame('denied', $capturedEvents[0]['decision']);
         $this->assertSame(0, $this->countAuthCodes($client['client']['client_id']));
+
+        $redirectParams = $this->parseRedirectOrSkip();
+        $this->assertSame('access_denied', $redirectParams['error']);
+        $this->assertArrayNotHasKey('code', $redirectParams);
     }
 
     public function test_post_readsTheSelectedScopeFromThePostBodyOnly()
@@ -285,9 +290,11 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
             'nonce' => Nonce::getNonce('Oauth2.authorize'),
         ]);
 
-        $redirectParams = $this->parseRedirect();
-        $this->assertNotEmpty($redirectParams['code']);
+        $this->assertSame(['matomo:read'], $this->storedAuthCodeScopes($client['client']['client_id']));
         $this->assertSame(['matomo:read'], $capturedEvents[0]['scopes']);
+
+        $redirectParams = $this->parseRedirectOrSkip();
+        $this->assertNotEmpty($redirectParams['code']);
 
         $this->exchangeCodeForTokens($client, $redirectParams['code']);
         $storedToken = Db::fetchRow(
@@ -322,7 +329,9 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
             ['decision' => 'allow', 'selected_scope' => 'matomo:read', 'nonce' => Nonce::getNonce('Oauth2.authorize')]
         );
 
-        $redirectParams = $this->parseRedirect();
+        $this->assertSame(['matomo:read'], $this->storedAuthCodeScopes($client['client']['client_id']));
+
+        $redirectParams = $this->parseRedirectOrSkip();
         $this->assertNotEmpty($redirectParams['code']);
 
         $tokenPayload = $this->exchangeCodeForTokens($client, $redirectParams['code']);
@@ -331,6 +340,10 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
 
     public function test_emitResponse_sendsStatusCodesCoreHasNoReasonPhraseFor()
     {
+        if (!$this->recordsSentHeaders()) {
+            $this->markTestSkipped('Asserting the sent status line requires Matomo 5.1.0 or higher');
+        }
+
         // the token endpoint answers a GET with 405, which Common::sendResponseCode() does not know
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $_GET = ['module' => 'OAuth2', 'action' => 'token'];
@@ -413,20 +426,48 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
         return $capturedEvents;
     }
 
+    /**
+     * Core only records sent headers in test mode since Matomo 5.1.0, while the plugin supports
+     * 5.0.0 and up, so assertions on the status line and the redirect have to be conditional.
+     */
+    private function recordsSentHeaders(): bool
+    {
+        return property_exists(Common::class, 'headersSentInTests');
+    }
+
     private function assertResponseCodeSent(int $statusCode, string $reasonPhrase): void
     {
+        if (!$this->recordsSentHeaders()) {
+            return;
+        }
+
         // Common::sendResponseCode() sends the status line as a header without a colon, so it is
         // recorded under the full status line in test mode
         $this->assertArrayHasKey('HTTP/1.1 ' . $statusCode . ' ' . $reasonPhrase, Common::$headersSentInTests);
     }
 
-    private function parseRedirect(): array
+    private function parseRedirectOrSkip(): array
     {
+        if (!$this->recordsSentHeaders()) {
+            $this->markTestSkipped('Reading the redirect requires Matomo 5.1.0 or higher');
+        }
+
         $location = trim(Common::$headersSentInTests['Location'] ?? '');
         $this->assertNotEmpty($location, 'expected authorize() to respond with a redirect');
         parse_str((string) parse_url($location, PHP_URL_QUERY), $redirectParams);
 
         return $redirectParams;
+    }
+
+    private function storedAuthCodeScopes(string $clientId): array
+    {
+        $scopes = Db::fetchOne(
+            'SELECT scopes FROM ' . Common::prefixTable('oauth2_auth_code')
+                . ' WHERE client_id = ? ORDER BY created_at DESC LIMIT 1',
+            [$clientId]
+        );
+
+        return json_decode((string) $scopes, true) ?: [];
     }
 
     private function countAuthCodes(string $clientId): int
