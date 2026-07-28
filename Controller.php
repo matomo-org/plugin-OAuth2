@@ -137,6 +137,7 @@ class Controller extends ControllerAdmin
 
             $isApproved = $decision === 'allow';
             $authRequest->setAuthorizationApproved($isApproved);
+
             Piwik::postEvent('OAuth2.authorize.decision.end', [
                 $this->buildAuthorizationActivityData($authRequest->getClient(), $login, [$selectedScope], $isApproved),
             ]);
@@ -283,11 +284,32 @@ class Controller extends ControllerAdmin
     {
         try {
             Common::sendResponseCode($statusCode);
+            return;
         } catch (\Exception $e) {
             // Common::sendResponseCode() only knows a fixed set of status codes and rejects the
             // others, such as the 405 the token and metadata endpoints send for a wrong method.
-            Common::sendHeader(rtrim('HTTP/1.1 ' . $statusCode . ' ' . $reasonPhrase));
         }
+
+        Common::sendHeader(rtrim($this->getStatusHeaderPrefix() . ' ' . $statusCode . ' ' . $reasonPhrase));
+    }
+
+    /**
+     * Same prefix Common::sendResponseCode() uses, as FastCGI needs a Status header instead of a
+     * status line and the response should keep the protocol the request was made with.
+     */
+    private function getStatusHeaderPrefix(): string
+    {
+        if (strpos(PHP_SAPI, '-fcgi') !== false) {
+            return 'Status:';
+        }
+
+        $protocol = $_SERVER['SERVER_PROTOCOL'] ?? '';
+
+        if (strlen($protocol) > 1 && strlen($protocol) < 15) {
+            return $protocol;
+        }
+
+        return 'HTTP/1.1';
     }
 
     private function buildAuthorizationActivityData($client, string $login, array $scopes, bool $isApproved): array

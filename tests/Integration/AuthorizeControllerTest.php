@@ -441,9 +441,13 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
             return;
         }
 
-        // Common::sendResponseCode() sends the status line as a header without a colon, so it is
-        // recorded under the full status line in test mode
-        $this->assertArrayHasKey('HTTP/1.1 ' . $statusCode . ' ' . $reasonPhrase, Common::$headersSentInTests);
+        // the status line is sent as a header without a colon, so it is recorded as a key in test
+        // mode, prefixed with the request protocol or with Status: on FastCGI
+        $statusLines = array_filter(array_keys(Common::$headersSentInTests), function (string $header) use ($statusCode, $reasonPhrase) {
+            return substr($header, -strlen($statusCode . ' ' . $reasonPhrase)) === $statusCode . ' ' . $reasonPhrase;
+        });
+
+        $this->assertCount(1, $statusLines, 'expected a sent status line for ' . $statusCode . ' ' . $reasonPhrase);
     }
 
     private function parseRedirectOrSkip(): array
