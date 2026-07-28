@@ -17,6 +17,7 @@ use Piwik\Db;
 use Piwik\Nonce;
 use Piwik\Piwik;
 use Piwik\Plugins\OAuth2\Controller;
+use Piwik\Plugins\OAuth2\Entities\ClientEntity;
 use Piwik\Plugins\OAuth2\OAuth2;
 use Piwik\Plugins\OAuth2\Repositories\AccessTokenRepository;
 use Piwik\Plugins\OAuth2\Repositories\AuthCodeRepository;
@@ -88,7 +89,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
 
     public function test_get_showsRadioGroupWithLeastPrivilegedScopePreselected()
     {
-        $client = $this->createClient(['matomo:read', 'matomo:write', 'matomo:admin']);
+        $client = $this->createClient(['matomo:admin']);
 
         $html = $this->requestAuthorize($this->authorizeQuery($client, 'matomo:admin matomo:write matomo:read'));
 
@@ -123,7 +124,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
 
     public function test_get_hidesScopesTheUserCannotGrant()
     {
-        $client = $this->createClient(['matomo:read', 'matomo:write', 'matomo:admin']);
+        $client = $this->createClient(['matomo:admin']);
         FakeAccess::clearAccess(false, [], [1], 'writeUserLogin', [1]);
 
         $html = $this->requestAuthorize($this->authorizeQuery($client, 'matomo:read matomo:write matomo:admin'));
@@ -132,6 +133,40 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
         $this->assertStringContainsString('value="matomo:read" checked', $html);
         $this->assertStringContainsString('value="matomo:write"', $html);
         $this->assertStringNotContainsString('matomo:admin', $html);
+    }
+
+    public function test_get_offersEveryScopeUpToTheClientMaximumOnly()
+    {
+        // the configured scope is a maximum, so a write client also offers read but never admin
+        $client = $this->createClient(['matomo:write']);
+
+        $html = $this->requestAuthorize($this->authorizeQuery($client, 'matomo:read matomo:write matomo:admin'));
+
+        $this->assertSame(2, substr_count($html, 'name="selected_scope"'));
+        $this->assertStringContainsString('value="matomo:read" checked', $html);
+        $this->assertStringContainsString('value="matomo:write"', $html);
+        $this->assertStringNotContainsString('matomo:admin', $html);
+    }
+
+    public function test_finalizeScopes_acceptsAScopeBelowTheClientMaximum()
+    {
+        // the consent screen may grant less than the client is configured for, so the token
+        // endpoint has to accept the downgraded scope when the code is exchanged
+        $clientEntity = new ClientEntity();
+        $clientEntity->allowedScopes = ['matomo:admin'];
+
+        $scopeRepository = StaticContainer::get(ScopeRepository::class);
+
+        $finalized = $scopeRepository->finalizeScopes(
+            [$scopeRepository->getScopeEntityByIdentifier('matomo:read')],
+            'authorization_code',
+            $clientEntity,
+            Fixture::ADMIN_USER_LOGIN
+        );
+
+        $this->assertSame(['matomo:read'], array_map(static function ($scope) {
+            return $scope->getIdentifier();
+        }, $finalized));
     }
 
     public function test_get_rejectsRequestWhenTheClientAllowsNoneOfTheRequestedScopes()
@@ -146,7 +181,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
 
     public function test_get_rejectsRequestWithADistinctMessageWhenTheUserCannotGrantAnyScope()
     {
-        $client = $this->createClient(['matomo:write', 'matomo:admin']);
+        $client = $this->createClient(['matomo:admin']);
         FakeAccess::clearAccess(false, [], [], 'noAccessLogin');
 
         $response = $this->requestAuthorize($this->authorizeQuery($client, 'matomo:write matomo:admin'));
@@ -162,7 +197,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
 
     public function test_get_deduplicatesRequestedScopes()
     {
-        $client = $this->createClient(['matomo:read', 'matomo:write', 'matomo:admin']);
+        $client = $this->createClient(['matomo:admin']);
 
         $html = $this->requestAuthorize($this->authorizeQuery($client, 'matomo:read matomo:read matomo:write'));
 
@@ -172,7 +207,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
 
     public function test_post_allow_issuesAuthCodeNarrowedToSelectedScope()
     {
-        $client = $this->createClient(['matomo:read', 'matomo:write', 'matomo:admin']);
+        $client = $this->createClient(['matomo:admin']);
         $capturedEvents = $this->captureAuthorizeDecisionEvents();
 
         $this->requestAuthorize(
@@ -203,7 +238,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
 
     public function test_post_allow_rejectsScopeOutsideTheSelectableSet()
     {
-        $client = $this->createClient(['matomo:read', 'matomo:write']);
+        $client = $this->createClient(['matomo:write']);
         $capturedEvents = $this->captureAuthorizeDecisionEvents();
 
         $response = $this->requestAuthorize(
@@ -219,7 +254,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
 
     public function test_post_allow_rejectsMissingSelectedScope()
     {
-        $client = $this->createClient(['matomo:read', 'matomo:write']);
+        $client = $this->createClient(['matomo:write']);
         $capturedEvents = $this->captureAuthorizeDecisionEvents();
 
         $response = $this->requestAuthorize(
@@ -235,7 +270,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
 
     public function test_post_deny_recordsSelectedScopeInAuditEvent()
     {
-        $client = $this->createClient(['matomo:read', 'matomo:write']);
+        $client = $this->createClient(['matomo:write']);
         $capturedEvents = $this->captureAuthorizeDecisionEvents();
 
         $this->requestAuthorize(
@@ -254,7 +289,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
 
     public function test_post_readsTheDecisionFromThePostBodyOnly()
     {
-        $client = $this->createClient(['matomo:read', 'matomo:write']);
+        $client = $this->createClient(['matomo:write']);
         $capturedEvents = $this->captureAuthorizeDecisionEvents();
 
         // a query string parameter must not override the decision the user submitted
@@ -277,7 +312,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
 
     public function test_post_readsTheSelectedScopeFromThePostBodyOnly()
     {
-        $client = $this->createClient(['matomo:read', 'matomo:write', 'matomo:admin']);
+        $client = $this->createClient(['matomo:admin']);
         $capturedEvents = $this->captureAuthorizeDecisionEvents();
 
         // a query string parameter must not widen the scope the user picked on the consent screen

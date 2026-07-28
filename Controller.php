@@ -393,7 +393,10 @@ class Controller extends ControllerAdmin
 
         if ($client instanceof ClientEntity && !empty($client->getAllowedScopes())) {
             // an empty client scope list means no client specific restriction, as in ScopeRepository::finalizeScopes()
-            $allowed = array_values(array_intersect($allowed, $client->getAllowedScopes()));
+            $allowed = array_values(array_intersect(
+                $allowed,
+                ScopeRepository::expandScopes($client->getAllowedScopes())
+            ));
         }
 
         return array_values(array_intersect($allowed, $requestedScopes));

@@ -17,8 +17,8 @@ use Piwik\Tests\Framework\Fixture;
 
 class OAuth2ConsentFixture extends OAuth2Fixture
 {
-    public const MULTI_SCOPE_CLIENT_ID = '11111111111111111111111111111111';
-    public const SINGLE_SCOPE_CLIENT_ID = '22222222222222222222222222222222';
+    public const ADMIN_SCOPE_CLIENT_ID = '11111111111111111111111111111111';
+    public const READ_SCOPE_CLIENT_ID = '22222222222222222222222222222222';
     public const REDIRECT_URI = 'https://client.example/callback';
 
     public function setUp(): void
@@ -28,8 +28,10 @@ class OAuth2ConsentFixture extends OAuth2Fixture
         OAuth2::setupRSAKeys(true);
         OAuth2::setEncryptionKey(true);
 
-        $this->createClient(self::MULTI_SCOPE_CLIENT_ID, 'Multi scope UI client', ['matomo:read', 'matomo:write', 'matomo:admin']);
-        $this->createClient(self::SINGLE_SCOPE_CLIENT_ID, 'Single scope UI client', ['matomo:read']);
+        // a client is configured with a single scope, as that is all the API accepts, and the
+        // consent screen then offers every scope up to that maximum
+        $this->createClient(self::ADMIN_SCOPE_CLIENT_ID, 'Admin scope UI client', ['matomo:admin']);
+        $this->createClient(self::READ_SCOPE_CLIENT_ID, 'Read scope UI client', ['matomo:read']);
     }
 
     private function createClient(string $clientId, string $name, array $scopes): void

@@ -14,8 +14,8 @@ describe("OAuth2Consent", function () {
     };
 
     // must match the constants in OAuth2ConsentFixture
-    const multiScopeClientId = '11111111111111111111111111111111';
-    const singleScopeClientId = '22222222222222222222222222222222';
+    const adminScopeClientId = '11111111111111111111111111111111';
+    const readScopeClientId = '22222222222222222222222222222222';
     const redirectUri = 'https://client.example/callback';
 
     before(function () {
@@ -33,7 +33,7 @@ describe("OAuth2Consent", function () {
     }
 
     it('should show a scope radio group with the least privileged scope preselected', async function () {
-        await page.goto(authorizeUrl(multiScopeClientId, 'matomo:read matomo:write matomo:admin'));
+        await page.goto(authorizeUrl(adminScopeClientId, 'matomo:read matomo:write matomo:admin'));
         await page.waitForSelector('.card-authorize', { visible: true });
         await page.waitForSelector('input[name="selected_scope"][value="matomo:admin"]', { visible: true });
         await page.waitForNetworkIdle();
@@ -52,7 +52,7 @@ describe("OAuth2Consent", function () {
     });
 
     it('should show a single selectable scope without radio buttons', async function () {
-        await page.goto(authorizeUrl(singleScopeClientId, 'matomo:read matomo:write matomo:admin'));
+        await page.goto(authorizeUrl(readScopeClientId, 'matomo:read matomo:write matomo:admin'));
         await page.waitForSelector('.card-authorize', { visible: true });
         // the only scope input is hidden here, so wait for the rendered scope instead
         await page.waitForSelector('.alert-warning .scope', { visible: true });

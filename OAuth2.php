@@ -40,6 +40,51 @@ class OAuth2 extends Plugin
         ];
     }
 
+    /**
+     * Maps each scope to the access role it confines a token to, and to its privilege level.
+     * The level is what orders the scopes, a higher level includes every lower one.
+     *
+     * @return array<string, array{role: string, level: int}>
+     */
+    public static function getScopeAccessLevels(): array
+    {
+        return [
+            'matomo:read' => ['role' => 'view', 'level' => 1],
+            'matomo:write' => ['role' => 'write', 'level' => 2],
+            'matomo:admin' => ['role' => 'admin', 'level' => 3],
+            'matomo:superuser' => ['role' => 'superuser', 'level' => 4],
+        ];
+    }
+
+    /**
+     * Returns the given scope together with every less privileged scope, in ascending order.
+     *
+     * The scope configured for a client is the maximum access level its tokens may get, as
+     * described by OAuth2_AdminScopeHelp, so a client allowed `matomo:admin` may also be
+     * granted `matomo:write` or `matomo:read`. Unknown scopes expand to nothing.
+     *
+     * @return string[]
+     */
+    public static function expandScopeHierarchically(string $scope): array
+    {
+        $levels = self::getScopeAccessLevels();
+
+        if (!isset($levels[$scope])) {
+            return [];
+        }
+
+        $maximumLevel = $levels[$scope]['level'];
+        $expanded = [];
+
+        foreach ($levels as $identifier => $level) {
+            if ($level['level'] <= $maximumLevel) {
+                $expanded[] = $identifier;
+            }
+        }
+
+        return $expanded;
+    }
+
     public function registerEvents()
     {
         return [
@@ -387,24 +432,29 @@ class OAuth2 extends Plugin
 
     private function scopeGrantsAtLeastWrite(?string $scope): bool
     {
-        $scopeToLevel = ['matomo:read' => 1, 'matomo:write' => 2, 'matomo:admin' => 3, 'matomo:superuser' => 4];
+        $scopeLevels = self::getScopeAccessLevels();
 
         // Unknown/empty scopes are treated as below write.
-        $level = $scopeToLevel[$scope] ?? 0;
+        $level = $scopeLevels[$scope]['level'] ?? 0;
 
-        return $level >= $scopeToLevel['matomo:write'];
+        return $level >= $scopeLevels['matomo:write']['level'];
     }
 
     private function modifyAccessBasedOnScope(?array $idSitesAccess, ?string $scope): array
     {
-        $levels = ['view' => 1, 'write' => 2, 'admin' => 3, 'superuser' => 4];
-        $scopeToLevelMapping = ['matomo:read' => 'view', 'matomo:write' => 'write', 'matomo:admin' => 'admin', 'matomo:superuser' => 'superuser'];
-        if (empty($scopeToLevelMapping[$scope])) {
+        $scopeLevels = self::getScopeAccessLevels();
+
+        if (!isset($scopeLevels[$scope])) {
             return [];
         }
 
-        $target = $scopeToLevelMapping[$scope];
-        $targetLevel = $levels[$target];
+        $levels = [];
+        foreach ($scopeLevels as $scopeLevel) {
+            $levels[$scopeLevel['role']] = $scopeLevel['level'];
+        }
+
+        $target = $scopeLevels[$scope]['role'];
+        $targetLevel = $scopeLevels[$scope]['level'];
 
         // Capture the subject's super user sites before the demotion loop empties them,
         // so the capability reconciliation below can grant a super user every capability.

@@ -4,6 +4,8 @@
 - Authorize requests may now carry multiple scopes; the consent screen shows a radio group and the user grants exactly one scope (defaulting to the least privileged). Issued tokens still carry a single scope.
 - Scopes offered on the consent screen are limited to those the authorizing user can actually grant. If the user's access level is too low for every requested scope, the error now says so and names the scopes, instead of reporting an invalid client scope mapping.
 - Clients with an empty scope list now fall back to the globally allowed scopes during authorization (previously rejected), matching the token endpoint behaviour.
+- The scope configured for a client is now applied as the maximum access level it may be granted, as the setting has always been documented. A client configured with `matomo:admin` can therefore be granted `matomo:write` or `matomo:read` as well, which is what lets the user choose a scope. Clients can never be granted more than their configured scope.
+- A client credentials request that names no scope now falls back to `matomo:read` for any client, instead of being rejected when the client is configured above read.
 - Added code to harden the consent decision handling on the authorize endpoint
 
 5.2.4 - 2026-07-27

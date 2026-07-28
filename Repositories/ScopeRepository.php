@@ -58,7 +58,7 @@ class ScopeRepository implements ScopeRepositoryInterface
 
         $allowed = $this->getAllowedScopeIds();
         if ($clientEntity instanceof ClientEntity && !empty($clientEntity->getAllowedScopes())) {
-            $allowed = array_values(array_intersect($allowed, $clientEntity->getAllowedScopes()));
+            $allowed = array_values(array_intersect($allowed, self::expandScopes($clientEntity->getAllowedScopes())));
         }
 
         if (empty($scopes)) {
@@ -80,6 +80,24 @@ class ScopeRepository implements ScopeRepositoryInterface
         }
 
         return $final;
+    }
+
+    /**
+     * Expands configured client scopes to every scope they permit, as a client scope is the
+     * maximum access level its tokens may get rather than the only one it can be granted.
+     *
+     * @param string[] $scopes
+     * @return string[]
+     */
+    public static function expandScopes(array $scopes): array
+    {
+        $expanded = [];
+
+        foreach ($scopes as $scope) {
+            $expanded = array_merge($expanded, OAuth2::expandScopeHierarchically($scope));
+        }
+
+        return array_values(array_unique($expanded));
     }
 
     public function getAllowedScopeIds(): array

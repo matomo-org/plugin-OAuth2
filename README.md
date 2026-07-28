@@ -241,7 +241,7 @@ https://example-app.com/oauth/callback?code=AUTHORIZATION_CODE&state=abc123
 
 ## Exchange Authorization Code for Tokens
 
-**Note:** The authorize request may list multiple space-separated scopes (e.g. `scope=matomo:read matomo:write`). The user grants exactly one of them on the consent screen, and the issued tokens always carry that single scope.
+**Note:** The authorize request may list multiple space-separated scopes (e.g. `scope=matomo:read matomo:write`). The user grants exactly one of them on the consent screen, and the issued tokens always carry that single scope. The scope configured for a client is the maximum it may be granted, so a client configured with `matomo:admin` can also be granted `matomo:write` or `matomo:read`.
 
 ### PKCE Token Request
 
