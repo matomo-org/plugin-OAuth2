@@ -35,7 +35,8 @@ describe("OAuth2Consent", function () {
     it('should show a scope radio group with the least privileged scope preselected', async function () {
         await page.goto(authorizeUrl(multiScopeClientId, 'matomo:read matomo:write matomo:admin'));
         await page.waitForSelector('.card-authorize', { visible: true });
-        await page.waitForTimeout(250);
+        await page.waitForSelector('input[name="selected_scope"][value="matomo:admin"]', { visible: true });
+        await page.waitForNetworkIdle();
 
         const radioValues = await page.$$eval('input[name="selected_scope"]', function (inputs) {
             return inputs.map(function (input) { return input.value; });
@@ -53,7 +54,9 @@ describe("OAuth2Consent", function () {
     it('should show a single selectable scope without radio buttons', async function () {
         await page.goto(authorizeUrl(singleScopeClientId, 'matomo:read matomo:write matomo:admin'));
         await page.waitForSelector('.card-authorize', { visible: true });
-        await page.waitForTimeout(250);
+        // the only scope input is hidden here, so wait for the rendered scope instead
+        await page.waitForSelector('.alert-warning .scope', { visible: true });
+        await page.waitForNetworkIdle();
 
         const radios = await page.$$('.card-authorize input[type="radio"]');
         expect(radios.length).to.equal(0);
