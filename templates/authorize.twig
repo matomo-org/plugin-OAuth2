@@ -29,7 +29,7 @@
                 <div class="permissions">
                     {% if scopes|length > 1 %}{{ 'OAuth2_SelectScopeToGrant'|translate }}{% else %}{{ 'OAuth2_RequestedScopes'|translate }}{% endif %}
                 </div>
-                <div class="alert alert-warning">
+                <div class="alert alert-warning{% if scopes|length == 1 %} single-scope{% endif %}">
                     {% if scopes|length > 1 %}
                         {% for scope in scopes %}
                             <label class="scope-option">
