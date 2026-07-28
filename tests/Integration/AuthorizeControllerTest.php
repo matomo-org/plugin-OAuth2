@@ -248,6 +248,71 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
         $this->assertSame(0, $this->countAuthCodes($client['client']['client_id']));
     }
 
+    public function test_post_readsTheDecisionFromThePostBodyOnly()
+    {
+        $client = $this->createClient(['matomo:read', 'matomo:write']);
+        $capturedEvents = $this->captureAuthorizeDecisionEvents();
+
+        // a query string parameter must not override the decision the user submitted
+        $query = $this->authorizeQuery($client, 'matomo:read matomo:write');
+        $query['decision'] = 'allow';
+
+        $this->requestAuthorize($query, [
+            'decision' => 'deny',
+            'selected_scope' => 'matomo:read',
+            'nonce' => Nonce::getNonce('Oauth2.authorize'),
+        ]);
+
+        $redirectParams = $this->parseRedirect();
+        $this->assertSame('access_denied', $redirectParams['error']);
+        $this->assertArrayNotHasKey('code', $redirectParams);
+        $this->assertSame('denied', $capturedEvents[0]['decision']);
+        $this->assertSame(0, $this->countAuthCodes($client['client']['client_id']));
+    }
+
+    public function test_post_readsTheSelectedScopeFromThePostBodyOnly()
+    {
+        $client = $this->createClient(['matomo:read', 'matomo:write', 'matomo:admin']);
+        $capturedEvents = $this->captureAuthorizeDecisionEvents();
+
+        // a query string parameter must not widen the scope the user picked on the consent screen
+        $query = $this->authorizeQuery($client, 'matomo:read matomo:write matomo:admin');
+        $query['selected_scope'] = 'matomo:admin';
+
+        $this->requestAuthorize($query, [
+            'decision' => 'allow',
+            'selected_scope' => 'matomo:read',
+            'nonce' => Nonce::getNonce('Oauth2.authorize'),
+        ]);
+
+        $redirectParams = $this->parseRedirect();
+        $this->assertNotEmpty($redirectParams['code']);
+        $this->assertSame(['matomo:read'], $capturedEvents[0]['scopes']);
+
+        $this->exchangeCodeForTokens($client, $redirectParams['code']);
+        $storedToken = Db::fetchRow(
+            'SELECT * FROM ' . Common::prefixTable('oauth2_access_token') . ' ORDER BY created_at DESC LIMIT 1'
+        );
+        $this->assertSame(['matomo:read'], json_decode($storedToken['scopes'], true));
+    }
+
+    public function test_post_rejectsADecisionValueThatIsNeitherAllowNorDeny()
+    {
+        $client = $this->createClient(['matomo:read']);
+        $capturedEvents = $this->captureAuthorizeDecisionEvents();
+
+        $response = $this->requestAuthorize($this->authorizeQuery($client, 'matomo:read'), [
+            'decision' => 'something else',
+            'selected_scope' => 'matomo:read',
+            'nonce' => Nonce::getNonce('Oauth2.authorize'),
+        ]);
+
+        $this->assertSame(Piwik::translate('OAuth2_InvalidAuthorizationRequest'), $response);
+        $this->assertResponseCodeSent(400, 'Bad Request');
+        $this->assertCount(0, $capturedEvents);
+        $this->assertSame(0, $this->countAuthCodes($client['client']['client_id']));
+    }
+
     public function test_post_allow_singleScopeClientStillIssuesCode()
     {
         $client = $this->createClient(['matomo:read']);

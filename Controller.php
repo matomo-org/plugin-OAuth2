@@ -111,14 +111,21 @@ class Controller extends ControllerAdmin
         }
 
         if ($this->isPostRequest()) {
-            $decision = Request::fromRequest()->getStringParameter('decision', '');
-            $nonce = Request::fromRequest()->getStringParameter('nonce', '');
+            // the consent form is submitted as POST, and Request::fromRequest() lets a query string
+            // parameter of the same name win, so the decision must be read from the POST body only
+            $post = Request::fromPost();
+            $decision = $post->getStringParameter('decision', '');
+            $nonce = $post->getStringParameter('nonce', '');
 
             if (!Nonce::verifyNonce('Oauth2.authorize', $nonce)) {
                 return $this->renderUnauthorized(Piwik::translate('OAuth2_InvalidAuthorizationRequest'));
             }
 
-            $selectedScope = Request::fromRequest()->getStringParameter('selected_scope', '');
+            if (!in_array($decision, ['allow', 'deny'], true)) {
+                return $this->renderUnauthorized(Piwik::translate('OAuth2_InvalidAuthorizationRequest'));
+            }
+
+            $selectedScope = $post->getStringParameter('selected_scope', '');
 
             if (!in_array($selectedScope, $selectableScopes, true)) {
                 return $this->renderUnauthorized(Piwik::translate('OAuth2_InvalidScopeValue'));

@@ -4,6 +4,7 @@
 - Authorize requests may now carry multiple scopes; the consent screen shows a radio group and the user grants exactly one scope (defaulting to the least privileged). Issued tokens still carry a single scope.
 - Scopes offered on the consent screen are limited to those the authorizing user can actually grant. If the user's access level is too low for every requested scope, the error now says so and names the scopes, instead of reporting an invalid client scope mapping.
 - Clients with an empty scope list now fall back to the globally allowed scopes during authorization (previously rejected), matching the token endpoint behaviour.
+- Added code to harden the consent decision handling on the authorize endpoint
 
 5.2.4 - 2026-07-27
 - Added code to warn users if scope is downgraded
