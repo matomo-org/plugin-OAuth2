@@ -329,6 +329,9 @@ class Controller extends ControllerAdmin
             case 'matomo:superuser':
                 Piwik::checkUserHasSuperUserAccess();
                 break;
+            default:
+                // never reached, the scope is validated against the selectable scopes beforehand
+                throw new \Exception(Piwik::translate('OAuth2_InvalidScopeValue'));
         }
     }
 

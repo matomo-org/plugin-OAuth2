@@ -283,6 +283,18 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
         $this->assertResponseCodeSent(405, 'Method Not Allowed');
     }
 
+    public function test_checkDoesUserHasAccessAsPerScope_failsClosedForAnUnknownScope()
+    {
+        // the selectable scope validation makes this unreachable, the check must still not pass silently
+        $method = new \ReflectionMethod(Controller::class, 'checkDoesUserHasAccessAsPerScope');
+        $method->setAccessible(true);
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage(Piwik::translate('OAuth2_InvalidScopeValue'));
+
+        $method->invoke($this->controller, 'matomo:unknown');
+    }
+
     private function createClient(array $scopes): array
     {
         return $this->clientManager->create([
