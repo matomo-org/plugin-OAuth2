@@ -246,9 +246,9 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
         // the issued code carries only the selected scope
         $this->assertSame(['matomo:write'], $this->storedAuthCodeScopes($client['client']['client_id']));
         $this->assertCount(1, $capturedEvents);
-        // the audit records the full request and, separately, the one scope that was granted
-        $this->assertSame(['matomo:read', 'matomo:write', 'matomo:admin'], $capturedEvents[0]['scopes']);
-        $this->assertSame('matomo:write', $capturedEvents[0]['grantedScope']);
+        // the audit records the granted scope and, separately, everything that was requested
+        $this->assertSame(['matomo:write'], $capturedEvents[0]['scopes']);
+        $this->assertSame(['matomo:read', 'matomo:write', 'matomo:admin'], $capturedEvents[0]['requestedScopes']);
         $this->assertSame('allowed', $capturedEvents[0]['decision']);
 
         $redirectParams = $this->parseRedirectOrSkip();
@@ -309,10 +309,10 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
         );
 
         $this->assertCount(1, $capturedEvents);
-        // denying grants nothing, so the audit shows what was asked for and no granted scope
-        // rather than the scope that happened to be selected in the form
-        $this->assertSame(['matomo:read', 'matomo:write'], $capturedEvents[0]['scopes']);
-        $this->assertNull($capturedEvents[0]['grantedScope']);
+        // denying grants nothing, so no scope is reported as granted, while the request the user
+        // refused is still recorded in full
+        $this->assertSame([], $capturedEvents[0]['scopes']);
+        $this->assertSame(['matomo:read', 'matomo:write'], $capturedEvents[0]['requestedScopes']);
         $this->assertSame('denied', $capturedEvents[0]['decision']);
         $this->assertSame(0, $this->countAuthCodes($client['client']['client_id']));
 
@@ -336,7 +336,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
         ]);
 
         $this->assertSame('denied', $capturedEvents[0]['decision']);
-        $this->assertNull($capturedEvents[0]['grantedScope']);
+        $this->assertSame([], $capturedEvents[0]['scopes']);
         $this->assertSame(0, $this->countAuthCodes($client['client']['client_id']));
 
         $redirectParams = $this->parseRedirectOrSkip();
@@ -360,7 +360,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
         ]);
 
         $this->assertSame(['matomo:read'], $this->storedAuthCodeScopes($client['client']['client_id']));
-        $this->assertSame('matomo:read', $capturedEvents[0]['grantedScope']);
+        $this->assertSame(['matomo:read'], $capturedEvents[0]['scopes']);
 
         $redirectParams = $this->parseRedirectOrSkip();
         $this->assertNotEmpty($redirectParams['code']);

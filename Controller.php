@@ -151,11 +151,12 @@ class Controller extends ControllerAdmin
              *                            - `client`: the OAuth client, with `id` and `name`, plus
              *                              `type` and `active` for clients of this plugin.
              *                            - `userLogin`: the login of the user who decided.
-             *                            - `scopes`: the scopes the client asked for. An authorize
-             *                              request may name several, so this can hold more than one
-             *                              scope even though only one of them can be granted.
-             *                            - `grantedScope`: the single scope the user granted, or
-             *                              null when the request was denied and nothing was granted.
+             *                            - `scopes`: the scopes that were granted. The user grants
+             *                              exactly one, so this holds a single scope, and it is
+             *                              empty when the request was denied.
+             *                            - `requestedScopes`: everything the client asked for. An
+             *                              authorize request may name several scopes even though
+             *                              only one of them can be granted.
              *                            - `decision`: either `allowed` or `denied`.
              */
             Piwik::postEvent('OAuth2.authorize.decision.end', [
@@ -359,9 +360,10 @@ class Controller extends ControllerAdmin
             'version' => 'v1',
             'client' => $clientData,
             'userLogin' => $login,
-            'scopes' => array_values($requestedScopes),
-            // nothing is granted when the request is denied, so the selected scope is not reported
-            'grantedScope' => $isApproved ? $selectedScope : null,
+            // keeps reporting the effective permission, which is nothing at all when denied, so a
+            // listener reading only this field can never read more access than was granted
+            'scopes' => $isApproved ? [$selectedScope] : [],
+            'requestedScopes' => array_values($requestedScopes),
             'decision' => $isApproved ? 'allowed' : 'denied',
         ];
     }
