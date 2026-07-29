@@ -9,6 +9,8 @@
 
 namespace Piwik\Plugins\OAuth2\Activity;
 
+use Piwik\Piwik;
+
 class UpdateClient extends BaseActivity
 {
     protected $eventName = 'API.OAuth2.updateClient.end';
@@ -37,6 +39,6 @@ class UpdateClient extends BaseActivity
     {
         $client = $activityData['client'] ?? [];
 
-        return sprintf('updated OAuth 2.0 client "%s"', $this->getClientLabel($client));
+        return Piwik::translate('OAuth2_UpdateClientActivity', [$this->getClientLabel($client)]);
     }
 }

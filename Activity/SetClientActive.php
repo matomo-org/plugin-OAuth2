@@ -9,6 +9,8 @@
 
 namespace Piwik\Plugins\OAuth2\Activity;
 
+use Piwik\Piwik;
+
 class SetClientActive extends BaseActivity
 {
     protected $eventName = 'API.OAuth2.setClientActive.end';
@@ -39,9 +41,9 @@ class SetClientActive extends BaseActivity
         $isActive = !empty($client['active']);
 
         if ($isActive) {
-            return sprintf('resumed OAuth 2.0 client "%s"', $this->getClientLabel($client));
+            return Piwik::translate('OAuth2_ResumeClientActivity', [$this->getClientLabel($client)]);
         }
 
-        return sprintf('paused OAuth 2.0 client "%s"', $this->getClientLabel($client));
+        return Piwik::translate('OAuth2_PauseClientActivity', [$this->getClientLabel($client)]);
     }
 }

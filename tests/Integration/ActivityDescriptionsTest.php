@@ -11,15 +11,20 @@ namespace Piwik\Plugins\OAuth2\tests\Integration;
 
 use Piwik\Container\StaticContainer;
 use Piwik\Plugins\OAuth2\Activity\AuthorizeClient;
+use Piwik\Plugins\OAuth2\Activity\CreateClient;
+use Piwik\Plugins\OAuth2\Activity\DeleteClient;
+use Piwik\Plugins\OAuth2\Activity\RotateSecret;
+use Piwik\Plugins\OAuth2\Activity\SetClientActive;
+use Piwik\Plugins\OAuth2\Activity\UpdateClient;
 use Piwik\Plugins\OAuth2\tests\Fixtures\OAuth2Fixture;
 use Piwik\Translation\Translator;
 
 /**
  * @group OAuth2
- * @group AuthorizeClientActivity
+ * @group ActivityDescriptions
  * @group Plugins
  */
-class AuthorizeClientActivityTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
+class ActivityDescriptionsTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
 {
     public static $fixture = null;
 
@@ -78,14 +83,52 @@ class AuthorizeClientActivityTest extends \Piwik\Tests\Framework\TestCase\Integr
         );
     }
 
+    /**
+     * @dataProvider getClientActivityDescriptions
+     */
+    public function test_getTranslatedDescription_describesTheClientActivities(
+        string $activityClass,
+        array $activityData,
+        string $expected
+    ) {
+        $activity = new $activityClass();
+
+        $description = $activity->getTranslatedDescription($this->activityData($activityData), 'superUserLogin');
+
+        $this->assertSame($expected, $description);
+    }
+
+    public function getClientActivityDescriptions(): array
+    {
+        $label = 'Claude Code Demo (c0dec0dec0dec0dec0dec0dec0dec0de)';
+
+        return [
+            [CreateClient::class, [], 'created OAuth 2.0 client "' . $label . '"'],
+            [UpdateClient::class, [], 'updated OAuth 2.0 client "' . $label . '"'],
+            [DeleteClient::class, [], 'deleted OAuth 2.0 client "' . $label . '"'],
+            [RotateSecret::class, [], 'rotated secret for OAuth 2.0 client "' . $label . '"'],
+            [SetClientActive::class, ['client' => $this->client(true)], 'resumed OAuth 2.0 client "' . $label . '"'],
+            [SetClientActive::class, ['client' => $this->client(false)], 'paused OAuth 2.0 client "' . $label . '"'],
+        ];
+    }
+
+    private function client(bool $active = true): array
+    {
+        return [
+            'id' => 'c0dec0dec0dec0dec0dec0dec0dec0de',
+            'name' => 'Claude Code Demo',
+            'active' => $active,
+        ];
+    }
+
     private function activityData(array $data): array
     {
         return array_merge([
             'version' => 'v1',
-            'client' => ['id' => 'c0dec0dec0dec0dec0dec0dec0dec0de', 'name' => 'Claude Code Demo'],
+            'client' => $this->client(),
             'userLogin' => 'superUserLogin',
         ], $data);
     }
 }
 
-AuthorizeClientActivityTest::$fixture = new OAuth2Fixture();
+ActivityDescriptionsTest::$fixture = new OAuth2Fixture();

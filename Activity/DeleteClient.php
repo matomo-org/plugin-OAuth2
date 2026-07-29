@@ -9,6 +9,8 @@
 
 namespace Piwik\Plugins\OAuth2\Activity;
 
+use Piwik\Piwik;
+
 class DeleteClient extends BaseActivity
 {
     protected $eventName = 'API.OAuth2.deleteClient.end';
@@ -40,6 +42,6 @@ class DeleteClient extends BaseActivity
     {
         $client = $activityData['client'] ?? [];
 
-        return sprintf('deleted OAuth 2.0 client "%s"', $this->getClientLabel($client));
+        return Piwik::translate('OAuth2_DeleteClientActivity', [$this->getClientLabel($client)]);
     }
 }

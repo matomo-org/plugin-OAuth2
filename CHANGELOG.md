@@ -8,6 +8,7 @@
 - Added code to harden the consent decision handling on the authorize endpoint
 - The `OAuth2.authorize.decision.end` event and the authorize activity keep reporting the granted scope in `scopes`, which is now empty when the request was denied, and add `requestedScopes` with everything the client asked for.
 - The activity log entry for an authorization decision now names the granted scope and the scopes the client requested, instead of only naming the client.
+- The activity log descriptions for OAuth 2.0 clients are now translatable, where they were previously always shown in English.
 
 5.2.4 - 2026-07-27
 - Added code to warn users if scope is downgraded
