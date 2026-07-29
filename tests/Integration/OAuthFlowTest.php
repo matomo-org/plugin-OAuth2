@@ -317,6 +317,8 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
 
     public function test_clientCredentialsFlow_withoutScope_rejectsClientWhenReadScopeIsNotAllowed()
     {
+        // the client scope is only treated as a maximum for scopes a user consented to, so a
+        // client credentials client still has to be configured for the scope it receives
         $client = $this->api->createClient(
             'Write only machine client',
             ['client_credentials'],

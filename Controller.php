@@ -28,6 +28,7 @@ use Piwik\Plugins\UsersManager\Model as UserModel;
 use Piwik\Request;
 use Piwik\Url;
 use Matomo\Dependencies\OAuth2\Psr\Http\Message\ResponseInterface;
+use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ClientEntityInterface;
 use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Exception\OAuthServerException;
 
 class Controller extends ControllerAdmin
@@ -94,31 +95,78 @@ class Controller extends ControllerAdmin
             return $scope->getIdentifier();
         }, $authRequest->getScopes());
 
-        $client = $authRequest->getClient();
-        $clientScopes = [];
-        if ($client instanceof ClientEntity) {
-            $clientScopes = array_values($client->getAllowedScopes());
-        }
-        $scopes = array_values($scopes);
+        $requestedClientScopes = $this->getScopesAllowedForClient(array_values($scopes), $authRequest->getClient());
 
-        if (count($scopes) !== 1 || count($clientScopes) !== 1 || $clientScopes[0] !== $scopes[0]) {
+        if (empty($requestedClientScopes)) {
             return $this->renderUnauthorized(Piwik::translate('OAuth2_InvalidClientScope'));
         }
 
-        $this->checkDoesUserHasAccessAsPerScope($scopes[0]);
+        $selectableScopes = $this->getScopesUserCanGrant($requestedClientScopes);
+
+        if (empty($selectableScopes)) {
+            return $this->renderUnauthorized(Piwik::translate(
+                'OAuth2_NoAccessForRequestedScopes',
+                implode(', ', $requestedClientScopes)
+            ));
+        }
 
         if ($this->isPostRequest()) {
-            $decision = Request::fromRequest()->getStringParameter('decision', '');
-            $nonce = Request::fromRequest()->getStringParameter('nonce', '');
+            // the consent form is submitted as POST, and Request::fromRequest() lets a query string
+            // parameter of the same name win, so the decision must be read from the POST body only
+            $post = Request::fromPost();
+            $decision = $post->getStringParameter('decision', '');
+            $nonce = $post->getStringParameter('nonce', '');
 
             if (!Nonce::verifyNonce('Oauth2.authorize', $nonce)) {
                 return $this->renderUnauthorized(Piwik::translate('OAuth2_InvalidAuthorizationRequest'));
             }
 
+            if (!in_array($decision, ['allow', 'deny'], true)) {
+                return $this->renderUnauthorized(Piwik::translate('OAuth2_InvalidAuthorizationRequest'));
+            }
+
+            $selectedScope = $post->getStringParameter('selected_scope', '');
+
+            if (!in_array($selectedScope, $selectableScopes, true)) {
+                return $this->renderUnauthorized(Piwik::translate('OAuth2_InvalidScopeValue'));
+            }
+
+            $this->checkDoesUserHasAccessAsPerScope($selectedScope);
+
+            $authRequest->setScopes([$this->scopeRepository->getScopeEntityByIdentifier($selectedScope)]);
+
             $isApproved = $decision === 'allow';
             $authRequest->setAuthorizationApproved($isApproved);
+
+            /**
+             * Triggered after a user allowed or denied an OAuth 2.0 authorization request on the
+             * consent screen, before the authorization code is issued.
+             *
+             * Used by the plugin itself to record the decision in the activity log, and available
+             * to other plugins that need to audit or react to granted and denied access.
+             *
+             * @param array $activityData Details of the decision:
+             *
+             *                            - `version`: the payload version, currently `v1`.
+             *                            - `client`: the OAuth client, with `id` and `name`, plus
+             *                              `type` and `active` for clients of this plugin.
+             *                            - `userLogin`: the login of the user who decided.
+             *                            - `scopes`: the scopes that were granted. The user grants
+             *                              exactly one, so this holds a single scope, and it is
+             *                              empty when the request was denied.
+             *                            - `requestedScopes`: everything the client asked for. An
+             *                              authorize request may name several scopes even though
+             *                              only one of them can be granted.
+             *                            - `decision`: either `allowed` or `denied`.
+             */
             Piwik::postEvent('OAuth2.authorize.decision.end', [
-                $this->buildAuthorizationActivityData($authRequest->getClient(), $login, $scopes, $isApproved),
+                $this->buildAuthorizationActivityData(
+                    $authRequest->getClient(),
+                    $login,
+                    array_values($scopes),
+                    $selectedScope,
+                    $isApproved
+                ),
             ]);
 
             try {
@@ -150,7 +198,7 @@ class Controller extends ControllerAdmin
             'clientId' => $client->getIdentifier(),
             'userLogin' => $login,
             'userEmail' => $user['email'] ?? '',
-            'scopes' => $scopes,
+            'scopes' => $selectableScopes,
             'scopeDescriptions' => $this->scopeRepository->describeScopes(),
             'nonce' => Nonce::getNonce('Oauth2.authorize'),
             'termsAndCondition' => $termsAndConditionUrl,
@@ -238,7 +286,7 @@ class Controller extends ControllerAdmin
 
     private function emitResponse(ResponseInterface $response)
     {
-        http_response_code($response->getStatusCode());
+        $this->sendResponseCode($response->getStatusCode(), $response->getReasonPhrase());
         foreach ($response->getHeaders() as $name => $values) {
             foreach ($values as $value) {
                 Common::sendHeader($name . ': ' . $value);
@@ -255,12 +303,49 @@ class Controller extends ControllerAdmin
 
     private function renderUnauthorized(string $message)
     {
-        http_response_code(400);
+        $this->sendResponseCode(400);
         return $message;
     }
 
-    private function buildAuthorizationActivityData($client, string $login, array $scopes, bool $isApproved): array
+    private function sendResponseCode(int $statusCode, string $reasonPhrase = ''): void
     {
+        try {
+            Common::sendResponseCode($statusCode);
+            return;
+        } catch (\Exception $e) {
+            // Common::sendResponseCode() only knows a fixed set of status codes and rejects the
+            // others, such as the 405 the token and metadata endpoints send for a wrong method.
+        }
+
+        Common::sendHeader(rtrim($this->getStatusHeaderPrefix() . ' ' . $statusCode . ' ' . $reasonPhrase));
+    }
+
+    /**
+     * Same prefix Common::sendResponseCode() uses, as FastCGI needs a Status header instead of a
+     * status line and the response should keep the protocol the request was made with.
+     */
+    private function getStatusHeaderPrefix(): string
+    {
+        if (strpos(PHP_SAPI, '-fcgi') !== false) {
+            return 'Status:';
+        }
+
+        $protocol = $_SERVER['SERVER_PROTOCOL'] ?? '';
+
+        if (strlen($protocol) > 1 && strlen($protocol) < 15) {
+            return $protocol;
+        }
+
+        return 'HTTP/1.1';
+    }
+
+    private function buildAuthorizationActivityData(
+        $client,
+        string $login,
+        array $requestedScopes,
+        string $selectedScope,
+        bool $isApproved
+    ): array {
         $clientData = [
             'id' => method_exists($client, 'getIdentifier') ? $client->getIdentifier() : null,
             'name' => method_exists($client, 'getName') ? $client->getName() : null,
@@ -275,7 +360,10 @@ class Controller extends ControllerAdmin
             'version' => 'v1',
             'client' => $clientData,
             'userLogin' => $login,
-            'scopes' => array_values($scopes),
+            // keeps reporting the effective permission, which is nothing at all when denied, so a
+            // listener reading only this field can never read more access than was granted
+            'scopes' => $isApproved ? [$selectedScope] : [],
+            'requestedScopes' => array_values($requestedScopes),
             'decision' => $isApproved ? 'allowed' : 'denied',
         ];
     }
@@ -305,6 +393,54 @@ class Controller extends ControllerAdmin
             case 'matomo:superuser':
                 Piwik::checkUserHasSuperUserAccess();
                 break;
+            default:
+                // never reached, the scope is validated against the selectable scopes beforehand
+                throw new \Exception(Piwik::translate('OAuth2_InvalidScopeValue'));
+        }
+    }
+
+    /**
+     * Returns the requested scopes the client is allowed to use, in ascending privilege order
+     * (read < write < admin < superuser).
+     */
+    private function getScopesAllowedForClient(array $requestedScopes, ClientEntityInterface $client): array
+    {
+        $allowed = $this->scopeRepository->getAllowedScopeIds();
+
+        if ($client instanceof ClientEntity && !empty($client->getAllowedScopes())) {
+            // an empty client scope list means no client specific restriction, as in ScopeRepository::finalizeScopes()
+            $allowed = array_values(array_intersect(
+                $allowed,
+                ScopeRepository::expandScopes($client->getAllowedScopes())
+            ));
+        }
+
+        return array_values(array_intersect($allowed, $requestedScopes));
+    }
+
+    /**
+     * Returns the scopes the current user has a high enough access level to grant.
+     */
+    private function getScopesUserCanGrant(array $scopes): array
+    {
+        return array_values(array_filter($scopes, function (string $scope) {
+            return $this->canUserGrantScope($scope);
+        }));
+    }
+
+    private function canUserGrantScope(string $scope): bool
+    {
+        switch ($scope) {
+            case 'matomo:read':
+                return Piwik::isUserHasSomeViewAccess();
+            case 'matomo:write':
+                return Piwik::isUserHasSomeWriteAccess();
+            case 'matomo:admin':
+                return Piwik::isUserHasSomeAdminAccess();
+            case 'matomo:superuser':
+                return Piwik::hasUserSuperUserAccess();
+            default:
+                return false;
         }
     }
 }

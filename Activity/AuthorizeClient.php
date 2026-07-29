@@ -31,7 +31,9 @@ class AuthorizeClient extends BaseActivity
             'version' => 'v1',
             'client' => $client,
             'userLogin' => $activityData['userLogin'] ?? null,
-            'scopes' => array_values((array) ($activityData['scopes'] ?? [])),
+            // the scopes that were granted, empty when the request was denied
+            'scopes' => $decision === 'allowed' ? array_values((array) ($activityData['scopes'] ?? [])) : [],
+            'requestedScopes' => array_values((array) ($activityData['requestedScopes'] ?? [])),
             'decision' => $decision,
         ];
     }

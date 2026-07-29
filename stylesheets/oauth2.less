@@ -108,10 +108,36 @@
       font-weight: 400;
       line-height: normal;
     }
+
+    .scope-option {
+      display: block;
+
+      & + .scope-option {
+        margin-top: 12px;
+      }
+
+      // undo the fixed single-line sizing materialize applies to radio label spans
+      [type="radio"] + .scope-option-label {
+        height: auto;
+        line-height: normal;
+      }
+
+      .scope,
+      .scope-help {
+        display: block;
+      }
+    }
   }
 
   .alert-warning::before {
     margin-top: 0.5rem;
+  }
+
+  // core leaves the alert icon at the top of the box, which looks off next to a single scope.
+  // 12px is half of the icon font size core sets, as in its alert-icon-center-vertically mixin.
+  .alert-warning.single-scope::before {
+    top: calc(~'50% - 12px');
+    margin-top: 0;
   }
 
   .form-help {
