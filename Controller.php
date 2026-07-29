@@ -151,14 +151,21 @@ class Controller extends ControllerAdmin
              *                            - `client`: the OAuth client, with `id` and `name`, plus
              *                              `type` and `active` for clients of this plugin.
              *                            - `userLogin`: the login of the user who decided.
-             *                            - `scopes`: the scopes that were granted. The user grants
-             *                              exactly one scope, so this holds a single scope, and it
-             *                              is the scope the user selected rather than the full list
-             *                              the client requested.
+             *                            - `scopes`: the scopes the client asked for. An authorize
+             *                              request may name several, so this can hold more than one
+             *                              scope even though only one of them can be granted.
+             *                            - `grantedScope`: the single scope the user granted, or
+             *                              null when the request was denied and nothing was granted.
              *                            - `decision`: either `allowed` or `denied`.
              */
             Piwik::postEvent('OAuth2.authorize.decision.end', [
-                $this->buildAuthorizationActivityData($authRequest->getClient(), $login, [$selectedScope], $isApproved),
+                $this->buildAuthorizationActivityData(
+                    $authRequest->getClient(),
+                    $login,
+                    array_values($scopes),
+                    $selectedScope,
+                    $isApproved
+                ),
             ]);
 
             try {
@@ -331,8 +338,13 @@ class Controller extends ControllerAdmin
         return 'HTTP/1.1';
     }
 
-    private function buildAuthorizationActivityData($client, string $login, array $scopes, bool $isApproved): array
-    {
+    private function buildAuthorizationActivityData(
+        $client,
+        string $login,
+        array $requestedScopes,
+        string $selectedScope,
+        bool $isApproved
+    ): array {
         $clientData = [
             'id' => method_exists($client, 'getIdentifier') ? $client->getIdentifier() : null,
             'name' => method_exists($client, 'getName') ? $client->getName() : null,
@@ -347,7 +359,9 @@ class Controller extends ControllerAdmin
             'version' => 'v1',
             'client' => $clientData,
             'userLogin' => $login,
-            'scopes' => array_values($scopes),
+            'scopes' => array_values($requestedScopes),
+            // nothing is granted when the request is denied, so the selected scope is not reported
+            'grantedScope' => $isApproved ? $selectedScope : null,
             'decision' => $isApproved ? 'allowed' : 'denied',
         ];
     }

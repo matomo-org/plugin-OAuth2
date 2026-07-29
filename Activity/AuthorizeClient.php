@@ -27,11 +27,15 @@ class AuthorizeClient extends BaseActivity
             return false;
         }
 
+        $grantedScope = $activityData['grantedScope'] ?? null;
+
         return [
             'version' => 'v1',
             'client' => $client,
             'userLogin' => $activityData['userLogin'] ?? null,
+            // the scopes the client requested, of which at most one can be granted
             'scopes' => array_values((array) ($activityData['scopes'] ?? [])),
+            'grantedScope' => $decision === 'allowed' && is_string($grantedScope) ? $grantedScope : null,
             'decision' => $decision,
         ];
     }
