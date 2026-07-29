@@ -7,6 +7,7 @@
 - The scope configured for a client is now applied as the maximum access level a user can grant it, as the setting has always been documented. A client configured with `matomo:admin` can therefore be granted `matomo:write` or `matomo:read` as well, which is what lets the user choose a scope on the consent screen. Clients can never be granted more than their configured scope. The client credentials grant is unchanged and still requires the exact configured scope, as no user is involved to choose a lower one.
 - Added code to harden the consent decision handling on the authorize endpoint
 - The `OAuth2.authorize.decision.end` event and the authorize activity keep reporting the granted scope in `scopes`, which is now empty when the request was denied, and add `requestedScopes` with everything the client asked for.
+- The activity log entry for an authorization decision now names the granted scope and the scopes the client requested, instead of only naming the client.
 
 5.2.4 - 2026-07-27
 - Added code to warn users if scope is downgraded
