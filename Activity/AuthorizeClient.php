@@ -9,6 +9,8 @@
 
 namespace Piwik\Plugins\OAuth2\Activity;
 
+use Piwik\Piwik;
+
 class AuthorizeClient extends BaseActivity
 {
     protected $eventName = 'OAuth2.authorize.decision.end';
@@ -40,13 +42,31 @@ class AuthorizeClient extends BaseActivity
 
     public function getTranslatedDescription($activityData, $performingUser)
     {
-        $client = $activityData['client'] ?? [];
+        $clientLabel = $this->getClientLabel($activityData['client'] ?? []);
         $decision = $activityData['decision'] ?? '';
+        $granted = implode(', ', array_values((array) ($activityData['scopes'] ?? [])));
+        $requested = implode(', ', array_values((array) ($activityData['requestedScopes'] ?? [])));
 
+        // decisions recorded before these scopes were stored can only name the client
         if ($decision === 'allowed') {
-            return sprintf('allowed OAuth 2.0 authorization request for client "%s"', $this->getClientLabel($client));
+            if ($granted === '') {
+                return Piwik::translate('OAuth2_AuthorizeAllowedActivity', [$clientLabel]);
+            }
+
+            if ($requested === '') {
+                return Piwik::translate('OAuth2_AuthorizeAllowedWithScopeActivity', [$clientLabel, $granted]);
+            }
+
+            return Piwik::translate(
+                'OAuth2_AuthorizeAllowedWithScopeAndRequestActivity',
+                [$clientLabel, $granted, $requested]
+            );
         }
 
-        return sprintf('denied OAuth 2.0 authorization request for client "%s"', $this->getClientLabel($client));
+        if ($requested === '') {
+            return Piwik::translate('OAuth2_AuthorizeDeniedActivity', [$clientLabel]);
+        }
+
+        return Piwik::translate('OAuth2_AuthorizeDeniedWithRequestActivity', [$clientLabel, $requested]);
     }
 }

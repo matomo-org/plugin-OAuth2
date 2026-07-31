@@ -9,6 +9,8 @@
 
 namespace Piwik\Plugins\OAuth2\Activity;
 
+use Piwik\Piwik;
+
 class RotateSecret extends BaseActivity
 {
     protected $eventName = 'API.OAuth2.rotateSecret.end';
@@ -39,6 +41,6 @@ class RotateSecret extends BaseActivity
     {
         $client = $activityData['client'] ?? [];
 
-        return sprintf('rotated secret for OAuth 2.0 client "%s"', $this->getClientLabel($client));
+        return Piwik::translate('OAuth2_RotateSecretActivity', [$this->getClientLabel($client)]);
     }
 }

@@ -9,6 +9,8 @@
 
 namespace Piwik\Plugins\OAuth2\Activity;
 
+use Piwik\Piwik;
+
 class CreateClient extends BaseActivity
 {
     protected $eventName = 'API.OAuth2.createClient.end';
@@ -37,6 +39,6 @@ class CreateClient extends BaseActivity
     {
         $client = $activityData['client'] ?? [];
 
-        return sprintf('created OAuth 2.0 client "%s"', $this->getClientLabel($client));
+        return Piwik::translate('OAuth2_CreateClientActivity', [$this->getClientLabel($client)]);
     }
 }
