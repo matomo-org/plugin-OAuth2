@@ -83,6 +83,32 @@ class ActivityDescriptionsTest extends \Piwik\Tests\Framework\TestCase\Integrati
         );
     }
 
+    public function test_getTranslatedDescription_namesOnlyTheGrantedScopeWhenRequestedScopesWereNotStored()
+    {
+        $description = $this->activity->getTranslatedDescription($this->activityData([
+            'scopes' => ['matomo:write'],
+            'decision' => 'allowed',
+        ]), 'superUserLogin');
+
+        $this->assertSame(
+            'allowed OAuth 2.0 authorization request for client "Claude Code Demo (c0dec0dec0dec0dec0dec0dec0dec0de)"'
+                . ' with scope matomo:write',
+            $description
+        );
+    }
+
+    public function test_getTranslatedDescription_describesDenialsRecordedBeforeScopesWereStored()
+    {
+        $description = $this->activity->getTranslatedDescription($this->activityData([
+            'decision' => 'denied',
+        ]), 'superUserLogin');
+
+        $this->assertSame(
+            'denied OAuth 2.0 authorization request for client "Claude Code Demo (c0dec0dec0dec0dec0dec0dec0dec0de)"',
+            $description
+        );
+    }
+
     /**
      * @dataProvider getClientActivityDescriptions
      */
