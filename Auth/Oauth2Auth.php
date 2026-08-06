@@ -30,7 +30,7 @@ class Oauth2Auth implements Auth
     private bool $isSuperUser;
 
     /**
-     * Set once credentials are supplied to this adapter.
+     * Set once password-based authentication is requested.
      *
      * @var bool
      */
@@ -95,7 +95,7 @@ class Oauth2Auth implements Auth
         #[\SensitiveParameter]
         $passwordHash
     ) {
-        if ($passwordHash !== null && $passwordHash !== '') {
+        if ($passwordHash !== null) {
             $this->passwordAuthRequested = true;
         }
     }
