@@ -1,5 +1,8 @@
 ## Changelog
 
+5.3.1 - 2026-08-06
+- Added code to harden authentication checks when a password confirmation is requested for an OAuth2 authenticated request
+
 5.3.0 - 2026-08-03
 - Authorize requests may now carry multiple scopes; the consent screen shows a radio group and the user grants exactly one scope (defaulting to the least privileged). Issued tokens still carry a single scope.
 - Scopes offered on the consent screen are limited to those the authorizing user can actually grant. If the user's access level is too low for every requested scope, the error now says so and names the scopes, instead of reporting an invalid client scope mapping.

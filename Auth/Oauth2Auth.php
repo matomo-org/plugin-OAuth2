@@ -30,11 +30,11 @@ class Oauth2Auth implements Auth
     private bool $isSuperUser;
 
     /**
-     * Set once a password has been supplied to this adapter (see setPassword()).
+     * Set once credentials are supplied to this adapter.
      *
      * @var bool
      */
-    private bool $passwordVerificationRequested = false;
+    private bool $passwordAuthRequested = false;
 
     private string $tokenAuth;
 
@@ -61,7 +61,9 @@ class Oauth2Auth implements Auth
         #[\SensitiveParameter]
         $token_auth
     ) {
-        // not used for OAuth2 authentication
+        if ($token_auth === null || $token_auth === '') {
+            $this->passwordAuthRequested = true;
+        }
     }
 
     public function getLogin()
@@ -84,8 +86,8 @@ class Oauth2Auth implements Auth
         $password
     ) {
         // OAuth2 authenticates by bearer token, not by password.
-        if ($password !== null && $password !== '') {
-            $this->passwordVerificationRequested = true;
+        if ($password !== null) {
+            $this->passwordAuthRequested = true;
         }
     }
 
@@ -93,13 +95,15 @@ class Oauth2Auth implements Auth
         #[\SensitiveParameter]
         $passwordHash
     ) {
-        // not used
+        if ($passwordHash !== null && $passwordHash !== '') {
+            $this->passwordAuthRequested = true;
+        }
     }
 
     public function authenticate()
     {
         // A token does not carry a password; refuse if asked to authenticate by one.
-        if ($this->passwordVerificationRequested) {
+        if ($this->passwordAuthRequested) {
             return new AuthResult(AuthResult::FAILURE, $this->login, $this->tokenAuth);
         }
 
