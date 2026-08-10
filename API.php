@@ -359,7 +359,7 @@ class API extends \Piwik\Plugin\API
             $redirects[] = $rawRedirectUri;
         }
 
-        return array_values($redirects);
+        return $redirects;
     }
 
     private function validateRedirectUris(array $redirectUris, array $grantTypes): void
