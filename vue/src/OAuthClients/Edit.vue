@@ -228,7 +228,7 @@ export default defineComponent({
     PasswordConfirmation,
   },
   data() {
-    const typeOptions = {
+    const typeOptions: Record<string, string> = {
       confidential: this.translate('OAuth2_AdminConfidential'),
       public: this.translate('OAuth2_AdminPublic'),
     };
