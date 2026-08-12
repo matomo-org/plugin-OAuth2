@@ -81,6 +81,12 @@ class Oauth2Auth implements Auth
         $this->login = $login;
     }
 
+    /**
+     * Piwik\Auth documents this as a string, but the tracker passes null
+     * (Tracker\Request and BulkTracking\Tracker\Handler both do).
+     *
+     * @param string|null $password
+     */
     public function setPassword(
         #[\SensitiveParameter]
         $password
@@ -91,6 +97,11 @@ class Oauth2Auth implements Auth
         }
     }
 
+    /**
+     * Piwik\Auth documents this as a string, but the tracker passes null.
+     *
+     * @param string|null $passwordHash
+     */
     public function setPasswordHash(
         #[\SensitiveParameter]
         $passwordHash

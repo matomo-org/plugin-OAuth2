@@ -1,9 +1,6 @@
 parameters:
     level: 5
     phpVersion: 80100
-    # The Auth interface documents string parameters but core passes null
-    # (see Tracker\Request), so PHPDoc types are not certain here.
-    treatPhpDocTypesAsCertain: false
     tmpDir: /tmp/phpstan/Oauth2/main
     paths:
         - .
