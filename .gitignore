@@ -2,3 +2,5 @@
 /tests/Integration/Importers/processed/
 /tests/UI/processed-ui-screenshots/
 .codex
+/vue/dist/*.umd.js
+/vue/dist/*.map

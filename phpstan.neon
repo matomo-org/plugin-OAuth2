@@ -6,7 +6,7 @@ parameters:
         - .
     excludePaths:
         - tests/*
-        - github-action-tests
+        - github-action-tests/ (?)
         - scoper.inc.php
         - vendor
         - Activity/*

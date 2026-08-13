@@ -1,5 +1,8 @@
 ## Changelog
 
+6.0.0 - 2026-08-11
+- Compatibility with Matomo 6
+
 5.3.1 - 2026-08-06
 - Added code to harden authentication checks when a password confirmation is requested for an OAuth2 authenticated request
 
