@@ -1,5 +1,8 @@
 ## Changelog
 
+6.0.1 - 2026-09-07
+- Re-designed client authorization screen
+
 6.0.0 - 2026-08-11
 - Compatibility with Matomo 6
 

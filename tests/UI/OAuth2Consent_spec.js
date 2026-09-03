@@ -55,7 +55,7 @@ describe("OAuth2Consent", function () {
         await page.goto(authorizeUrl(readScopeClientId, 'matomo:read matomo:write matomo:admin'));
         await page.waitForSelector('.card-authorize', { visible: true });
         // the only scope input is hidden here, so wait for the rendered scope instead
-        await page.waitForSelector('.alert-warning .scope', { visible: true });
+        await page.waitForSelector('.scope-list .scope', { visible: true });
         await page.waitForNetworkIdle();
 
         const radios = await page.$$('.card-authorize input[type="radio"]');
