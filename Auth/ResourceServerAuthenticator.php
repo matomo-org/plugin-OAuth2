@@ -59,16 +59,24 @@ class ResourceServerAuthenticator
             return;
         }
 
-        if (empty($login)) {
-            $client = $this->clientModel->find($clientId);
-            $login = $client['owner_login'] ?? '';
-        }
-
-        if (empty($login)) {
+        $client = $this->clientModel->find($clientId);
+        if (empty($client) || empty($client['active']) || empty($client['owner_login'])) {
             return;
         }
 
-        $user = $this->userModel->getUser($login);
+        // A client is removed together with its owner, so one that outlived them was left behind by
+        // a cleanup that did not complete. Its login is free to be given to somebody else, and the
+        // token must not start authenticating as whoever holds it now.
+        $owner = $this->userModel->getUser($client['owner_login']);
+        if (empty($owner['login'])) {
+            return;
+        }
+
+        if (empty($login)) {
+            $login = $client['owner_login'];
+        }
+
+        $user = $login === $client['owner_login'] ? $owner : $this->userModel->getUser($login);
         if (empty($user['login'])) {
             return;
         }

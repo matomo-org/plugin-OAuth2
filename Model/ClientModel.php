@@ -28,6 +28,12 @@ class ClientModel
         return array_map([$this, 'hydrate'], $rows);
     }
 
+    public function allByOwner(string $ownerLogin): array
+    {
+        $rows = Db::fetchAll('SELECT * FROM ' . $this->table . ' WHERE owner_login = ?', [$ownerLogin]);
+        return array_map([$this, 'hydrate'], $rows);
+    }
+
     public function find(string $clientId): ?array
     {
         $row = Db::fetchRow('SELECT * FROM ' . $this->table . ' WHERE client_id = ?', [$clientId]);

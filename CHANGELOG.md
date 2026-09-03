@@ -1,5 +1,10 @@
 ## Changelog
 
+6.0.2 - 2026-09-07
+- Deleting a user now removes the OAuth 2.0 clients they own, together with the access tokens, refresh tokens and authorization codes issued for those clients. The credentials the deleted user was granted for clients owned by somebody else are removed as well, while those clients themselves are kept.
+- Clients whose owner no longer exists are no longer accepted in any grant and their tokens no longer authenticate, so credentials left behind by an incomplete cleanup cannot start acting as a different user that is later given the same login.
+- Clients removed because their owner was deleted are now reported in the activity log, and the new `OAuth2.deleteClientWithOwner.end` event reports them to other plugins.
+
 6.0.1 - 2026-09-07
 - Re-designed client authorization screen
 

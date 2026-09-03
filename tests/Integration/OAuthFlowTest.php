@@ -17,6 +17,7 @@ use Piwik\Auth\Password;
 use Piwik\Container\StaticContainer;
 use Piwik\Date;
 use Piwik\Db;
+use Piwik\Plugins\OAuth2\Auth\Oauth2Auth;
 use Piwik\Plugins\OAuth2\Auth\ResourceServerAuthenticator;
 use Piwik\Plugins\OAuth2\Entities\AccessTokenEntity;
 use Piwik\Plugins\OAuth2\Entities\ClientEntity;
@@ -442,6 +443,158 @@ class OAuthFlowTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         $authenticator->prepareAuthenticationFromToken($accessToken->toString());
 
         $this->assertFalse(StaticContainer::get('Piwik\Auth') instanceof \Piwik\Plugins\OAuth2\Auth\Oauth2Auth);
+    }
+
+    public function test_clientCredentialsFlow_rejectsClientWhoseOwnerNoLongerExists()
+    {
+        $client = $this->createClientOwnedBy('oauth_orphan_grant_owner');
+
+        // control: the client issues tokens for as long as its owner exists
+        $response = $this->requestClientCredentialsToken($client);
+        $this->assertSame(200, $response->getStatusCode());
+
+        // stands in for a cleanup that did not complete, which is the only way a client can outlive
+        // its owner once UsersManager.deleteUser is handled
+        $this->deleteUserRowOnly('oauth_orphan_grant_owner');
+
+        $this->expectException(OAuthServerException::class);
+        $this->requestClientCredentialsToken($client);
+    }
+
+    public function test_prepareAuthenticationFromToken_rejectsBearerWhoseClientOwnerNoLongerExists()
+    {
+        // The token subject has to differ from the client owner, otherwise the missing subject
+        // already stops the token and the owner check is never what rejects it. An authorization
+        // code token carries the authorizing user, so the surviving admin holds the subject while
+        // the client belongs to the owner that is about to be deleted.
+        $client = $this->createAuthCodeClientOwnedBy('oauth_orphan_bearer_owner');
+        $payload = $this->exchangeOrphanClientAuthorizationCodeForTokens($client);
+
+        $authenticator = StaticContainer::get(ResourceServerAuthenticator::class);
+
+        // control: the bearer authenticates while the client owner exists
+        $authenticator->prepareAuthenticationFromToken($payload['access_token']);
+        $this->assertInstanceOf(Oauth2Auth::class, StaticContainer::get('Piwik\Auth'));
+
+        StaticContainer::getContainer()->set('Piwik\Auth', null);
+        $this->deleteUserRowOnly('oauth_orphan_bearer_owner');
+
+        // the token is unexpired, unrevoked, signed, and its subject still exists, so only the
+        // owner check can stop the client from acting for whoever is given that login next
+        $authenticator->prepareAuthenticationFromToken($payload['access_token']);
+        $this->assertNull(StaticContainer::get('Piwik\Auth'));
+    }
+
+    private function createAuthCodeClientOwnedBy(string $ownerLogin): array
+    {
+        $this->createSuperUser($ownerLogin);
+        FakeAccess::clearAccess(true, [], [], $ownerLogin);
+
+        $client = $this->api->createClient(
+            'Auth code client of ' . $ownerLogin,
+            ['authorization_code'],
+            'matomo:read',
+            ['https://orphan-client.example/callback'],
+            'Authorization code client',
+            'confidential',
+            '1',
+            'test-password'
+        );
+
+        FakeAccess::clearAccess(true);
+
+        return $client;
+    }
+
+    private function exchangeOrphanClientAuthorizationCodeForTokens(array $client): array
+    {
+        $authorizationServer = $this->serverFactory->makeAuthorizationServer();
+        $authorizationRequest = $authorizationServer->validateAuthorizationRequest(
+            (new ServerRequest('GET', 'https://matomo.example/authorize'))->withQueryParams([
+                'response_type' => 'code',
+                'client_id' => $client['client']['client_id'],
+                'redirect_uri' => 'https://orphan-client.example/callback',
+                'scope' => 'matomo:read',
+                'state' => 'test-state',
+            ])
+        );
+
+        $user = new UserEntity();
+        $user->setIdentifier(Fixture::ADMIN_USER_LOGIN);
+        $authorizationRequest->setUser($user);
+        $authorizationRequest->setAuthorizationApproved(true);
+
+        $authorizationResponse = $authorizationServer->completeAuthorizationRequest($authorizationRequest, new Response());
+        parse_str((string) parse_url($authorizationResponse->getHeaderLine('Location'), PHP_URL_QUERY), $redirectParams);
+
+        $this->assertNotEmpty($redirectParams['code']);
+
+        $tokenResponse = $authorizationServer->respondToAccessTokenRequest(
+            (new ServerRequest('POST', 'https://matomo.example/token'))->withParsedBody([
+                'grant_type' => 'authorization_code',
+                'client_id' => $client['client']['client_id'],
+                'client_secret' => $client['secret'],
+                'code' => $redirectParams['code'],
+                'redirect_uri' => 'https://orphan-client.example/callback',
+            ]),
+            new Response()
+        );
+
+        $tokenPayload = json_decode((string) $tokenResponse->getBody(), true);
+
+        $this->assertSame(200, $tokenResponse->getStatusCode());
+        $this->assertNotEmpty($tokenPayload['access_token']);
+        $this->assertSame(Fixture::ADMIN_USER_LOGIN, $this->userLoginForToken($client['client']['client_id']));
+
+        return $tokenPayload;
+    }
+
+    private function userLoginForToken(string $clientId): string
+    {
+        return (string) Db::fetchOne(
+            'SELECT user_login FROM ' . \Piwik\Common::prefixTable('oauth2_access_token')
+                . ' WHERE client_id = ? ORDER BY created_at DESC LIMIT 1',
+            [$clientId]
+        );
+    }
+
+    private function createClientOwnedBy(string $ownerLogin): array
+    {
+        $this->createSuperUser($ownerLogin);
+        FakeAccess::clearAccess(true, [], [], $ownerLogin);
+
+        $client = $this->api->createClient(
+            'Machine client of ' . $ownerLogin,
+            ['client_credentials'],
+            'matomo:write',
+            [],
+            'Server to server client',
+            'confidential',
+            '1',
+            'test-password'
+        );
+
+        FakeAccess::clearAccess(true);
+
+        return $client;
+    }
+
+    private function requestClientCredentialsToken(array $client): Response
+    {
+        return $this->serverFactory->makeAuthorizationServer()->respondToAccessTokenRequest(
+            (new ServerRequest('POST', 'https://matomo.example/token'))->withParsedBody([
+                'grant_type' => 'client_credentials',
+                'client_id' => $client['client']['client_id'],
+                'client_secret' => $client['secret'],
+                'scope' => 'matomo:write',
+            ]),
+            new Response()
+        );
+    }
+
+    private function deleteUserRowOnly(string $login): void
+    {
+        Db::query('DELETE FROM ' . \Piwik\Common::prefixTable('user') . ' WHERE login = ?', [$login]);
     }
 
     private function createConfidentialAuthCodeClient(): array
