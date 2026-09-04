@@ -123,6 +123,37 @@ class UserDeletionCleanupTest extends \Piwik\Tests\Framework\TestCase\Integratio
         self::assertArrayNotHasKey('secret_hash', $extracted['client']);
     }
 
+    public function test_deleteUser_keepsReportingTheRemainingClients_whenAListenerThrows()
+    {
+        $this->createUser(self::OWNER);
+        $clientIds = [
+            $this->createClient(self::OWNER),
+            $this->createClient(self::OWNER),
+            $this->createClient(self::OWNER),
+        ];
+
+        $seen = [];
+        Piwik::addAction('OAuth2.deleteClientWithOwner.end', function ($activityData) use (&$seen) {
+            $seen[] = $activityData['client']['client_id'];
+
+            // a listener of another plugin failing on the first client must not hide the rest
+            if (count($seen) === 1) {
+                throw new \Exception('listener failure');
+            }
+        });
+
+        UsersManagerAPI::getInstance()->deleteUser(self::OWNER);
+
+        sort($clientIds);
+        sort($seen);
+        self::assertSame($clientIds, $seen);
+
+        // the clients are deleted before any event is posted, so a listener can never keep one alive
+        foreach ($clientIds as $clientId) {
+            self::assertNull($this->clientModel->find($clientId));
+        }
+    }
+
     public function test_deleteUser_succeedsForAUserWithoutAnyOAuthObjects()
     {
         $this->createUser(self::OWNER);
