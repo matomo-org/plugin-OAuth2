@@ -9,6 +9,7 @@
     "AuthorizeDeniedWithRequestActivity": "denied OAuth 2.0 authorization request for client \"%1$s\", requested %2$s",
     "CreateClientActivity": "created OAuth 2.0 client \"%1$s\"",
     "DeleteClientActivity": "deleted OAuth 2.0 client \"%1$s\"",
+    "DeleteClientWithOwnerActivity": "deleted OAuth 2.0 client \"%1$s\" while deleting its owner \"%2$s\"",
     "PauseClientActivity": "paused OAuth 2.0 client \"%1$s\"",
     "ResumeClientActivity": "resumed OAuth 2.0 client \"%1$s\"",
     "RotateSecretActivity": "rotated secret for OAuth 2.0 client \"%1$s\"",
