@@ -14,12 +14,14 @@ use Piwik\Container\StaticContainer;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\DbHelper;
+use Piwik\Log\LoggerInterface;
 use Piwik\Option;
 use Piwik\Piwik;
 use Piwik\Plugin;
 use Piwik\Plugins\OAuth2\Access\OAuth2Access;
 use Piwik\Plugins\OAuth2\Auth\Oauth2Auth;
 use Piwik\Plugins\OAuth2\Auth\ResourceServerAuthenticator;
+use Piwik\Plugins\OAuth2\Service\ClientManager;
 use Piwik\Plugins\SitesManager\Model as SitesManagerModel;
 
 class OAuth2 extends Plugin
@@ -91,6 +93,7 @@ class OAuth2 extends Plugin
             'API.Request.authenticate' => 'onApiAuthenticate',
             'API.Request.dispatch' => 'onApiRequestDispatch',
             'Access.modifyUserAccess' => 'onModifyUserAccess',
+            'UsersManager.deleteUser' => ['function' => 'onUserDeleted', 'before' => true],
             'Db.getTablesInstalled' => 'getTablesInstalled',
             'Vue.getComponents' => 'registerVueComponents',
             'Translate.getClientSideTranslationKeys' => 'getClientSideTranslationKeys',
@@ -101,6 +104,95 @@ class OAuth2 extends Plugin
     public function getStylesheetFiles(&$stylesheets)
     {
         $stylesheets[] = "plugins/OAuth2/stylesheets/oauth2.less";
+    }
+
+    /**
+     * Removes the OAuth clients and credentials belonging to a deleted user.
+     *
+     * A login may be handed to a different person later on, and clients and tokens are associated
+     * with it as plain text, so anything left behind here would authenticate as whoever holds the
+     * login next. The listener is registered in the first callback group because
+     * `EventDispatcher::postEvent()` does not isolate observers from each other, and a listener of
+     * another plugin throwing before this one would otherwise skip the cleanup entirely.
+     *
+     * @param string $userLogin
+     */
+    public function onUserDeleted($userLogin)
+    {
+        $clientManager = StaticContainer::get(ClientManager::class);
+        $logger = StaticContainer::get(LoggerInterface::class);
+        $deletedClients = [];
+
+        try {
+            // The credentials go first, so that failing part way through leaves an unusable client
+            // behind instead of a token that still authenticates.
+            $clientManager->deleteCredentialsForUser($userLogin);
+
+            $deletedClients = $clientManager->deleteClientsForOwner($userLogin);
+        } catch (\Throwable $e) {
+            // UsersManager logs one generic message for the whole event, which is not enough to tell
+            // that OAuth credentials outlived their owner, so name the failure here. It is not
+            // rethrown, as this listener runs first and would otherwise skip the cleanup of every
+            // other plugin. Whatever is left behind stays unusable, see ClientRepository.
+            $logger->error(
+                'Failed to remove the OAuth2 clients and credentials of the deleted user {login}',
+                ['login' => $userLogin, 'exception' => $e]
+            );
+        }
+
+        // Every client above is already gone by now, so a listener throwing here cannot cost a
+        // deletion, only the activity log entries of the clients it did not reach. Post one at a
+        // time, as `EventDispatcher::postEvent()` does not isolate observers from each other.
+        foreach ($deletedClients as $client) {
+            try {
+                /**
+                 * Triggered after an OAuth 2.0 client was removed because its owner was deleted.
+                 *
+                 * Clients removed this way never pass through the API, so `API.OAuth2.deleteClient.end`
+                 * does not report them and this is the only event that does. The activity log relies
+                 * on it to keep naming the clients a user deletion took with it.
+                 *
+                 * **Example**
+                 *
+                 *     Piwik::addAction('OAuth2.deleteClientWithOwner.end', function ($activityData) {
+                 *         Log::info(sprintf(
+                 *             'OAuth2 client %s was removed with its owner %s',
+                 *             $activityData['client']['client_id'],
+                 *             $activityData['ownerLogin']
+                 *         ));
+                 *     });
+                 *
+                 * @param array $activityData Details of the removed client:
+                 *
+                 *                            - `version`: the payload version, currently `v1`.
+                 *                            - `client`: the removed client, with `client_id`, `name`,
+                 *                              `type` and `active`. The secret is never included.
+                 *                            - `ownerLogin`: the login of the deleted owner.
+                 */
+                Piwik::postEvent('OAuth2.deleteClientWithOwner.end', [
+                    [
+                        'version' => 'v1',
+                        // only the fields the activity log displays, never the secret hash
+                        'client' => [
+                            'client_id' => $client['client_id'] ?? null,
+                            'name' => $client['name'] ?? null,
+                            'type' => $client['type'] ?? null,
+                            'active' => $client['active'] ?? null,
+                        ],
+                        'ownerLogin' => $userLogin,
+                    ],
+                ]);
+            } catch (\Throwable $e) {
+                $logger->error(
+                    'Failed to report the removal of the OAuth2 client {clientId} of the deleted user {login}',
+                    [
+                        'clientId' => $client['client_id'] ?? null,
+                        'login' => $userLogin,
+                        'exception' => $e,
+                    ]
+                );
+            }
+        }
     }
 
     public function onApiAuthenticate(
@@ -303,6 +395,7 @@ class OAuth2 extends Plugin
             created_at DATETIME NOT NULL,
             PRIMARY KEY (token_id),
             INDEX idx_oauth2_access_client (client_id),
+            INDEX idx_oauth2_access_user (user_login),
             INDEX idx_oauth2_access_expires (expires_at)"
         );
 
@@ -331,6 +424,7 @@ class OAuth2 extends Plugin
             created_at DATETIME NOT NULL,
             PRIMARY KEY (code_id),
             INDEX idx_oauth2_authcode_client (client_id),
+            INDEX idx_oauth2_authcode_user (user_login),
             INDEX idx_oauth2_authcode_expires (expires_at)"
         );
     }
