@@ -126,6 +126,34 @@ class ClientManager
         $this->clientModel->delete($clientId);
     }
 
+    /**
+     * Removes every credential issued to the given user, including the ones issued for clients
+     * owned by somebody else. The clients themselves are left untouched, only their owner may
+     * remove them.
+     */
+    public function deleteCredentialsForUser(string $userLogin): void
+    {
+        $this->refreshTokenModel->deleteByUserLogin($userLogin);
+        $this->accessTokenModel->deleteByUserLogin($userLogin);
+        $this->authCodeModel->deleteByUserLogin($userLogin);
+    }
+
+    /**
+     * Removes every client the given user owns, together with the credentials issued for them.
+     *
+     * @return array The clients that were removed, as they were stored before the deletion.
+     */
+    public function deleteClientsForOwner(string $ownerLogin): array
+    {
+        $clients = $this->clientModel->allByOwner($ownerLogin);
+
+        foreach ($clients as $client) {
+            $this->delete($client['client_id']);
+        }
+
+        return $clients;
+    }
+
     private function generateSecret(): string
     {
         return bin2hex(random_bytes(32));

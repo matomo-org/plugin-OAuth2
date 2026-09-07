@@ -81,6 +81,11 @@ class AccessTokenModel
         Db::query('DELETE FROM ' . $this->table . ' WHERE client_id = ?', [$clientId]);
     }
 
+    public function deleteByUserLogin(string $userLogin): void
+    {
+        Db::query('DELETE FROM ' . $this->table . ' WHERE user_login = ?', [$userLogin]);
+    }
+
     private function encodeList(array $values): string
     {
         $normalized = array_values(array_filter(array_map('trim', $values), static function ($value) {

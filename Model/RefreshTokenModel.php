@@ -65,4 +65,12 @@ class RefreshTokenModel
             [$clientId]
         );
     }
+
+    public function deleteByUserLogin(string $userLogin): void
+    {
+        Db::query(
+            'DELETE rt FROM ' . $this->table . ' rt INNER JOIN ' . Common::prefixTable('oauth2_access_token') . ' at ON rt.access_token_id = at.token_id WHERE at.user_login = ?',
+            [$userLogin]
+        );
+    }
 }
