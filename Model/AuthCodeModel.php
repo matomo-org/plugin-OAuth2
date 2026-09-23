@@ -16,10 +16,12 @@ use Piwik\Date;
 class AuthCodeModel
 {
     private string $table;
+    private string $clientTable;
 
     public function __construct()
     {
         $this->table = Common::prefixTable('oauth2_auth_code');
+        $this->clientTable = Common::prefixTable('oauth2_client');
     }
 
     public function persist(array $data): void
@@ -53,8 +55,15 @@ class AuthCodeModel
 
     public function isRevoked(string $codeId): bool
     {
-        $row = Db::fetchRow('SELECT revoked FROM ' . $this->table . ' WHERE code_id = ?', [$codeId]);
-        return empty($row) || (bool) $row['revoked'] === true;
+        $row = Db::fetchRow(
+            'SELECT code.revoked, client.active AS client_active
+             FROM ' . $this->table . ' code
+             LEFT JOIN ' . $this->clientTable . ' client ON client.client_id = code.client_id
+             WHERE code.code_id = ?',
+            [$codeId]
+        );
+
+        return empty($row) || (bool) $row['revoked'] === true || empty($row['client_active']);
     }
 
     public function find(string $codeId): ?array
