@@ -157,7 +157,8 @@ final class Encoding
      *
      * @return string
      */
-    public static function saveBytesToChecksummedAsciiSafeString($header, #[\SensitiveParameter] $bytes)
+    public static function saveBytesToChecksummedAsciiSafeString($header, #[\SensitiveParameter]
+        $bytes)
     {
         // Headers must be a constant length to prevent one type's header from
         // being a prefix of another type's header, leading to ambiguity.
@@ -176,7 +177,8 @@ final class Encoding
      *
      * @return string
      */
-    public static function loadBytesFromChecksummedAsciiSafeString($expected_header, #[\SensitiveParameter] $string)
+    public static function loadBytesFromChecksummedAsciiSafeString($expected_header, #[\SensitiveParameter]
+        $string)
     {
         // Headers must be a constant length to prevent one type's header from
         // being a prefix of another type's header, leading to ambiguity.
