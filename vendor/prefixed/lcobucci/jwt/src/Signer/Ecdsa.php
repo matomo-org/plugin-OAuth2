@@ -3,6 +3,7 @@
 declare (strict_types=1);
 namespace Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer;
 
+use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Ecdsa\ConversionFailed;
 use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Ecdsa\MultibyteStringConverter;
 use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Ecdsa\SignatureConverter;
 use const OPENSSL_KEYTYPE_EC;
@@ -17,7 +18,12 @@ abstract class Ecdsa extends OpenSSL
     }
     public final function verify(string $expected, string $payload, Key $key) : bool
     {
-        return $this->verifySignature($this->converter->toAsn1($expected, $this->pointLength()), $payload, $key->contents());
+        try {
+            $asn1Signature = $this->converter->toAsn1($expected, $this->pointLength());
+        } catch (ConversionFailed) {
+            return \false;
+        }
+        return $this->verifySignature($asn1Signature, $payload, $key->contents());
     }
     /** {@inheritDoc} */
     protected final function guardAgainstIncompatibleKey(int $type, int $lengthInBits) : void

@@ -31,7 +31,9 @@ abstract class OpenSSL implements Signer
      * @throws CannotSignPayload
      * @throws InvalidKeyProvided
      */
-    protected final function createSignature(#[SensitiveParameter] string $pem, #[SensitiveParameter] string $passphrase, string $payload) : string
+    protected final function createSignature(#[SensitiveParameter]
+        string $pem, #[SensitiveParameter]
+            string $passphrase, string $payload) : string
     {
         $key = $this->getPrivateKey($pem, $passphrase);
         $signature = '';
@@ -41,7 +43,9 @@ abstract class OpenSSL implements Signer
         return $signature;
     }
     /** @throws CannotSignPayload */
-    private function getPrivateKey(#[SensitiveParameter] string $pem, #[SensitiveParameter] string $passphrase) : OpenSSLAsymmetricKey
+    private function getPrivateKey(#[SensitiveParameter]
+        string $pem, #[SensitiveParameter]
+            string $passphrase) : OpenSSLAsymmetricKey
     {
         return $this->validateKey(openssl_pkey_get_private($pem, $passphrase));
     }

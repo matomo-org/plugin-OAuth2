@@ -165,4 +165,8 @@ enum UriScheme : string
         }
         return $reverse[$port] ?? [];
     }
+    public function builder() : Builder
+    {
+        return new Builder(scheme: $this);
+    }
 }

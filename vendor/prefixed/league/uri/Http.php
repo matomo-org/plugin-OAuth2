@@ -14,6 +14,7 @@ namespace Matomo\Dependencies\OAuth2\League\Uri;
 use Matomo\Dependencies\OAuth2\Deprecated;
 use JsonSerializable;
 use Matomo\Dependencies\OAuth2\League\Uri\Contracts\Conditionable;
+use Matomo\Dependencies\OAuth2\League\Uri\Contracts\Transformable;
 use Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriException;
 use Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface;
 use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\SyntaxError;
@@ -27,7 +28,7 @@ use function ltrim;
 /**
  * @phpstan-import-type InputComponentMap from UriString
  */
-final class Http implements Stringable, Psr7UriInterface, JsonSerializable, Conditionable
+final class Http implements Stringable, Psr7UriInterface, JsonSerializable, Conditionable, Transformable
 {
     private readonly UriInterface $uri;
     private function __construct(UriInterface $uri)
@@ -204,6 +205,10 @@ final class Http implements Stringable, Psr7UriInterface, JsonSerializable, Cond
             null !== $onFail => $onFail($this),
             default => $this,
         } ?? $this;
+    }
+    public function transform(callable $callback) : static
+    {
+        return $callback($this);
     }
     public function withScheme(string $scheme) : self
     {

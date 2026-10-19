@@ -11,8 +11,8 @@ declare (strict_types=1);
 namespace Matomo\Dependencies\OAuth2\League\OAuth2\Server\AuthorizationValidators;
 
 use DateInterval;
+use DateTimeImmutable;
 use DateTimeZone;
-use Matomo\Dependencies\OAuth2\Lcobucci\Clock\SystemClock;
 use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Configuration;
 use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Exception;
 use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer\Key\InMemory;
@@ -25,6 +25,7 @@ use Matomo\Dependencies\OAuth2\League\OAuth2\Server\CryptKeyInterface;
 use Matomo\Dependencies\OAuth2\League\OAuth2\Server\CryptTrait;
 use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Exception\OAuthServerException;
 use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Repositories\AccessTokenRepositoryInterface;
+use Matomo\Dependencies\OAuth2\Psr\Clock\ClockInterface;
 use Matomo\Dependencies\OAuth2\Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use function date_default_timezone_get;
@@ -52,7 +53,13 @@ class BearerTokenValidator implements AuthorizationValidatorInterface
     private function initJwtConfiguration() : void
     {
         $this->jwtConfiguration = Configuration::forSymmetricSigner(new Sha256(), InMemory::plainText('empty', 'empty'));
-        $clock = new SystemClock(new DateTimeZone(date_default_timezone_get()));
+        $clock = new class implements ClockInterface
+        {
+            public function now() : DateTimeImmutable
+            {
+                return new DateTimeImmutable('now', new DateTimeZone(date_default_timezone_get()));
+            }
+        };
         $publicKeyContents = $this->publicKey->getKeyContents();
         if ($publicKeyContents === '') {
             throw new RuntimeException('Public key is empty');

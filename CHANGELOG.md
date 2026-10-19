@@ -1,5 +1,8 @@
 ## Changelog
 
+5.3.4
+- Updated dependencies
+
 5.3.3 - 2026-09-07
 - The access token and authorization code tables are now indexed by `user_login`, so deleting a user no longer scans them in full.
 - A plugin listening to `OAuth2.deleteClientWithOwner.end` that throws no longer stops the remaining removed clients from being reported. The clients themselves were already deleted before the event was posted, so only their activity log entries were affected.

@@ -10,8 +10,10 @@ use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Token as TokenInterface;
 use function array_key_exists;
 use function count;
 use function explode;
+use function get_debug_type;
 use function is_array;
 use function is_numeric;
+use function is_string;
 use function number_format;
 final class Parser implements ParserInterface
 {
@@ -118,10 +120,10 @@ final class Parser implements ParserInterface
         }
     }
     /** @throws InvalidTokenStructure */
-    private function convertDate(int|float|string $timestamp) : DateTimeImmutable
+    private function convertDate(mixed $timestamp) : DateTimeImmutable
     {
         if (!is_numeric($timestamp)) {
-            throw InvalidTokenStructure::dateIsNotParseable($timestamp);
+            throw InvalidTokenStructure::dateIsNotParseable(is_string($timestamp) ? $timestamp : get_debug_type($timestamp));
         }
         $normalizedTimestamp = number_format((float) $timestamp, self::MICROSECOND_PRECISION, '.', '');
         $date = DateTimeImmutable::createFromFormat('U.u', $normalizedTimestamp);
