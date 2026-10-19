@@ -11,14 +11,17 @@
 declare (strict_types=1);
 namespace Matomo\Dependencies\OAuth2\League\Uri;
 
+use BackedEnum;
 use Matomo\Dependencies\OAuth2\Deprecated;
 use Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriException;
 use Matomo\Dependencies\OAuth2\League\Uri\Contracts\UriInterface;
 use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\MissingFeature;
 use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\SyntaxError;
+use Matomo\Dependencies\OAuth2\League\Uri\UriTemplate\ExtractionResult;
 use Matomo\Dependencies\OAuth2\League\Uri\UriTemplate\Template;
 use Matomo\Dependencies\OAuth2\League\Uri\UriTemplate\TemplateCanNotBeExpanded;
 use Matomo\Dependencies\OAuth2\League\Uri\UriTemplate\VariableBag;
+use Matomo\Dependencies\OAuth2\League\Uri\UriTemplate\VariableCanNotBeExtracted;
 use Matomo\Dependencies\OAuth2\Psr\Http\Message\UriFactoryInterface;
 use Matomo\Dependencies\OAuth2\Psr\Http\Message\UriInterface as Psr7UriInterface;
 use Stringable;
@@ -26,6 +29,7 @@ use Uri\InvalidUriException;
 use Uri\Rfc3986\Uri as Rfc3986Uri;
 use Uri\WhatWg\InvalidUrlException;
 use Uri\WhatWg\Url as WhatWgUrl;
+use Uri\WhatWg\UrlValidationError;
 use function array_fill_keys;
 use function array_key_exists;
 use function class_exists;
@@ -47,12 +51,12 @@ final class UriTemplate implements Stringable
      * @throws SyntaxError if the template syntax is invalid
      * @throws TemplateCanNotBeExpanded if the template or the variables are invalid
      */
-    public function __construct(Stringable|string $template, iterable $defaultVariables = [])
+    public function __construct(BackedEnum|Stringable|string $template, iterable|ExtractionResult $defaultVariables = [])
     {
         $this->template = $template instanceof Template ? $template : Template::new($template);
         $this->defaultVariables = $this->filterVariables($defaultVariables);
     }
-    private function filterVariables(iterable $variables) : VariableBag
+    private function filterVariables(iterable|ExtractionResult $variables) : VariableBag
     {
         if (!$variables instanceof VariableBag) {
             $variables = new VariableBag($variables);
@@ -83,6 +87,13 @@ final class UriTemplate implements Stringable
         return iterator_to_array($this->defaultVariables);
     }
     /**
+     * Tells whether the UriTemplate contains variables.
+     */
+    public function hasVariable() : bool
+    {
+        return 0 < count($this->template->variableNames);
+    }
+    /**
      * Returns a new instance with the updated default variables.
      *
      * This method MUST retain the state of the current instance, and return
@@ -93,7 +104,7 @@ final class UriTemplate implements Stringable
      *
      * @throws TemplateCanNotBeExpanded if the variables are invalid
      */
-    public function withDefaultVariables(iterable $defaultVariables) : self
+    public function withDefaultVariables(iterable|ExtractionResult $defaultVariables) : self
     {
         $defaultVariables = $this->filterVariables($defaultVariables);
         if ($this->defaultVariables->equals($defaultVariables)) {
@@ -101,11 +112,11 @@ final class UriTemplate implements Stringable
         }
         return new self($this->template, $defaultVariables);
     }
-    private function templateExpanded(iterable $variables = []) : string
+    private function templateExpanded(iterable|ExtractionResult $variables = []) : string
     {
         return $this->template->expand($this->filterVariables($variables)->replace($this->defaultVariables));
     }
-    private function templateExpandedOrFail(iterable $variables = []) : string
+    private function templateExpandedOrFail(iterable|ExtractionResult $variables = []) : string
     {
         return $this->template->expandOrFail($this->filterVariables($variables)->replace($this->defaultVariables));
     }
@@ -113,7 +124,7 @@ final class UriTemplate implements Stringable
      * @throws TemplateCanNotBeExpanded if the variables are invalid
      * @throws UriException if the resulting expansion cannot be converted to a UriInterface instance
      */
-    public function expand(iterable $variables = [], Rfc3986Uri|WhatWgUrl|Stringable|string|null $baseUri = null) : UriInterface
+    public function expand(iterable|ExtractionResult $variables = [], Rfc3986Uri|WhatWgUrl|BackedEnum|Stringable|string|null $baseUri = null) : UriInterface
     {
         $expanded = $this->templateExpanded($variables);
         return null === $baseUri ? Uri::new($expanded) : Uri::parse($expanded, $baseUri) ?? throw new SyntaxError('Unable to expand URI');
@@ -124,30 +135,32 @@ final class UriTemplate implements Stringable
      * @throws InvalidUriException if the base URI cannot be converted to a Uri\Rfc3986\Uri instance
      * @throws InvalidUriException if the resulting expansion cannot be converted to a Uri\Rfc3986\Uri instance
      */
-    public function expandToUri(iterable $variables = [], Rfc3986Uri|WhatWgUrl|Stringable|string|null $baseUri = null) : Rfc3986Uri
+    public function expandToUri(iterable|ExtractionResult $variables = [], Rfc3986Uri|WhatWgUrl|BackedEnum|Stringable|string|null $baseUri = null) : Rfc3986Uri
     {
-        class_exists(Rfc3986Uri::class) || throw new MissingFeature('Support for ' . Rfc3986Uri::class . ' requires PHP8.5+ or a polyfill. Run "composer require league/uri-polyfill" or use you owm polyfill.');
+        class_exists(Rfc3986Uri::class) || throw new MissingFeature('Support for ' . Rfc3986Uri::class . ' requires PHP8.5+ or a polyfill. Run "composer require league/uri-polyfill" or use you own polyfill.');
         return new Rfc3986Uri($this->templateExpanded($variables), $this->newRfc3986Uri($baseUri));
     }
     /**
-     * @throws MissingFeature if no Uri\Whatwg\Url class is found
+     * @param list<UrlValidationError>|null $errors
+     *
      * @throws TemplateCanNotBeExpanded if the variables are invalid
      * @throws InvalidUrlException if the base URI cannot be converted to a Uri\Whatwg\Url instance
      * @throws InvalidUrlException if the resulting expansion cannot be converted to a Uri\Whatwg\Url instance
+     * @throws MissingFeature if no Uri\Whatwg\Url class is found
      */
-    public function expandToUrl(iterable $variables = [], Rfc3986Uri|WhatWgUrl|Stringable|string|null $baseUrl = null) : WhatWgUrl
+    public function expandToUrl(iterable|ExtractionResult $variables = [], Rfc3986Uri|WhatWgUrl|BackedEnum|Stringable|string|null $baseUrl = null, array|null &$errors = []) : WhatWgUrl
     {
-        class_exists(WhatWgUrl::class) || throw new MissingFeature('Support for ' . WhatWgUrl::class . ' requires PHP8.5+ or a polyfill. Run "composer require league/uri-polyfill" or use you owm polyfill.');
-        return new WhatWgUrl($this->templateExpanded($variables), $this->newWhatWgUrl($baseUrl));
+        class_exists(WhatWgUrl::class) || throw new MissingFeature('Support for ' . WhatWgUrl::class . ' requires PHP8.5+ or a polyfill. Run "composer require league/uri-polyfill" or use you own polyfill.');
+        return new WhatWgUrl($this->templateExpanded($variables), $this->newWhatWgUrl($baseUrl), $errors);
     }
     /**
      * @throws TemplateCanNotBeExpanded if the variables are invalid
      * @throws UriException if the resulting expansion cannot be converted to a UriInterface instance
      */
-    public function expandToPsr7Uri(iterable $variables = [], Rfc3986Uri|WhatWgUrl|Stringable|string|null $baseUrl = null, UriFactoryInterface $uriFactory = new HttpFactory()) : Psr7UriInterface
+    public function expandToPsr7Uri(iterable|ExtractionResult $variables = [], Rfc3986Uri|WhatWgUrl|BackedEnum|Stringable|string|null $baseUrl = null, UriFactoryInterface $uriFactory = new HttpFactory()) : Psr7UriInterface
     {
-        $uriString = $this->templateExpandedOrFail($variables);
-        return $uriFactory->createUri(null === $baseUrl ? $uriString : UriString::resolve($uriString, match (\true) {
+        $expanded = $this->templateExpanded($variables);
+        return $uriFactory->createUri(null === $baseUrl ? $expanded : UriString::resolve($expanded, match (\true) {
             $baseUrl instanceof Rfc3986Uri => $baseUrl->toRawString(),
             $baseUrl instanceof WhatWgUrl => $baseUrl->toUnicodeString(),
             default => $baseUrl,
@@ -157,7 +170,7 @@ final class UriTemplate implements Stringable
      * @throws TemplateCanNotBeExpanded if the variables are invalid or missing
      * @throws UriException if the resulting expansion cannot be converted to a UriInterface instance
      */
-    public function expandOrFail(iterable $variables = [], Rfc3986Uri|WhatWgUrl|Stringable|string|null $baseUri = null) : UriInterface
+    public function expandOrFail(iterable|ExtractionResult $variables = [], Rfc3986Uri|WhatWgUrl|BackedEnum|Stringable|string|null $baseUri = null) : UriInterface
     {
         $expanded = $this->templateExpandedOrFail($variables);
         return null === $baseUri ? Uri::new($expanded) : Uri::parse($expanded, $baseUri) ?? throw new SyntaxError('Unable to expand URI');
@@ -168,30 +181,32 @@ final class UriTemplate implements Stringable
      * @throws InvalidUriException if the base URI cannot be converted to a Uri\Rfc3986\Uri instance
      * @throws InvalidUriException if the resulting expansion cannot be converted to a Uri\Rfc3986\Uri instance
      */
-    public function expandToUriOrFail(iterable $variables = [], Rfc3986Uri|WhatWgUrl|Stringable|string|null $baseUri = null) : Rfc3986Uri
+    public function expandToUriOrFail(iterable|ExtractionResult $variables = [], Rfc3986Uri|WhatWgUrl|BackedEnum|Stringable|string|null $baseUri = null) : Rfc3986Uri
     {
-        class_exists(Rfc3986Uri::class) || throw new MissingFeature('Support for ' . Rfc3986Uri::class . ' requires PHP8.5+ or a polyfill. Run "composer require league/uri-polyfill" or use you owm polyfill.');
+        class_exists(Rfc3986Uri::class) || throw new MissingFeature('Support for ' . Rfc3986Uri::class . ' requires PHP8.5+ or a polyfill. Run "composer require league/uri-polyfill" or use you own polyfill.');
         return new Rfc3986Uri($this->templateExpandedOrFail($variables), $this->newRfc3986Uri($baseUri));
     }
     /**
+     * @param list<UrlValidationError>|null $errors
+     *
      * @throws MissingFeature if no Uri\Whatwg\Url class is found
      * @throws TemplateCanNotBeExpanded if the variables are invalid
      * @throws InvalidUrlException if the base URI cannot be converted to a Uri\Whatwg\Url instance
      * @throws InvalidUrlException if the resulting expansion cannot be converted to a Uri\Whatwg\Url instance
      */
-    public function expandToUrlOrFail(iterable $variables = [], Rfc3986Uri|WhatWgUrl|Stringable|string|null $baseUrl = null) : WhatWgUrl
+    public function expandToUrlOrFail(iterable|ExtractionResult $variables = [], Rfc3986Uri|WhatWgUrl|BackedEnum|Stringable|string|null $baseUrl = null, array|null &$errors = []) : WhatWgUrl
     {
-        class_exists(WhatWgUrl::class) || throw new MissingFeature('Support for ' . WhatWgUrl::class . ' requires PHP8.5+ or a polyfill. Run "composer require league/uri-polyfill" or use you owm polyfill.');
-        return new WhatWgUrl($this->templateExpandedOrFail($variables), $this->newWhatWgUrl($baseUrl));
+        class_exists(WhatWgUrl::class) || throw new MissingFeature('Support for ' . WhatWgUrl::class . ' requires PHP8.5+ or a polyfill. Run "composer require league/uri-polyfill" or use you own polyfill.');
+        return new WhatWgUrl($this->templateExpandedOrFail($variables), $this->newWhatWgUrl($baseUrl), $errors);
     }
     /**
      * @throws TemplateCanNotBeExpanded if the variables are invalid
      * @throws UriException if the resulting expansion cannot be converted to a UriInterface instance
      */
-    public function expandToPsr7UriOrFail(iterable $variables = [], Rfc3986Uri|WhatWgUrl|Stringable|string|null $baseUrl = null, UriFactoryInterface $uriFactory = new HttpFactory()) : Psr7UriInterface
+    public function expandToPsr7UriOrFail(iterable|ExtractionResult $variables = [], Rfc3986Uri|WhatWgUrl|BackedEnum|Stringable|string|null $baseUrl = null, UriFactoryInterface $uriFactory = new HttpFactory()) : Psr7UriInterface
     {
-        $uriString = $this->templateExpandedOrFail($variables);
-        return $uriFactory->createUri(null === $baseUrl ? $uriString : UriString::resolve($uriString, match (\true) {
+        $expanded = $this->templateExpandedOrFail($variables);
+        return $uriFactory->createUri(null === $baseUrl ? $expanded : UriString::resolve($expanded, match (\true) {
             $baseUrl instanceof Rfc3986Uri => $baseUrl->toRawString(),
             $baseUrl instanceof WhatWgUrl => $baseUrl->toUnicodeString(),
             default => $baseUrl,
@@ -200,26 +215,49 @@ final class UriTemplate implements Stringable
     /**
      * @throws InvalidUrlException
      */
-    private function newWhatWgUrl(Rfc3986Uri|WhatWgUrl|Stringable|string|null $url = null) : ?WhatWgUrl
+    private function newWhatWgUrl(Rfc3986Uri|WhatWgUrl|BackedEnum|Stringable|string|null $url = null) : ?WhatWgUrl
     {
         return match (\true) {
             null === $url => null,
             $url instanceof WhatWgUrl => $url,
             $url instanceof Rfc3986Uri => new WhatWgUrl($url->toRawString()),
+            $url instanceof BackedEnum => new WhatWgUrl((string) $url->value),
             default => new WhatWgUrl((string) $url),
         };
     }
     /**
      * @throws InvalidUriException
      */
-    private function newRfc3986Uri(Rfc3986Uri|WhatWgUrl|Stringable|string|null $uri = null) : ?Rfc3986Uri
+    private function newRfc3986Uri(Rfc3986Uri|WhatWgUrl|BackedEnum|Stringable|string|null $uri = null) : ?Rfc3986Uri
     {
         return match (\true) {
             null === $uri => null,
             $uri instanceof Rfc3986Uri => $uri,
             $uri instanceof WhatWgUrl => new Rfc3986Uri($uri->toAsciiString()),
+            $uri instanceof BackedEnum => new Rfc3986Uri((string) $uri->value),
             default => new Rfc3986Uri((string) $uri),
         };
+    }
+    /**
+     * Extracts the variables from a URI using the template.
+     */
+    public function extract(Rfc3986Uri|WhatWgUrl|BackedEnum|Stringable|string $uri) : ExtractionResult
+    {
+        return $this->template->extract($uri);
+    }
+    /**
+     * @throws VariableCanNotBeExtracted if the URI cannot be extracted using the template
+     */
+    public function extractOrFail(Rfc3986Uri|WhatWgUrl|BackedEnum|Stringable|string $uri) : ExtractionResult
+    {
+        return $this->template->extractOrFail($uri);
+    }
+    /**
+     * Returns whether the URI matches the template.
+     */
+    public function match(Rfc3986Uri|WhatWgUrl|BackedEnum|Stringable|string $uri) : bool
+    {
+        return $this->template->match($uri);
     }
     /**
      * DEPRECATION WARNING! This method will be removed in the next major point release.

@@ -51,17 +51,17 @@ class RefreshTokenGrant extends AbstractGrant
                 throw OAuthServerException::invalidScope($scope->getIdentifier());
             }
         }
-        $scopes = $this->scopeRepository->finalizeScopes($scopes, $this->getIdentifier(), $client);
+        $userId = $oldRefreshToken['user_id'];
+        if (is_int($userId)) {
+            $userId = (string) $userId;
+        }
+        $scopes = $this->scopeRepository->finalizeScopes($scopes, $this->getIdentifier(), $client, $userId);
         // Expire old tokens
         $this->accessTokenRepository->revokeAccessToken($oldRefreshToken['access_token_id']);
         if ($this->revokeRefreshTokens) {
             $this->refreshTokenRepository->revokeRefreshToken($oldRefreshToken['refresh_token_id']);
         }
         // Issue and persist new access token
-        $userId = $oldRefreshToken['user_id'];
-        if (is_int($userId)) {
-            $userId = (string) $userId;
-        }
         $accessToken = $this->issueAccessToken($accessTokenTTL, $client, $userId, $scopes);
         $this->getEmitter()->emit(new RequestAccessTokenEvent(RequestEvent::ACCESS_TOKEN_ISSUED, $request, $accessToken));
         $responseType->setAccessToken($accessToken);

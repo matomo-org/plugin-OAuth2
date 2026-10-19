@@ -15,7 +15,8 @@ use Matomo\Dependencies\OAuth2\Psr\Http\Message\ServerRequestInterface;
 use SensitiveParameter;
 class RequestAccessTokenEvent extends RequestEvent
 {
-    public function __construct(string $name, ServerRequestInterface $request, #[SensitiveParameter] private AccessTokenEntityInterface $accessToken)
+    public function __construct(string $name, ServerRequestInterface $request, #[SensitiveParameter]
+        private AccessTokenEntityInterface $accessToken)
     {
         parent::__construct($name, $request);
     }

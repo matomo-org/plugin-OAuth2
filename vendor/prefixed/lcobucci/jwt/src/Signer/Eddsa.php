@@ -7,6 +7,8 @@ use Matomo\Dependencies\OAuth2\Lcobucci\JWT\Signer;
 use SodiumException;
 use function sodium_crypto_sign_detached;
 use function sodium_crypto_sign_verify_detached;
+use function strlen;
+use const SODIUM_CRYPTO_SIGN_BYTES;
 final class Eddsa implements Signer
 {
     public function algorithmId() : string
@@ -23,6 +25,9 @@ final class Eddsa implements Signer
     }
     public function verify(string $expected, string $payload, Key $key) : bool
     {
+        if (strlen($expected) !== SODIUM_CRYPTO_SIGN_BYTES) {
+            return \false;
+        }
         try {
             return sodium_crypto_sign_verify_detached($expected, $payload, $key->contents());
         } catch (SodiumException $sodiumException) {

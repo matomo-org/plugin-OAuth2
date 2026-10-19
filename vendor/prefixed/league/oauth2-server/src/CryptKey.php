@@ -34,7 +34,8 @@ class CryptKey implements CryptKeyInterface
      */
     protected string $keyContents;
     protected string $keyPath;
-    public function __construct(string $keyPath, #[SensitiveParameter] protected ?string $passPhrase = null, bool $keyPermissionsCheck = \true)
+    public function __construct(string $keyPath, #[SensitiveParameter]
+        protected ?string $passPhrase = null, bool $keyPermissionsCheck = \true)
     {
         if (str_starts_with($keyPath, self::FILE_PREFIX) === \false && $this->isValidKey($keyPath, $this->passPhrase ?? '')) {
             $this->keyContents = $keyPath;
@@ -78,7 +79,9 @@ class CryptKey implements CryptKeyInterface
     /**
      * Validate key contents.
      */
-    private function isValidKey(#[SensitiveParameter] string $contents, #[SensitiveParameter] string $passPhrase) : bool
+    private function isValidKey(#[SensitiveParameter]
+        string $contents, #[SensitiveParameter]
+            string $passPhrase) : bool
     {
         $privateKey = openssl_pkey_get_private($contents, $passPhrase);
         $key = $privateKey instanceof OpenSSLAsymmetricKey ? $privateKey : openssl_pkey_get_public($contents);
