@@ -30,6 +30,8 @@ use function implode;
 use function in_array;
 use function preg_match;
 use function rawurldecode;
+use function sort;
+use function str_contains;
 use function str_repeat;
 use function str_replace;
 use function strpos;
@@ -218,18 +220,17 @@ class BaseUri implements Stringable, JsonSerializable, UriAccess
      */
     public function isSameDocument(Stringable|string $uri) : bool
     {
-        return self::normalizedUri($this->uri)->isSameDocument(self::normalizedUri($uri));
+        return self::normalizedUri($this->uri)->equals(self::normalizedUri($uri));
     }
     private static function normalizedUri(Stringable|string $uri) : Uri
     {
-        $uri = $uri instanceof Uri ? $uri : Uri::new($uri);
-        $host = $uri->getHost();
-        if (null === $host || Ipv4Converter::fromEnvironment()->isIpv4($host) || IPv6Converter::isIpv6($host)) {
-            return $uri;
-        }
-        /** @var Uri $uri */
-        $uri = $uri->withHost(IdnaConverter::toUnicode((string) Ipv6Converter::compress($host))->domain());
-        return $uri;
+        // Normalize the URI according to RFC3986
+        $uri = ($uri instanceof Uri ? $uri : Uri::new($uri))->normalize();
+        return $uri->when(condition: '' === $uri->getPath() && null !== $uri->getAuthority(), onSuccess: fn(Uri $uri) => $uri->withPath('/'))->when(condition: null !== ($query = $uri->getQuery()) && str_contains($query, '&'), onSuccess: function (Uri $uri) use($query) {
+            $pairs = explode('&', (string) $query);
+            sort($pairs);
+            return $uri->withQuery(implode('&', $pairs));
+        });
     }
     /**
      * Tells whether the URI contains an Internationalized Domain Name (IDN).
@@ -256,7 +257,7 @@ class BaseUri implements Stringable, JsonSerializable, UriAccess
      */
     public function resolve(Stringable|string $uri) : static
     {
-        $resolved = UriString::resolve($uri, $this->uri->__toString());
+        $resolved = UriString::resolve($uri, $this->uri);
         return new static(match ($this->uriFactory) {
             null => Uri::new($resolved),
             default => $this->uriFactory->createUri($resolved),

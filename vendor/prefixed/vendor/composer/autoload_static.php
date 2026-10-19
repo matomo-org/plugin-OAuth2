@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInite7cc1af1473e3eea2dc8ddbf0ce77476
+class ComposerStaticInit2bc3e3077cc2695f4f4e517ce612fee7
 {
     public static $classMap = array (
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
@@ -22,9 +22,6 @@ class ComposerStaticInite7cc1af1473e3eea2dc8ddbf0ce77476
         'Matomo\\Dependencies\\OAuth2\\Defuse\\Crypto\\KeyOrPassword' => __DIR__ . '/../..' . '/defuse/php-encryption/src/KeyOrPassword.php',
         'Matomo\\Dependencies\\OAuth2\\Defuse\\Crypto\\KeyProtectedByPassword' => __DIR__ . '/../..' . '/defuse/php-encryption/src/KeyProtectedByPassword.php',
         'Matomo\\Dependencies\\OAuth2\\Defuse\\Crypto\\RuntimeTests' => __DIR__ . '/../..' . '/defuse/php-encryption/src/RuntimeTests.php',
-        'Matomo\\Dependencies\\OAuth2\\Lcobucci\\Clock\\Clock' => __DIR__ . '/../..' . '/lcobucci/clock/src/Clock.php',
-        'Matomo\\Dependencies\\OAuth2\\Lcobucci\\Clock\\FrozenClock' => __DIR__ . '/../..' . '/lcobucci/clock/src/FrozenClock.php',
-        'Matomo\\Dependencies\\OAuth2\\Lcobucci\\Clock\\SystemClock' => __DIR__ . '/../..' . '/lcobucci/clock/src/SystemClock.php',
         'Matomo\\Dependencies\\OAuth2\\Lcobucci\\JWT\\Builder' => __DIR__ . '/../..' . '/lcobucci/jwt/src/Builder.php',
         'Matomo\\Dependencies\\OAuth2\\Lcobucci\\JWT\\ClaimsFormatter' => __DIR__ . '/../..' . '/lcobucci/jwt/src/ClaimsFormatter.php',
         'Matomo\\Dependencies\\OAuth2\\Lcobucci\\JWT\\Configuration' => __DIR__ . '/../..' . '/lcobucci/jwt/src/Configuration.php',
@@ -177,6 +174,7 @@ class ComposerStaticInite7cc1af1473e3eea2dc8ddbf0ce77476
         'Matomo\\Dependencies\\OAuth2\\League\\OAuth2\\Server\\ResponseTypes\\RedirectResponse' => __DIR__ . '/../..' . '/league/oauth2-server/src/ResponseTypes/RedirectResponse.php',
         'Matomo\\Dependencies\\OAuth2\\League\\OAuth2\\Server\\ResponseTypes\\ResponseTypeInterface' => __DIR__ . '/../..' . '/league/oauth2-server/src/ResponseTypes/ResponseTypeInterface.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\BaseUri' => __DIR__ . '/../..' . '/league/uri/BaseUri.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\Builder' => __DIR__ . '/../..' . '/league/uri/Builder.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\Contracts\\AuthorityInterface' => __DIR__ . '/../..' . '/league/uri-interfaces/Contracts/AuthorityInterface.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\Contracts\\Conditionable' => __DIR__ . '/../..' . '/league/uri-interfaces/Contracts/Conditionable.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\Contracts\\DataPathInterface' => __DIR__ . '/../..' . '/league/uri-interfaces/Contracts/DataPathInterface.php',
@@ -189,6 +187,7 @@ class ComposerStaticInite7cc1af1473e3eea2dc8ddbf0ce77476
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\Contracts\\PortInterface' => __DIR__ . '/../..' . '/league/uri-interfaces/Contracts/PortInterface.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\Contracts\\QueryInterface' => __DIR__ . '/../..' . '/league/uri-interfaces/Contracts/QueryInterface.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\Contracts\\SegmentedPathInterface' => __DIR__ . '/../..' . '/league/uri-interfaces/Contracts/SegmentedPathInterface.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\Contracts\\Transformable' => __DIR__ . '/../..' . '/league/uri-interfaces/Contracts/Transformable.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\Contracts\\UriAccess' => __DIR__ . '/../..' . '/league/uri-interfaces/Contracts/UriAccess.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\Contracts\\UriComponentInterface' => __DIR__ . '/../..' . '/league/uri-interfaces/Contracts/UriComponentInterface.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\Contracts\\UriException' => __DIR__ . '/../..' . '/league/uri-interfaces/Contracts/UriException.php',
@@ -200,6 +199,9 @@ class ComposerStaticInite7cc1af1473e3eea2dc8ddbf0ce77476
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\Exceptions\\OffsetOutOfBounds' => __DIR__ . '/../..' . '/league/uri-interfaces/Exceptions/OffsetOutOfBounds.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\Exceptions\\SyntaxError' => __DIR__ . '/../..' . '/league/uri-interfaces/Exceptions/SyntaxError.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\FeatureDetection' => __DIR__ . '/../..' . '/league/uri-interfaces/FeatureDetection.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\HostFormat' => __DIR__ . '/../..' . '/league/uri-interfaces/HostFormat.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\HostRecord' => __DIR__ . '/../..' . '/league/uri-interfaces/HostRecord.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\HostType' => __DIR__ . '/../..' . '/league/uri-interfaces/HostType.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\Http' => __DIR__ . '/../..' . '/league/uri/Http.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\HttpFactory' => __DIR__ . '/../..' . '/league/uri/HttpFactory.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\IPv4\\BCMathCalculator' => __DIR__ . '/../..' . '/league/uri-interfaces/IPv4/BCMathCalculator.php',
@@ -213,8 +215,13 @@ class ComposerStaticInite7cc1af1473e3eea2dc8ddbf0ce77476
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\Idna\\Option' => __DIR__ . '/../..' . '/league/uri-interfaces/Idna/Option.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\Idna\\Result' => __DIR__ . '/../..' . '/league/uri-interfaces/Idna/Result.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\KeyValuePair\\Converter' => __DIR__ . '/../..' . '/league/uri-interfaces/KeyValuePair/Converter.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\Occurrence' => __DIR__ . '/../..' . '/league/uri-interfaces/Occurrence.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\QueryComposeMode' => __DIR__ . '/../..' . '/league/uri-interfaces/QueryComposeMode.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\QueryExtractMode' => __DIR__ . '/../..' . '/league/uri-interfaces/QueryExtractMode.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\QueryString' => __DIR__ . '/../..' . '/league/uri-interfaces/QueryString.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\SchemeType' => __DIR__ . '/../..' . '/league/uri/SchemeType.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\StringCoercionMode' => __DIR__ . '/../..' . '/league/uri-interfaces/StringCoercionMode.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\TypeConverter' => __DIR__ . '/../..' . '/league/uri/TypeConverter.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\Uri' => __DIR__ . '/../..' . '/league/uri/Uri.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UriComparisonMode' => __DIR__ . '/../..' . '/league/uri-interfaces/UriComparisonMode.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UriInfo' => __DIR__ . '/../..' . '/league/uri/UriInfo.php',
@@ -223,11 +230,32 @@ class ComposerStaticInite7cc1af1473e3eea2dc8ddbf0ce77476
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UriString' => __DIR__ . '/../..' . '/league/uri-interfaces/UriString.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UriTemplate' => __DIR__ . '/../..' . '/league/uri/UriTemplate.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UriTemplate\\Expression' => __DIR__ . '/../..' . '/league/uri/UriTemplate/Expression.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UriTemplate\\ExtractedValue' => __DIR__ . '/../..' . '/league/uri/UriTemplate/ExtractedValue.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UriTemplate\\ExtractionErrorReason' => __DIR__ . '/../..' . '/league/uri/UriTemplate/ExtractionErrorReason.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UriTemplate\\ExtractionResult' => __DIR__ . '/../..' . '/league/uri/UriTemplate/ExtractionResult.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UriTemplate\\Literal' => __DIR__ . '/../..' . '/league/uri/UriTemplate/Literal.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UriTemplate\\Operator' => __DIR__ . '/../..' . '/league/uri/UriTemplate/Operator.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UriTemplate\\Template' => __DIR__ . '/../..' . '/league/uri/UriTemplate/Template.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UriTemplate\\TemplateCanNotBeExpanded' => __DIR__ . '/../..' . '/league/uri/UriTemplate/TemplateCanNotBeExpanded.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UriTemplate\\VarSpecifier' => __DIR__ . '/../..' . '/league/uri/UriTemplate/VarSpecifier.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UriTemplate\\VariableBag' => __DIR__ . '/../..' . '/league/uri/UriTemplate/VariableBag.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UriTemplate\\VariableCanNotBeExtracted' => __DIR__ . '/../..' . '/league/uri/UriTemplate/VariableCanNotBeExtracted.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UrlPattern' => __DIR__ . '/../..' . '/league/uri/UrlPattern.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UrlPatternBuilder' => __DIR__ . '/../..' . '/league/uri/UrlPatternBuilder.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UrlPattern\\Component' => __DIR__ . '/../..' . '/league/uri/UrlPattern/Component.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UrlPattern\\ComponentName' => __DIR__ . '/../..' . '/league/uri/UrlPattern/ComponentName.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UrlPattern\\ComponentResult' => __DIR__ . '/../..' . '/league/uri/UrlPattern/ComponentResult.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UrlPattern\\MatchMode' => __DIR__ . '/../..' . '/league/uri/UrlPattern/MatchMode.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UrlPattern\\Modifier' => __DIR__ . '/../..' . '/league/uri/UrlPattern/Modifier.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UrlPattern\\Parser' => __DIR__ . '/../..' . '/league/uri/UrlPattern/Parser.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UrlPattern\\Part' => __DIR__ . '/../..' . '/league/uri/UrlPattern/Part.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UrlPattern\\PartType' => __DIR__ . '/../..' . '/league/uri/UrlPattern/PartType.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UrlPattern\\PathToRegexp' => __DIR__ . '/../..' . '/league/uri/UrlPattern/PathToRegexp.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UrlPattern\\PatternType' => __DIR__ . '/../..' . '/league/uri/UrlPattern/PatternType.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UrlPattern\\Result' => __DIR__ . '/../..' . '/league/uri/UrlPattern/Result.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UrlPattern\\State' => __DIR__ . '/../..' . '/league/uri/UrlPattern/State.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UrlPattern\\Token' => __DIR__ . '/../..' . '/league/uri/UrlPattern/Token.php',
+        'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UrlPattern\\TokenType' => __DIR__ . '/../..' . '/league/uri/UrlPattern/TokenType.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\Urn' => __DIR__ . '/../..' . '/league/uri/Urn.php',
         'Matomo\\Dependencies\\OAuth2\\League\\Uri\\UrnComparisonMode' => __DIR__ . '/../..' . '/league/uri-interfaces/UrnComparisonMode.php',
         'Matomo\\Dependencies\\OAuth2\\Nyholm\\Psr7Server\\ServerRequestCreator' => __DIR__ . '/../..' . '/nyholm/psr7-server/src/ServerRequestCreator.php',
@@ -267,7 +295,7 @@ class ComposerStaticInite7cc1af1473e3eea2dc8ddbf0ce77476
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->classMap = ComposerStaticInite7cc1af1473e3eea2dc8ddbf0ce77476::$classMap;
+            $loader->classMap = ComposerStaticInit2bc3e3077cc2695f4f4e517ce612fee7::$classMap;
 
         }, null, ClassLoader::class);
     }

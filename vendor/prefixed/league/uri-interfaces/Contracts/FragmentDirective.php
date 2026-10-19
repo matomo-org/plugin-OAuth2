@@ -14,6 +14,8 @@ namespace Matomo\Dependencies\OAuth2\League\Uri\Contracts;
 use Stringable;
 /**
  * @see https://wicg.github.io/scroll-to-text-fragment/#the-fragment-directive
+ *
+ * @method string toFragmentValue() returns the encoded string representation of the directive as a fragment string
  */
 interface FragmentDirective extends Stringable
 {
@@ -28,7 +30,7 @@ interface FragmentDirective extends Stringable
      */
     public function value() : ?string;
     /**
-     * The encoded string representation of the fragment.
+     * The encoded string representation of the directive.
      */
     public function toString() : string;
     /**

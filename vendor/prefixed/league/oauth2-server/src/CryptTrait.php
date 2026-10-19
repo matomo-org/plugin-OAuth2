@@ -68,7 +68,8 @@ trait CryptTrait
             throw new LogicException($e->getMessage(), 0, $e);
         }
     }
-    public function setEncryptionKey(#[SensitiveParameter] Key|string|null $key = null) : void
+    public function setEncryptionKey(#[SensitiveParameter]
+        Key|string|null $key = null) : void
     {
         $this->encryptionKey = $key;
     }
