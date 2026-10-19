@@ -11,6 +11,7 @@
 declare (strict_types=1);
 namespace Matomo\Dependencies\OAuth2\League\Uri\Idna;
 
+use BackedEnum;
 use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\ConversionFailed;
 use Matomo\Dependencies\OAuth2\League\Uri\Exceptions\SyntaxError;
 use Matomo\Dependencies\OAuth2\League\Uri\FeatureDetection;
@@ -51,7 +52,7 @@ final class Converter
      * @throws SyntaxError if the string cannot be converted to UNICODE using IDN UTS46 algorithm
      * @throws ConversionFailed if the conversion returns error
      */
-    public static function toAsciiOrFail(Stringable|string $domain, Option|int|null $options = null) : string
+    public static function toAsciiOrFail(BackedEnum|Stringable|string $domain, Option|int|null $options = null) : string
     {
         $result = self::toAscii($domain, $options);
         return match (\true) {
@@ -66,8 +67,11 @@ final class Converter
      *
      * @throws SyntaxError if the string cannot be converted to ASCII using IDN UTS46 algorithm
      */
-    public static function toAscii(Stringable|string $domain, Option|int|null $options = null) : Result
+    public static function toAscii(BackedEnum|Stringable|string $domain, Option|int|null $options = null) : Result
     {
+        if ($domain instanceof BackedEnum) {
+            $domain = $domain->value;
+        }
         $domain = rawurldecode((string) $domain);
         if (1 === preg_match(self::REGEXP_IDNA_PATTERN, $domain)) {
             FeatureDetection::supportsIdn();
@@ -95,7 +99,7 @@ final class Converter
      *
      * @throws ConversionFailed if the conversion returns error
      */
-    public static function toUnicodeOrFail(Stringable|string $domain, Option|int|null $options = null) : string
+    public static function toUnicodeOrFail(BackedEnum|Stringable|string $domain, Option|int|null $options = null) : string
     {
         $result = self::toUnicode($domain, $options);
         return match (\true) {
@@ -110,8 +114,11 @@ final class Converter
      *
      * @throws SyntaxError if the string cannot be converted to UNICODE using IDN UTS46 algorithm
      */
-    public static function toUnicode(Stringable|string $domain, Option|int|null $options = null) : Result
+    public static function toUnicode(BackedEnum|Stringable|string $domain, Option|int|null $options = null) : Result
     {
+        if ($domain instanceof BackedEnum) {
+            $domain = $domain->value;
+        }
         $domain = rawurldecode((string) $domain);
         if (\false === stripos($domain, 'xn--')) {
             return Result::fromIntl(['result' => strtolower($domain), 'isTransitionalDifferent' => \false, 'errors' => Error::NONE->value]);
@@ -133,8 +140,11 @@ final class Converter
      *
      * Returns false if the host is invalid or if its conversion yields the same result
      */
-    public static function isIdn(Stringable|string|null $domain) : bool
+    public static function isIdn(BackedEnum|Stringable|string|null $domain) : bool
     {
+        if ($domain instanceof BackedEnum) {
+            $domain = $domain->value;
+        }
         $domain = strtolower(rawurldecode((string) $domain));
         $result = match (1) {
             preg_match(self::REGEXP_IDNA_PATTERN, $domain) => self::toAscii($domain),

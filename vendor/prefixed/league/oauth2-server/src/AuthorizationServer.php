@@ -46,7 +46,9 @@ class AuthorizationServer implements EmitterAwareInterface
     /**
      * New server instance
      */
-    public function __construct(private ClientRepositoryInterface $clientRepository, private AccessTokenRepositoryInterface $accessTokenRepository, private ScopeRepositoryInterface $scopeRepository, #[SensitiveParameter] CryptKeyInterface|string $privateKey, #[SensitiveParameter] Key|string $encryptionKey, ResponseTypeInterface|null $responseType = null)
+    public function __construct(private ClientRepositoryInterface $clientRepository, private AccessTokenRepositoryInterface $accessTokenRepository, private ScopeRepositoryInterface $scopeRepository, #[SensitiveParameter]
+        CryptKeyInterface|string $privateKey, #[SensitiveParameter]
+            Key|string $encryptionKey, ResponseTypeInterface|null $responseType = null)
     {
         if ($privateKey instanceof CryptKeyInterface === \false) {
             $privateKey = new CryptKey($privateKey);
@@ -86,6 +88,9 @@ class AuthorizationServer implements EmitterAwareInterface
      */
     public function validateAuthorizationRequest(ServerRequestInterface $request) : AuthorizationRequestInterface
     {
+        if (!isset($request->getQueryParams()['response_type'])) {
+            throw OAuthServerException::invalidRequest('response_type');
+        }
         foreach ($this->enabledGrantTypes as $grantType) {
             if ($grantType->canRespondToAuthorizationRequest($request)) {
                 return $grantType->validateAuthorizationRequest($request);

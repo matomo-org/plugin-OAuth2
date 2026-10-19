@@ -23,15 +23,18 @@ abstract class AbstractResponseType implements ResponseTypeInterface
     protected AccessTokenEntityInterface $accessToken;
     protected RefreshTokenEntityInterface $refreshToken;
     protected CryptKeyInterface $privateKey;
-    public function setAccessToken(#[SensitiveParameter] AccessTokenEntityInterface $accessToken) : void
+    public function setAccessToken(#[SensitiveParameter]
+        AccessTokenEntityInterface $accessToken) : void
     {
         $this->accessToken = $accessToken;
     }
-    public function setRefreshToken(#[SensitiveParameter] RefreshTokenEntityInterface $refreshToken) : void
+    public function setRefreshToken(#[SensitiveParameter]
+        RefreshTokenEntityInterface $refreshToken) : void
     {
         $this->refreshToken = $refreshToken;
     }
-    public function setPrivateKey(#[SensitiveParameter] CryptKeyInterface $key) : void
+    public function setPrivateKey(#[SensitiveParameter]
+        CryptKeyInterface $key) : void
     {
         $this->privateKey = $key;
     }
