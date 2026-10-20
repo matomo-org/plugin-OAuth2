@@ -1,0 +1,17 @@
+includes:
+    - phpstan.neon
+
+parameters:
+    tmpDir: /tmp/phpstan/Oauth2/min-matomo
+    ignoreErrors:
+        # Core's Auth interface widened these docblocks after the minimum Matomo this plugin
+        # supports: getTokenAuthSecret() may return null from 5.3.0, and setTokenAuth() may
+        # receive null from 5.6.0. This class implements the wider contract.
+        -
+            identifier: identical.alwaysFalse
+            path: Auth/Oauth2Auth.php
+            count: 1
+        -
+            identifier: return.type
+            path: Auth/Oauth2Auth.php
+            count: 1
