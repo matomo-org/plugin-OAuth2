@@ -1,6 +1,6 @@
 ## Changelog
 
-5.3.4
+5.3.4 - 2026-10-26
 - Updated dependencies
 
 5.3.3 - 2026-09-07
