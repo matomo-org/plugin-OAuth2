@@ -18,6 +18,7 @@ use Piwik\Plugins\OAuth2\Repositories\ClientRepository;
 use Piwik\Plugins\OAuth2\Repositories\RefreshTokenRepository;
 use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
 use Piwik\Plugins\OAuth2\Service\ClientManager;
+use Piwik\Plugins\OAuth2\Service\DiscoveryFile;
 use Piwik\Plugins\OAuth2\Service\ServerFactory;
 
 $autoload = __DIR__ . '/../vendor/autoload.php';
@@ -38,7 +39,15 @@ return [
     AuthCodeRepository::class => Piwik\DI::autowire(),
     ScopeRepository::class => Piwik\DI::autowire(),
     ClientManager::class => Piwik\DI::autowire(),
+    DiscoveryFile::class => Piwik\DI::autowire(),
     'diagnostics.required' => Piwik\DI::add([
         Piwik\DI::get(\Piwik\Plugins\OAuth2\Diagnostic\OpenSslRsaCheck::class),
+    ]),
+    'diagnostics.optional' => Piwik\DI::add([
+        Piwik\DI::get(\Piwik\Plugins\OAuth2\Diagnostic\DiscoveryEndpointCheck::class),
+    ]),
+    // Written by DiscoveryFile, its .htaccess and web.config helpers are already ignored by core.
+    'fileintegrity.ignore' => Piwik\DI::add([
+        DiscoveryFile::DIRECTORY . '/' . DiscoveryFile::FILE_NAME,
     ]),
 ];

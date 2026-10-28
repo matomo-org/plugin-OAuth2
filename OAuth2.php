@@ -22,6 +22,7 @@ use Piwik\Plugins\OAuth2\Access\OAuth2Access;
 use Piwik\Plugins\OAuth2\Auth\Oauth2Auth;
 use Piwik\Plugins\OAuth2\Auth\ResourceServerAuthenticator;
 use Piwik\Plugins\OAuth2\Service\ClientManager;
+use Piwik\Plugins\OAuth2\Service\DiscoveryFile;
 use Piwik\Plugins\SitesManager\Model as SitesManagerModel;
 
 class OAuth2 extends Plugin
@@ -98,7 +99,52 @@ class OAuth2 extends Plugin
             'Vue.getComponents' => 'registerVueComponents',
             'Translate.getClientSideTranslationKeys' => 'getClientSideTranslationKeys',
             'AssetManager.getStylesheetFiles' => 'getStylesheetFiles',
+            'SystemSettings.updated' => 'writeDiscoveryFile',
+            'PluginManager.pluginActivated' => 'onPluginActivationChanged',
+            'PluginManager.pluginDeactivated' => 'onPluginActivationChanged',
         ];
+    }
+
+    /**
+     * Other plugins can extend the discovery document, and settings decide what it contains, so
+     * the static copy is written again whenever either may have changed it.
+     *
+     * @param string $pluginName
+     */
+    public function onPluginActivationChanged($pluginName)
+    {
+        // This plugin's own activation is handled by activate() and deactivate().
+        if ($pluginName !== 'OAuth2') {
+            $this->writeDiscoveryFile();
+        }
+    }
+
+    /**
+     * Best effort: a discovery file that cannot be written must not break the action that changed
+     * it, the discovery endpoint check in the System Check reports the outcome.
+     */
+    public function writeDiscoveryFile()
+    {
+        try {
+            StaticContainer::get(DiscoveryFile::class)->write();
+        } catch (\Throwable $e) {
+            StaticContainer::get(LoggerInterface::class)->warning(
+                'OAuth2: Could not write the discovery file: {exception}',
+                ['exception' => $e]
+            );
+        }
+    }
+
+    private function removeDiscoveryFile(): void
+    {
+        try {
+            StaticContainer::get(DiscoveryFile::class)->remove();
+        } catch (\Throwable $e) {
+            StaticContainer::get(LoggerInterface::class)->warning(
+                'OAuth2: Could not remove the discovery file: {exception}',
+                ['exception' => $e]
+            );
+        }
     }
 
     public function getStylesheetFiles(&$stylesheets)
@@ -361,6 +407,12 @@ class OAuth2 extends Plugin
     {
         self::setupRSAKeys();
         self::setEncryptionKey();
+        $this->writeDiscoveryFile();
+    }
+
+    public function deactivate()
+    {
+        $this->removeDiscoveryFile();
     }
 
     public function install()
@@ -431,6 +483,8 @@ class OAuth2 extends Plugin
 
     public function uninstall()
     {
+        $this->removeDiscoveryFile();
+
         foreach (['oauth2_auth_code', 'oauth2_refresh_token', 'oauth2_access_token', 'oauth2_client'] as $table) {
             Db::query('DROP TABLE IF EXISTS ' . Common::prefixTable($table));
         }

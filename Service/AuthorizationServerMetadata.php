@@ -35,18 +35,13 @@ class AuthorizationServerMetadata
     }
 
     /**
+     * @param string|null $issuer Issuer to describe, without trailing slash. Resolved from the
+     *                            current request when not given.
      * @return array<string, mixed> JSON-serializable metadata document.
      */
-    public function build(): array
+    public function build(?string $issuer = null): array
     {
-        // The issuer is the current request URL with the well-known segment removed.
-        // RFC 8414 (section 3.1) inserts that segment between the host and the issuer's path
-        // component (e.g. https://host/.well-known/oauth-authorization-server/sub => issuer
-        // https://host/sub), while the appended form (https://host/sub/.well-known/...) is also
-        // seen in practice. Removing the segment wherever it appears yields the issuer for both,
-        // and resolves the host and any subdirectory automatically.
-        $currentUrl = Url::getCurrentUrlWithoutQueryString();
-        $issuer = rtrim(str_replace(self::WELL_KNOWN_PATH, '', $currentUrl), '/');
+        $issuer = $issuer ?? $this->getIssuerFromCurrentRequest();
         $baseUrl = $issuer . '/';
 
         $authorizationCodeEnabled = (bool) $this->settings->enableAuthorizationCode->getValue();
@@ -94,5 +89,24 @@ class AuthorizationServerMetadata
         Piwik::postEvent('OAuth2.authorizationServerMetadata', [&$metadata]);
 
         return $metadata;
+    }
+
+    private function getIssuerFromCurrentRequest(): string
+    {
+        $currentUrl = Url::getCurrentUrlWithoutQueryString();
+
+        // The issuer is the current request URL with the well-known segment removed.
+        // RFC 8414 (section 3.1) inserts that segment between the host and the issuer's path
+        // component (e.g. https://host/.well-known/oauth-authorization-server/sub => issuer
+        // https://host/sub), while the appended form (https://host/sub/.well-known/...) is also
+        // seen in practice. Removing the segment wherever it appears yields the issuer for both,
+        // and resolves the host and any subdirectory automatically.
+        if (strpos($currentUrl, self::WELL_KNOWN_PATH) !== false) {
+            return rtrim(str_replace(self::WELL_KNOWN_PATH, '', $currentUrl), '/');
+        }
+
+        // Requested as index.php?module=OAuth2&action=metadata, either directly or through a
+        // rewrite that doesn't keep the original path, so the issuer is the Matomo base URL.
+        return rtrim(Url::getCurrentUrlWithoutFileName(), '/');
     }
 }
