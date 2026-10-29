@@ -17,7 +17,7 @@ class Tasks extends \Piwik\Plugin\Tasks
     {
     }
 
-    public function schedule()
+    public function schedule(): void
     {
         $this->daily('writeDiscoveryFile');
     }
@@ -26,7 +26,7 @@ class Tasks extends \Piwik\Plugin\Tasks
      * Nothing notifies the plugin when the Matomo URL changes (new domain, or http to https), so
      * the file's issuer is checked daily. write() only replaces the file when its content changed.
      */
-    public function writeDiscoveryFile()
+    public function writeDiscoveryFile(): void
     {
         $this->discoveryFile->write();
     }
