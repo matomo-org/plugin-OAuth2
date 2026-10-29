@@ -95,7 +95,7 @@ This is the recommended way to contribute optional RFC 8414 fields such as `regi
 
 The discovery path lives at the domain root, outside Matomo's `index.php`, so the web server has to serve something there.
 
-**Root installs (Matomo at `https://example.com/`): no web server configuration needed in most cases.** The plugin writes the document as a static file to `.well-known/oauth-authorization-server` in the Matomo directory, which Apache, nginx and IIS serve like any other file. It also writes a `.htaccess` (Apache) and a `web.config` (IIS) next to it, so the file is sent as JSON. The file is written when the plugin is activated or updated, and again whenever the system settings change or another plugin is activated or deactivated. It is removed when the plugin is deactivated.
+**Root installs (Matomo at `https://example.com/`): no web server configuration needed in most cases.** The plugin writes the document as a static file to `.well-known/oauth-authorization-server` in the Matomo directory, which Apache, nginx and IIS serve like any other file. It also writes a `.htaccess` (Apache) and a `web.config` (IIS) next to it, so the file is sent as JSON. The file is written when the plugin is activated or updated, and again whenever the system settings change or another plugin is activated or deactivated. A daily scheduled task also rewrites it when the Matomo URL has changed, for example after a move to a new domain or to HTTPS. It is removed when the plugin is deactivated.
 
 This needs the Matomo directory to be writable by PHP. If it is not, or to update the file by hand, run:
 

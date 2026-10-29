@@ -407,6 +407,13 @@ class OAuth2 extends Plugin
     {
         self::setupRSAKeys();
         self::setEncryptionKey();
+
+        // The plugin's config, which loads the prefixed dependencies, is only read once the
+        // plugin is active, so they are not available yet while it is being activated.
+        $autoload = __DIR__ . '/vendor/autoload.php';
+        if (file_exists($autoload)) {
+            require_once $autoload;
+        }
         $this->writeDiscoveryFile();
     }
 

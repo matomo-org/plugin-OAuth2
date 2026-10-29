@@ -79,8 +79,10 @@ class DiscoveryFile
             $existingHash = sha1((string) @file_get_contents($path));
 
             if ($existingHash === $hash) {
-                $this->rememberHash($hash);
-                $this->writeHelperFiles();
+                // A file with the same content that Matomo did not write stays somebody else's.
+                if ($existingHash === Option::get(self::OPTION_FILE_HASH)) {
+                    $this->writeHelperFiles();
+                }
                 return self::STATUS_UNCHANGED;
             }
 
@@ -115,8 +117,11 @@ class DiscoveryFile
         if (
             file_exists($path)
             && sha1((string) @file_get_contents($path)) === Option::get(self::OPTION_FILE_HASH)
+            && !@unlink($path)
         ) {
-            @unlink($path);
+            // Keep the hash, so the file left behind is still recognised as written by Matomo.
+            $this->logger->info('OAuth2: Could not remove {path}.', ['path' => $path]);
+            return;
         }
 
         Option::delete(self::OPTION_FILE_HASH);
@@ -135,11 +140,14 @@ class DiscoveryFile
     }
 
     /**
-     * Returns the issuer the file is written for, the configured Matomo URL without trailing slash.
+     * Returns the issuer the file is written for, the stored Matomo URL without trailing slash.
+     *
+     * Read from the option rather than SettingsPiwik::getPiwikUrl(), which during a web request
+     * returns the host of that request, so the file doesn't depend on where it was written from.
      */
     public function getIssuer(): ?string
     {
-        $url = rtrim((string) SettingsPiwik::getPiwikUrl(), '/');
+        $url = rtrim((string) Option::get(SettingsPiwik::OPTION_PIWIK_URL), '/');
 
         return $url === '' ? null : $url;
     }

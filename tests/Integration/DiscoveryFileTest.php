@@ -118,6 +118,61 @@ class DiscoveryFileTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestC
         $this->assertSame('Options -Indexes', file_get_contents($this->getDirectory() . '/.htaccess'));
     }
 
+    public function test_write_doesNotTakeOverIdenticalFileNotWrittenByMatomo()
+    {
+        $discoveryFile = $this->makeDiscoveryFile();
+        $discoveryFile->write();
+        $content = (string) file_get_contents($this->getFilePath());
+        $discoveryFile->remove();
+
+        Filesystem::mkdir($this->getDirectory());
+        file_put_contents($this->getFilePath(), $content);
+
+        $this->assertSame(DiscoveryFile::STATUS_UNCHANGED, $discoveryFile->write());
+        $this->assertFalse(Option::get(DiscoveryFile::OPTION_FILE_HASH));
+        $this->assertFileDoesNotExist($this->getDirectory() . '/.htaccess');
+
+        $this->settings->enableClientCredentials->setValue(false);
+        $this->assertSame(DiscoveryFile::STATUS_SKIPPED_FOREIGN_FILE, $discoveryFile->write());
+        $this->assertSame($content, file_get_contents($this->getFilePath()));
+    }
+
+    public function test_write_usesTheChangedMatomoUrl()
+    {
+        $discoveryFile = $this->makeDiscoveryFile();
+        $discoveryFile->write();
+
+        Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'https://analytics.example/');
+
+        $this->assertSame(DiscoveryFile::STATUS_WRITTEN, $discoveryFile->write());
+        $document = json_decode((string) file_get_contents($this->getFilePath()), true);
+        $this->assertSame('https://analytics.example', $document['issuer']);
+    }
+
+    public function test_remove_keepsOwnershipWhenFileCannotBeRemoved()
+    {
+        if (function_exists('posix_geteuid') && posix_geteuid() === 0) {
+            $this->markTestSkipped('root can remove files from a read-only directory');
+        }
+
+        $discoveryFile = $this->makeDiscoveryFile();
+        $discoveryFile->write();
+        $hash = Option::get(DiscoveryFile::OPTION_FILE_HASH);
+
+        chmod($this->getDirectory(), 0555);
+        try {
+            $discoveryFile->remove();
+        } finally {
+            chmod($this->getDirectory(), 0755);
+        }
+
+        $this->assertFileExists($this->getFilePath());
+        $this->assertSame($hash, Option::get(DiscoveryFile::OPTION_FILE_HASH));
+
+        $discoveryFile->remove();
+        $this->assertFileDoesNotExist($this->getFilePath());
+    }
+
     public function test_remove_removesOnlyFilesWrittenByMatomo()
     {
         $discoveryFile = $this->makeDiscoveryFile();

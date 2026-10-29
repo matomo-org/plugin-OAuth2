@@ -23,8 +23,9 @@ use Piwik\Url;
 class AuthorizationServerMetadata
 {
     /**
-     * Discovery path (RFC 8414). The web server is expected to forward this path to the
-     * metadata controller action; see the plugin README for the rewrite rules.
+     * Discovery path (RFC 8414). On root installs it is served from the static copy written by
+     * DiscoveryFile; otherwise a web server rule forwards it to the metadata controller action,
+     * see the plugin README.
      */
     public const WELL_KNOWN_PATH = '/.well-known/oauth-authorization-server';
 

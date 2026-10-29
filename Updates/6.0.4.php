@@ -10,6 +10,7 @@
 namespace Piwik\Plugins\OAuth2;
 
 use Piwik\Container\StaticContainer;
+use Piwik\Log\LoggerInterface;
 use Piwik\Plugins\OAuth2\Service\DiscoveryFile;
 use Piwik\Updater;
 use Piwik\Updater\Migration\Custom as CustomMigration;
@@ -40,6 +41,13 @@ class Updates_6_0_4 extends PiwikUpdates
      */
     public static function writeDiscoveryFile(): void
     {
-        StaticContainer::get(DiscoveryFile::class)->write();
+        try {
+            StaticContainer::get(DiscoveryFile::class)->write();
+        } catch (\Throwable $e) {
+            StaticContainer::get(LoggerInterface::class)->warning(
+                'OAuth2: Could not write the discovery file: {exception}',
+                ['exception' => $e]
+            );
+        }
     }
 }
