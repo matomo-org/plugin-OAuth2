@@ -9,6 +9,7 @@
 
 namespace Piwik\Plugins\OAuth2\Service;
 
+use Piwik\Config;
 use Piwik\Log\LoggerInterface;
 use Piwik\Option;
 use Piwik\SettingsPiwik;
@@ -27,6 +28,7 @@ use Piwik\SettingsPiwik;
  */
 class DiscoveryFile
 {
+    public const STATUS_DISABLED = 'disabled';
     public const STATUS_WRITTEN = 'written';
     public const STATUS_UNCHANGED = 'unchanged';
     public const STATUS_SKIPPED_NO_URL = 'skipped_no_url';
@@ -65,6 +67,11 @@ class DiscoveryFile
      */
     public function write(bool $force = false): string
     {
+        if (!$this->isEnabled()) {
+            $this->remove();
+            return self::STATUS_DISABLED;
+        }
+
         $issuer = $this->getIssuer();
         if ($issuer === null) {
             $this->remove();
@@ -149,6 +156,18 @@ class DiscoveryFile
         if (is_dir($this->getDirectoryPath())) {
             @rmdir($this->getDirectoryPath());
         }
+    }
+
+    /**
+     * Instances sharing one codebase (host specific configs) share the document root, but each
+     * has its own Matomo URL, so the file can only describe one of them. Such deployments turn the
+     * writer off with `[OAuth2] write_discovery_file = 0` and use a web server rule instead.
+     */
+    public function isEnabled(): bool
+    {
+        $config = Config::getInstance()->OAuth2;
+
+        return (bool) ($config['write_discovery_file'] ?? true);
     }
 
     /**
@@ -248,6 +267,9 @@ class DiscoveryFile
     /**
      * Deliberately no rewrite to the metadata action: Matomo stores the URL of each dispatched
      * request as its own URL, which for a rewritten discovery request is <host>/.well-known/.
+     *
+     * ForceType needs AllowOverride FileInfo, like the AddHandler in the .htaccess files Matomo
+     * generates for its own directories, so an install where those work can use this one too.
      */
     private function getHtaccessContent(): string
     {

@@ -9,6 +9,7 @@
 
 namespace Piwik\Plugins\OAuth2\tests\Integration;
 
+use Piwik\Config;
 use Piwik\Container\StaticContainer;
 use Piwik\Filesystem;
 use Piwik\Log\NullLogger;
@@ -155,6 +156,29 @@ class DiscoveryFileTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestC
 
         $this->settings->enableClientCredentials->setValue(false);
         $this->assertSame(DiscoveryFile::STATUS_WRITTEN, $discoveryFile->write());
+    }
+
+    public function test_write_removesItsFileWhenTurnedOff()
+    {
+        $discoveryFile = $this->makeDiscoveryFile();
+        $discoveryFile->write();
+
+        Config::getInstance()->OAuth2 = ['write_discovery_file' => 0];
+
+        $this->assertFalse($discoveryFile->isEnabled());
+        $this->assertSame(DiscoveryFile::STATUS_DISABLED, $discoveryFile->write());
+        $this->assertFileDoesNotExist($this->getFilePath());
+    }
+
+    public function test_write_keepsAnotherInstancesFileWhenTurnedOff()
+    {
+        // Another instance on the same codebase wrote it, so its hash is not in this database.
+        Filesystem::mkdir($this->getDirectory());
+        file_put_contents($this->getFilePath(), '{"issuer":"https://other-instance.example"}');
+        Config::getInstance()->OAuth2 = ['write_discovery_file' => 0];
+
+        $this->assertSame(DiscoveryFile::STATUS_DISABLED, $this->makeDiscoveryFile()->write(true));
+        $this->assertFileExists($this->getFilePath());
     }
 
     public function test_write_usesTheChangedMatomoUrl()

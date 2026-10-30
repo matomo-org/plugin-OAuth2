@@ -9,6 +9,7 @@
 
 namespace Piwik\Plugins\OAuth2\tests\Integration;
 
+use Piwik\Config;
 use Piwik\Log\NullLogger;
 use Piwik\Option;
 use Piwik\Plugins\Diagnostics\Diagnostic\DiagnosticResult;
@@ -65,7 +66,8 @@ class DiscoveryEndpointCheckTest extends \Piwik\Tests\Framework\TestCase\Integra
         $this->assertStringContainsString('HTTP status 404', $comment);
         $this->assertStringContainsString('oauth2:write-discovery-file', $comment);
         $this->assertStringContainsString('location = /.well-known/oauth-authorization-server {', $comment);
-        $this->assertStringContainsString('rewrite ^ /index.php?module=OAuth2&amp;action=metadata last;', $comment);
+        // Indented with non-breaking spaces, as the System Check strips <pre>.
+        $this->assertStringContainsString('&nbsp;&nbsp;&nbsp;&nbsp;rewrite ^ /index.php?module=OAuth2&amp;action=metadata last;', $comment);
     }
 
     public function test_execute_suggestsDomainRootRuleForSubdirectoryInstalls()
@@ -78,7 +80,7 @@ class DiscoveryEndpointCheckTest extends \Piwik\Tests\Framework\TestCase\Integra
         $this->assertSame(['https://matomo.example/.well-known/oauth-authorization-server/analytics'], $check->requestedUrls);
         $this->assertStringNotContainsString('oauth2:write-discovery-file', $comment);
         $this->assertStringContainsString(
-            'RewriteRule ^\.well-known/oauth-authorization-server/analytics$ /analytics/index.php?module=OAuth2&amp;action=metadata [L,QSA]',
+            'RewriteRule ^/?\.well-known/oauth-authorization-server/analytics$ /analytics/index.php?module=OAuth2&amp;action=metadata [L,QSA]',
             $comment
         );
     }
@@ -89,7 +91,18 @@ class DiscoveryEndpointCheckTest extends \Piwik\Tests\Framework\TestCase\Integra
 
         $comment = $this->makeCheck(404, '', 'Apache/2.4.52')->execute()[0]->getItems()[0]->getComment();
 
-        $this->assertStringContainsString('RewriteRule ^\.well-known/oauth-authorization-server/stats\+\(eu\)$ ', $comment);
+        $this->assertStringContainsString('RewriteRule ^/?\.well-known/oauth-authorization-server/stats\+\(eu\)$ ', $comment);
+    }
+
+    public function test_execute_suggestsOnlyTheRuleWhenWritingTheFileIsTurnedOff()
+    {
+        Config::getInstance()->OAuth2 = ['write_discovery_file' => 0];
+
+        $comment = $this->makeCheck(404, '', 'Apache/2.4.52')->execute()[0]->getItems()[0]->getComment();
+
+        $this->assertStringContainsString('write_discovery_file = 0', $comment);
+        $this->assertStringNotContainsString('./console oauth2:write-discovery-file', $comment);
+        $this->assertStringContainsString('RewriteRule ^/?\.well-known/oauth-authorization-server$ /index.php', $comment);
     }
 
     public function test_execute_warnsWithNginxRuleWhenNotServedAsJson()

@@ -65,6 +65,26 @@ class DiscoveryFileHooksTest extends \Piwik\Tests\Framework\TestCase\Integration
         $this->assertFileDoesNotExist($this->getFilePath());
     }
 
+    public function test_activatingOrDeactivatingAnotherPlugin_rewritesTheFile()
+    {
+        // Other plugins can add fields to the document, so their activation changes it.
+        $plugin = new OAuth2();
+
+        $plugin->onPluginActivationChanged('SomeOtherPlugin');
+        $this->assertSame('https://matomo.example', $this->getWrittenIssuer());
+
+        Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'https://analytics.example/');
+        $plugin->onPluginActivationChanged('SomeOtherPlugin');
+        $this->assertSame('https://analytics.example', $this->getWrittenIssuer());
+    }
+
+    public function test_activatingOrDeactivatingThisPlugin_isLeftToItsOwnHooks()
+    {
+        (new OAuth2())->onPluginActivationChanged('OAuth2');
+
+        $this->assertFileDoesNotExist($this->getFilePath());
+    }
+
     public function test_update_writesTheFile()
     {
         Updates_6_0_4::writeDiscoveryFile();

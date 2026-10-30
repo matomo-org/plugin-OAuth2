@@ -16,6 +16,7 @@ use Piwik\Plugins\OAuth2\Service\DiscoveryFile;
 use Piwik\Plugins\OAuth2\tests\Fixtures\OAuth2Fixture;
 use Piwik\SettingsPiwik;
 use Piwik\Tests\Framework\TestCase\ConsoleCommandTestCase;
+use Piwik\Tests\Framework\TestingEnvironmentVariables;
 
 /**
  * @group OAuth2
@@ -76,6 +77,23 @@ class WriteDiscoveryFileTest extends ConsoleCommandTestCase
 
         $this->assertSame(0, $this->runCommand(['--force' => true]));
         $this->assertStringContainsString('https://matomo.example', (string) file_get_contents($this->getFilePath()));
+    }
+
+    public function test_succeedsWhenWritingTheFileIsTurnedOff()
+    {
+        // The command reads the config afresh, so it is overridden through the test environment.
+        $testingEnvironment = new TestingEnvironmentVariables();
+        $testingEnvironment->overrideConfig('OAuth2', 'write_discovery_file', 0);
+        $testingEnvironment->save();
+
+        try {
+            $this->assertSame(0, $this->runCommand());
+        } finally {
+            $testingEnvironment->removeOverriddenConfig('OAuth2', 'write_discovery_file');
+            $testingEnvironment->save();
+        }
+        $this->assertStringContainsString('turned off', $this->applicationTester->getDisplay());
+        $this->assertFileDoesNotExist($this->getFilePath());
     }
 
     public function test_failsWhenTheDirectoryIsNotWritable()

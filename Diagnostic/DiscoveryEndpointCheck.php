@@ -157,7 +157,10 @@ class DiscoveryEndpointCheck implements Diagnostic
         $comment = 'OAuth 2.0 clients such as MCP integrations cannot discover this authorization server at '
             . htmlspecialchars($url) . '. ' . $reason . '<br><br>';
 
-        if ($path === '') {
+        if ($path === '' && !$this->discoveryFile->isEnabled()) {
+            $comment .= 'Writing the discovery file is turned off (<code>[OAuth2] write_discovery_file = 0</code>), '
+                . 'so forward the discovery URL to Matomo in your web server configuration';
+        } elseif ($path === '') {
             $comment .= 'Make sure the Matomo directory is writable and run <code>./console oauth2:write-discovery-file</code>, '
                 . 'or forward the discovery URL to Matomo in your web server configuration';
         } else {
@@ -173,7 +176,7 @@ class DiscoveryEndpointCheck implements Diagnostic
 
     private function getWebServerRule(string $path): string
     {
-        $pattern = '^' . str_replace('.', '\\.', ltrim(AuthorizationServerMetadata::WELL_KNOWN_PATH, '/')) . preg_quote($path) . '$';
+        $pattern = str_replace('.', '\\.', ltrim(AuthorizationServerMetadata::WELL_KNOWN_PATH, '/')) . preg_quote($path) . '$';
         $target = $path . '/index.php?module=OAuth2&action=metadata';
         $server = $this->getServerSoftware();
 
@@ -181,7 +184,7 @@ class DiscoveryEndpointCheck implements Diagnostic
             $rule = [
                 'IIS (URL Rewrite module, inside <rules> of web.config):',
                 '<rule name="OAuth2 discovery" stopProcessing="true">',
-                '    <match url="' . $pattern . '" />',
+                '    <match url="^' . $pattern . '" />',
                 '    <action type="Rewrite" url="' . ltrim(str_replace('&', '&amp;', $target), '/') . '" />',
                 '</rule>',
             ];
@@ -196,7 +199,8 @@ class DiscoveryEndpointCheck implements Diagnostic
             $rule = [
                 'Apache (.htaccess in the domain root, or the virtual host):',
                 'RewriteEngine On',
-                'RewriteRule ' . $pattern . ' ' . $target . ' [L,QSA]',
+                // In a virtual host the path keeps its leading slash, in .htaccess it doesn't.
+                'RewriteRule ^/?' . $pattern . ' ' . $target . ' [L,QSA]',
             ];
         }
 
@@ -205,7 +209,7 @@ class DiscoveryEndpointCheck implements Diagnostic
 
     /**
      * The generated .htaccess and web.config set the content type, but nginx ignores both, and
-     * Apache ignores .htaccess files when AllowOverride doesn't include FileInfo.
+     * Apache ignores the .htaccess with AllowOverride None. The virtual host rule works regardless.
      */
     private function getContentTypeRule(): string
     {
@@ -244,10 +248,18 @@ class DiscoveryEndpointCheck implements Diagnostic
     }
 
     /**
+     * The System Check strips <pre>, so the indentation is kept with non-breaking spaces.
+     *
      * @param string[] $lines
      */
     private function formatRule(array $lines): string
     {
-        return '<code>' . implode('<br>', array_map('htmlspecialchars', $lines)) . '</code>';
+        $lines = array_map(static function (string $line): string {
+            $indentation = strlen($line) - strlen(ltrim($line, ' '));
+
+            return str_repeat('&nbsp;', $indentation) . htmlspecialchars(ltrim($line, ' '));
+        }, $lines);
+
+        return '<code>' . implode('<br>', $lines) . '</code>';
     }
 }
