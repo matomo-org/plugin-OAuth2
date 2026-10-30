@@ -181,6 +181,30 @@ class DiscoveryFileTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestC
         $this->assertFileExists($this->getFilePath());
     }
 
+    public function test_isEnabled_isOffByDefaultWithAHostSpecificConfig()
+    {
+        // Instances on one codebase share the document root, so none of them can own the file.
+        $GLOBALS['CONFIG_INI_PATH_RESOLVER'] = static function (): string {
+            return PIWIK_USER_PATH . '/config/analytics.example.config.ini.php';
+        };
+
+        try {
+            $this->assertFalse($this->makeDiscoveryFile()->isEnabled());
+            $this->assertSame(DiscoveryFile::STATUS_DISABLED, $this->makeDiscoveryFile()->write());
+            $this->assertFileDoesNotExist($this->getFilePath());
+
+            Config::getInstance()->OAuth2 = ['write_discovery_file' => 1];
+            $this->assertTrue($this->makeDiscoveryFile()->isEnabled());
+        } finally {
+            unset($GLOBALS['CONFIG_INI_PATH_RESOLVER']);
+        }
+    }
+
+    public function test_isEnabled_isOnByDefaultWithTheDefaultConfig()
+    {
+        $this->assertTrue($this->makeDiscoveryFile()->isEnabled());
+    }
+
     public function test_write_usesTheChangedMatomoUrl()
     {
         $discoveryFile = $this->makeDiscoveryFile();

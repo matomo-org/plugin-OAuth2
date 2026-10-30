@@ -78,8 +78,12 @@ class AuthorizationServerMetadata
         $metadata['token_endpoint_auth_methods_supported'] = ['client_secret_basic', 'client_secret_post'];
 
         /**
-         * Triggered after the OAuth 2.0 Authorization Server Metadata document (RFC 8414) is built,
-         * before it is served at `/.well-known/oauth-authorization-server`.
+         * Triggered after the OAuth 2.0 Authorization Server Metadata document (RFC 8414) is built.
+         *
+         * The document is served at `/.well-known/oauth-authorization-server`, and is also written to
+         * a static file outside of any request (by a console command, an update, a scheduled task or
+         * a plugin activation). Listeners must therefore not build values from the current request,
+         * but from the `issuer` in the document or from Matomo's settings.
          *
          * Other plugins (e.g. an MCP or AI integration) can use this to add or override fields,
          * such as `registration_endpoint`, `introspection_endpoint`, `revocation_endpoint`,

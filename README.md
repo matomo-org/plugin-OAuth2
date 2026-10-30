@@ -113,12 +113,14 @@ This needs the Matomo directory to be writable by PHP. If it is not, or to updat
 
 The file is never written over a file that was not written by Matomo, unless `--force` is given. It describes the Matomo URL stored for the install, which follows the host Matomo was last opened under. If Matomo is reachable under several host names, the file names whichever was used last, so use the web server rule below instead.
 
-**Several Matomo instances on one codebase** (host specific config files) share the Matomo directory but not the Matomo URL, so one file can't describe all of them. Turn writing it off in each instance's `config.ini.php` and use the web server rule below:
+**Several Matomo instances on one codebase** (host specific config files) share the Matomo directory but not the Matomo URL, so one file can't describe all of them. Matomo doesn't write the file when it runs with a host specific config, so use the web server rule below. On other shared setups, turn writing it off in each instance's `config.ini.php`:
 
 ```ini
 [OAuth2]
 write_discovery_file = 0
 ```
+
+Setting `write_discovery_file = 1` writes the file even with a host specific config.
 
 **Check it:** *Administration → System → System Check* shows **OAuth 2.0 discovery endpoint**. It requests the discovery URL and reports whether clients can discover the authorization server and whether the document is sent as JSON. If they can't, it shows the web server rule for your server, with your subdirectory filled in.
 

@@ -33,7 +33,7 @@ class WriteDiscoveryFile extends ConsoleCommand
 
         switch ($status) {
             case DiscoveryFile::STATUS_DISABLED:
-                $output->writeln('<comment>Writing the discovery file is turned off by [OAuth2] write_discovery_file = 0 in the config. Use a web server rule instead, see the plugin README.</comment>');
+                $output->writeln('<comment>Writing the discovery file is turned off, as Matomo uses a host specific config or [OAuth2] write_discovery_file = 0 is set. Use a web server rule instead, see the plugin README.</comment>');
                 return self::SUCCESS;
             case DiscoveryFile::STATUS_WRITTEN:
                 $output->writeln('Wrote ' . $path . '.');

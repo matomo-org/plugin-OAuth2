@@ -158,7 +158,8 @@ class DiscoveryEndpointCheck implements Diagnostic
             . htmlspecialchars($url) . '. ' . $reason . '<br><br>';
 
         if ($path === '' && !$this->discoveryFile->isEnabled()) {
-            $comment .= 'Writing the discovery file is turned off (<code>[OAuth2] write_discovery_file = 0</code>), '
+            $comment .= 'Writing the discovery file is turned off, as Matomo uses a host specific config or '
+                . '<code>[OAuth2] write_discovery_file = 0</code> is set, '
                 . 'so forward the discovery URL to Matomo in your web server configuration';
         } elseif ($path === '') {
             $comment .= 'Make sure the Matomo directory is writable and run <code>./console oauth2:write-discovery-file</code>, '

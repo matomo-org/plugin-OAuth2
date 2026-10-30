@@ -160,14 +160,18 @@ class DiscoveryFile
 
     /**
      * Instances sharing one codebase (host specific configs) share the document root, but each
-     * has its own Matomo URL, so the file can only describe one of them. Such deployments turn the
-     * writer off with `[OAuth2] write_discovery_file = 0` and use a web server rule instead.
+     * has its own Matomo URL, so the file can only describe one of them. The writer is therefore
+     * off by default when this instance uses a host specific config, and such deployments use a
+     * web server rule instead. `[OAuth2] write_discovery_file` turns it on or off explicitly.
      */
     public function isEnabled(): bool
     {
         $config = Config::getInstance()->OAuth2;
+        if (isset($config['write_discovery_file'])) {
+            return (bool) $config['write_discovery_file'];
+        }
 
-        return (bool) ($config['write_discovery_file'] ?? true);
+        return Config::getLocalConfigPath() === Config::getDefaultLocalConfigPath();
     }
 
     /**
