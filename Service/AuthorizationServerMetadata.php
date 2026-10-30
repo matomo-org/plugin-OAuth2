@@ -23,8 +23,9 @@ use Piwik\Url;
 class AuthorizationServerMetadata
 {
     /**
-     * Discovery path (RFC 8414). The web server is expected to forward this path to the
-     * metadata controller action; see the plugin README for the rewrite rules.
+     * Discovery path (RFC 8414). On root installs it is served from the static copy written by
+     * DiscoveryFile; otherwise a web server rule forwards it to the metadata controller action,
+     * see the plugin README.
      */
     public const WELL_KNOWN_PATH = '/.well-known/oauth-authorization-server';
 
@@ -35,18 +36,13 @@ class AuthorizationServerMetadata
     }
 
     /**
+     * @param string|null $issuer Issuer to describe, without trailing slash. Resolved from the
+     *                            current request when not given.
      * @return array<string, mixed> JSON-serializable metadata document.
      */
-    public function build(): array
+    public function build(?string $issuer = null): array
     {
-        // The issuer is the current request URL with the well-known segment removed.
-        // RFC 8414 (section 3.1) inserts that segment between the host and the issuer's path
-        // component (e.g. https://host/.well-known/oauth-authorization-server/sub => issuer
-        // https://host/sub), while the appended form (https://host/sub/.well-known/...) is also
-        // seen in practice. Removing the segment wherever it appears yields the issuer for both,
-        // and resolves the host and any subdirectory automatically.
-        $currentUrl = Url::getCurrentUrlWithoutQueryString();
-        $issuer = rtrim(str_replace(self::WELL_KNOWN_PATH, '', $currentUrl), '/');
+        $issuer = $issuer ?? $this->getIssuerFromCurrentRequest();
         $baseUrl = $issuer . '/';
 
         $authorizationCodeEnabled = (bool) $this->settings->enableAuthorizationCode->getValue();
@@ -82,8 +78,12 @@ class AuthorizationServerMetadata
         $metadata['token_endpoint_auth_methods_supported'] = ['client_secret_basic', 'client_secret_post'];
 
         /**
-         * Triggered after the OAuth 2.0 Authorization Server Metadata document (RFC 8414) is built,
-         * before it is served at `/.well-known/oauth-authorization-server`.
+         * Triggered after the OAuth 2.0 Authorization Server Metadata document (RFC 8414) is built.
+         *
+         * The document is served at `/.well-known/oauth-authorization-server`, and is also written to
+         * a static file outside of any request (by a console command, an update, a scheduled task or
+         * a plugin activation). Listeners must therefore not build values from the current request,
+         * but from the `issuer` in the document or from Matomo's settings.
          *
          * Other plugins (e.g. an MCP or AI integration) can use this to add or override fields,
          * such as `registration_endpoint`, `introspection_endpoint`, `revocation_endpoint`,
@@ -94,5 +94,24 @@ class AuthorizationServerMetadata
         Piwik::postEvent('OAuth2.authorizationServerMetadata', [&$metadata]);
 
         return $metadata;
+    }
+
+    private function getIssuerFromCurrentRequest(): string
+    {
+        $currentUrl = Url::getCurrentUrlWithoutQueryString();
+
+        // The issuer is the current request URL with the well-known segment removed.
+        // RFC 8414 (section 3.1) inserts that segment between the host and the issuer's path
+        // component (e.g. https://host/.well-known/oauth-authorization-server/sub => issuer
+        // https://host/sub), while the appended form (https://host/sub/.well-known/...) is also
+        // seen in practice. Removing the segment wherever it appears yields the issuer for both,
+        // and resolves the host and any subdirectory automatically.
+        if (strpos($currentUrl, self::WELL_KNOWN_PATH) !== false) {
+            return rtrim(str_replace(self::WELL_KNOWN_PATH, '', $currentUrl), '/');
+        }
+
+        // Requested as index.php?module=OAuth2&action=metadata, either directly or through a
+        // rewrite that doesn't keep the original path, so the issuer is the Matomo base URL.
+        return rtrim(Url::getCurrentUrlWithoutFileName(), '/');
     }
 }

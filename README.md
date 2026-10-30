@@ -91,16 +91,49 @@ public function extendAuthorizationServerMetadata(array &$metadata)
 
 This is the recommended way to contribute optional RFC 8414 fields such as `registration_endpoint`, `introspection_endpoint`, `revocation_endpoint`, or `jwks_uri`.
 
-### Web server routing (required)
+### Making the discovery URL reachable
 
-The discovery path lives at the site root, so your web server must forward it to the plugin's metadata action (`index.php?module=OAuth2&action=metadata`). Use an **internal rewrite** (not a redirect), matching the **exact path with no trailing slash**.
+The discovery path lives at the domain root, outside Matomo's `index.php`, so the web server has to serve something there.
+
+**Root installs (Matomo at `https://example.com/`): no web server configuration needed in most cases.** The plugin writes the document as a static file to `.well-known/oauth-authorization-server` in the Matomo directory, which Apache, nginx and IIS serve like any other file. It also writes a `.htaccess` (Apache) and a `web.config` (IIS) next to it, so the file is sent as JSON. The `.htaccess` needs `AllowOverride FileInfo`, as Matomo's own `.htaccess` files do; if your server doesn't apply `.htaccess` files, the System Check shows a virtual host block instead. The file is written when the plugin is activated or updated, and again whenever the system settings change or another plugin is activated or deactivated. A daily scheduled task also rewrites it when the Matomo URL has changed, for example after a move to a new domain or to HTTPS. It is removed when the plugin is deactivated.
+
+**Nginx** ignores both helper files and serves the extensionless file with its `default_type`, usually `application/octet-stream`, which some clients reject. Add this inside the Matomo `server { ... }` block so it is sent as JSON:
+
+```nginx
+location = /.well-known/oauth-authorization-server {
+    default_type application/json;
+}
+```
+
+This needs the Matomo directory to be writable by PHP. If it is not, or to update the file by hand, run:
+
+```
+./console oauth2:write-discovery-file
+```
+
+The file is never written over a file that was not written by Matomo, unless `--force` is given. It describes the Matomo URL stored for the install, which follows the host Matomo was last opened under. If Matomo is reachable under several host names, the file names whichever was used last, so use the web server rule below instead.
+
+**Several Matomo instances on one codebase** (host specific config files) share the Matomo directory but not the Matomo URL, so one file can't describe all of them. Matomo doesn't write the file when it runs with a host specific config, so use the web server rule below. On other shared setups, turn writing it off in each instance's `config.ini.php`:
+
+```ini
+[OAuth2]
+write_discovery_file = 0
+```
+
+Setting `write_discovery_file = 1` writes the file even with a host specific config.
+
+**Check it:** *Administration → System → System Check* shows **OAuth 2.0 discovery endpoint**. It requests the discovery URL and reports whether clients can discover the authorization server and whether the document is sent as JSON. If they can't, it shows the web server rule for your server, with your subdirectory filled in.
+
+### Web server rule (fallback)
+
+Use a rule forwarding the discovery path to the plugin's metadata action (`index.php?module=OAuth2&action=metadata`) when Matomo is installed in a subdirectory, when the static file can't be written, or when Matomo is reachable under several host names. Use an **internal rewrite** (not a redirect), matching the **exact path with no trailing slash**.
 
 **Apache** (`.htaccess` in the Matomo root, or the vhost):
 
 ```apache
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteRule ^\.well-known/oauth-authorization-server$ index.php?module=OAuth2&action=metadata [L,QSA]
+    RewriteRule ^/?\.well-known/oauth-authorization-server$ /index.php?module=OAuth2&action=metadata [L,QSA]
 </IfModule>
 ```
 
@@ -112,7 +145,24 @@ location = /.well-known/oauth-authorization-server {
 }
 ```
 
-In both cases the rewrite is internal and preserves the original `REQUEST_URI`, which the plugin uses to derive the `issuer`. Do not use a redirect (`return 301` / `rewrite ... permanent`), as that would change the path and break discovery.
+**IIS** (requires the [URL Rewrite](https://www.iis.net/downloads/microsoft/url-rewrite) module; inside `<system.webServer>` of the root `web.config`):
+
+```xml
+<rewrite>
+  <rules>
+    <rule name="OAuth2 discovery" stopProcessing="true">
+      <match url="^\.well-known/oauth-authorization-server$" />
+      <action type="Rewrite" url="index.php?module=OAuth2&amp;action=metadata" />
+    </rule>
+  </rules>
+</rewrite>
+```
+
+Without the URL Rewrite module, IIS rejects a `web.config` containing a `<rewrite>` section with a 500.19 error for the whole site, so install the module first.
+
+In all cases the rewrite is internal. The plugin derives the `issuer` from the original request path, or uses the Matomo base URL when the server passes on the rewritten one. Do not use a redirect (`return 301` / `rewrite ... permanent`), as that would change the path and break discovery.
+
+A web server rule takes precedence over the static file, so with a rule in place the document is always served by Matomo itself.
 
 **DDEV** uses nginx-fpm by default. Add a config snippet so DDEV includes it inside the site's `server { ... }` block — create `.ddev/nginx/oauth2-well-known.conf`:
 
@@ -126,14 +176,13 @@ Then run `ddev restart` to apply it. (If your project uses the `apache-fpm` webs
 
 Notes:
 
-- **Subdirectory installs:** the `issuer` is the Matomo base URL including the subdirectory (e.g. `https://example.com/matomo`). Per [RFC 8414 §3.1](https://datatracker.ietf.org/doc/html/rfc8414#section-3.1), the well-known string is inserted between the host and the issuer's path component, so the canonical discovery URL is `https://example.com/.well-known/oauth-authorization-server/matomo`. Note this lives at the **domain root**, not under the Matomo directory, so the rewrite must go in the root server config and route to the subdirectory's front controller, e.g. Apache:
+- **Subdirectory installs:** the `issuer` is the Matomo base URL including the subdirectory (e.g. `https://example.com/matomo`). Per [RFC 8414 §3.1](https://datatracker.ietf.org/doc/html/rfc8414#section-3.1), the well-known string is inserted between the host and the issuer's path component, so the canonical discovery URL is `https://example.com/.well-known/oauth-authorization-server/matomo`. Note this lives at the **domain root**, not under the Matomo directory, so the static file can't be used and the rewrite must go in the root server config and route to the subdirectory's front controller, e.g. Apache:
 
     ```apache
-    RewriteRule ^\.well-known/oauth-authorization-server/matomo$ /matomo/index.php?module=OAuth2&action=metadata [L,QSA]
+    RewriteRule ^/?\.well-known/oauth-authorization-server/matomo$ /matomo/index.php?module=OAuth2&action=metadata [L,QSA]
     ```
 
     The plugin derives the `issuer` correctly from either layout, so it also accepts the appended form `https://example.com/matomo/.well-known/oauth-authorization-server` — handy when you can only edit Matomo's own `.htaccess` — but the RFC 8414 form above is what spec-compliant clients request.
-- Make sure no physical `.well-known/oauth-authorization-server` file or directory exists in the Matomo root, or the web server will serve it directly instead of routing to Matomo.
 
 ## Setup
 

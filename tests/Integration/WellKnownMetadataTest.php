@@ -77,6 +77,22 @@ class WellKnownMetadataTest extends \Piwik\Tests\Framework\TestCase\IntegrationT
         $this->assertSame('https://matomo.example/analytics/index.php?module=OAuth2&action=token', $metadata['token_endpoint']);
     }
 
+    public function test_build_usesMatomoBaseUrlWhenRequestedWithoutWellKnownPath()
+    {
+        // Direct requests, and rewrites that pass the rewritten URL on (e.g. some IIS setups).
+        $this->simulateRequest('matomo.example', '/analytics/index.php?module=OAuth2&action=metadata');
+
+        $this->assertSame('https://matomo.example/analytics', $this->makeMetadata()->build()['issuer']);
+    }
+
+    public function test_build_usesGivenIssuer()
+    {
+        $metadata = $this->makeMetadata()->build('https://other.example');
+
+        $this->assertSame('https://other.example', $metadata['issuer']);
+        $this->assertSame('https://other.example/index.php?module=OAuth2&action=token', $metadata['token_endpoint']);
+    }
+
     public function test_build_omitsAuthorizationCodeMetadataWhenGrantDisabled()
     {
         $this->settings->enableAuthorizationCode->setValue(false);
