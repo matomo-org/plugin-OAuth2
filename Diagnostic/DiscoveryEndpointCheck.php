@@ -74,6 +74,19 @@ class DiscoveryEndpointCheck implements Diagnostic
             )];
         }
 
+        // Some clients reject the document without a JSON content type. Only the static file can be
+        // served with another one, as Matomo always sends JSON.
+        $contentType = strtolower(trim(explode(';', $response['contentType'])[0]));
+        if ($contentType !== 'application/json') {
+            return [DiagnosticResult::singleResult(
+                self::LABEL,
+                DiagnosticResult::STATUS_WARNING,
+                'OAuth 2.0 clients can request the discovery document at ' . htmlspecialchars($url) . ', but it is sent as "'
+                . htmlspecialchars($contentType) . '" instead of "application/json", which some clients reject. '
+                . 'Configure the web server to send it as JSON:<br><br>' . $this->getContentTypeRule()
+            )];
+        }
+
         return [DiagnosticResult::singleResult(
             self::LABEL,
             DiagnosticResult::STATUS_OK,
@@ -99,7 +112,7 @@ class DiscoveryEndpointCheck implements Diagnostic
      * forwards the discovery URL to Matomo, that is <host>/.well-known/, so the stored URL is put
      * back after the check's own request.
      *
-     * @return array{status: int, data: string}
+     * @return array{status: int, data: string, contentType: string}
      */
     private function fetchKeepingMatomoUrl(string $url): array
     {
@@ -116,13 +129,18 @@ class DiscoveryEndpointCheck implements Diagnostic
     }
 
     /**
-     * @return array{status: int, data: string}
+     * @return array{status: int, data: string, contentType: string}
      */
     protected function fetch(string $url): array
     {
         $response = Http::sendHttpRequest($url, 5, null, null, 0, false, false, true);
+        $contentType = $response['headers']['Content-Type'] ?? '';
 
-        return ['status' => (int) $response['status'], 'data' => $response['data'] ?? ''];
+        return [
+            'status' => (int) $response['status'],
+            'data' => $response['data'] ?? '',
+            'contentType' => is_string($contentType) ? $contentType : '',
+        ];
     }
 
     protected function getServerSoftware(): string
@@ -155,7 +173,7 @@ class DiscoveryEndpointCheck implements Diagnostic
 
     private function getWebServerRule(string $path): string
     {
-        $pattern = '^' . str_replace('.', '\\.', ltrim(AuthorizationServerMetadata::WELL_KNOWN_PATH, '/') . $path) . '$';
+        $pattern = '^' . str_replace('.', '\\.', ltrim(AuthorizationServerMetadata::WELL_KNOWN_PATH, '/')) . preg_quote($path) . '$';
         $target = $path . '/index.php?module=OAuth2&action=metadata';
         $server = $this->getServerSoftware();
 
@@ -182,6 +200,54 @@ class DiscoveryEndpointCheck implements Diagnostic
             ];
         }
 
-        return '<code>' . implode('<br>', array_map('htmlspecialchars', $rule)) . '</code>';
+        return $this->formatRule($rule);
+    }
+
+    /**
+     * The generated .htaccess and web.config set the content type, but nginx ignores both, and
+     * Apache ignores .htaccess files when AllowOverride doesn't include FileInfo.
+     */
+    private function getContentTypeRule(): string
+    {
+        $server = $this->getServerSoftware();
+        $path = AuthorizationServerMetadata::WELL_KNOWN_PATH;
+
+        if (SettingsServer::isIIS() || strpos($server, 'iis') !== false) {
+            $rule = [
+                'IIS (web.config in the Matomo directory):',
+                '<location path="' . ltrim($path, '/') . '">',
+                '    <system.webServer>',
+                '        <staticContent>',
+                '            <remove fileExtension="." />',
+                '            <mimeMap fileExtension="." mimeType="application/json" />',
+                '        </staticContent>',
+                '    </system.webServer>',
+                '</location>',
+            ];
+        } elseif (strpos($server, 'nginx') !== false) {
+            $rule = [
+                'nginx (inside the server block):',
+                'location = ' . $path . ' {',
+                '    default_type application/json;',
+                '}',
+            ];
+        } else {
+            $rule = [
+                'Apache (virtual host):',
+                '<Location "' . $path . '">',
+                '    ForceType application/json',
+                '</Location>',
+            ];
+        }
+
+        return $this->formatRule($rule);
+    }
+
+    /**
+     * @param string[] $lines
+     */
+    private function formatRule(array $lines): string
+    {
+        return '<code>' . implode('<br>', array_map('htmlspecialchars', $lines)) . '</code>';
     }
 }

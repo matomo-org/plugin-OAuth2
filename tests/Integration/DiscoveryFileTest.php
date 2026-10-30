@@ -43,7 +43,7 @@ class DiscoveryFileTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestC
 
         $this->settings = new SystemSettings();
         Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'https://matomo.example/');
-        Option::delete(DiscoveryFile::OPTION_FILE_HASH);
+        Option::delete(DiscoveryFile::OPTION_FILE_HASHES);
     }
 
     public function tearDown(): void
@@ -124,17 +124,37 @@ class DiscoveryFileTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestC
         $discoveryFile->write();
         $content = (string) file_get_contents($this->getFilePath());
         $discoveryFile->remove();
+        // As if Matomo had never written it.
+        Option::delete(DiscoveryFile::OPTION_FILE_HASHES);
 
         Filesystem::mkdir($this->getDirectory());
         file_put_contents($this->getFilePath(), $content);
 
         $this->assertSame(DiscoveryFile::STATUS_UNCHANGED, $discoveryFile->write());
-        $this->assertFalse(Option::get(DiscoveryFile::OPTION_FILE_HASH));
+        $this->assertFalse(Option::get(DiscoveryFile::OPTION_FILE_HASHES));
         $this->assertFileDoesNotExist($this->getDirectory() . '/.htaccess');
 
         $this->settings->enableClientCredentials->setValue(false);
         $this->assertSame(DiscoveryFile::STATUS_SKIPPED_FOREIGN_FILE, $discoveryFile->write());
         $this->assertSame($content, file_get_contents($this->getFilePath()));
+    }
+
+    public function test_write_takesOverIdenticalFileWhenForced()
+    {
+        $discoveryFile = $this->makeDiscoveryFile();
+        $discoveryFile->write();
+        $content = (string) file_get_contents($this->getFilePath());
+        $discoveryFile->remove();
+        Option::delete(DiscoveryFile::OPTION_FILE_HASHES);
+
+        Filesystem::mkdir($this->getDirectory());
+        file_put_contents($this->getFilePath(), $content);
+
+        $this->assertSame(DiscoveryFile::STATUS_UNCHANGED, $discoveryFile->write(true));
+        $this->assertFileExists($this->getDirectory() . '/.htaccess');
+
+        $this->settings->enableClientCredentials->setValue(false);
+        $this->assertSame(DiscoveryFile::STATUS_WRITTEN, $discoveryFile->write());
     }
 
     public function test_write_usesTheChangedMatomoUrl()
@@ -157,7 +177,6 @@ class DiscoveryFileTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestC
 
         $discoveryFile = $this->makeDiscoveryFile();
         $discoveryFile->write();
-        $hash = Option::get(DiscoveryFile::OPTION_FILE_HASH);
 
         chmod($this->getDirectory(), 0555);
         try {
@@ -167,7 +186,6 @@ class DiscoveryFileTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestC
         }
 
         $this->assertFileExists($this->getFilePath());
-        $this->assertSame($hash, Option::get(DiscoveryFile::OPTION_FILE_HASH));
 
         $discoveryFile->remove();
         $this->assertFileDoesNotExist($this->getFilePath());
@@ -185,7 +203,47 @@ class DiscoveryFileTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestC
         $this->assertFileDoesNotExist($this->getDirectory() . '/.htaccess');
         $this->assertFileDoesNotExist($this->getDirectory() . '/web.config');
         $this->assertDirectoryExists($this->getDirectory() . '/acme-challenge');
-        $this->assertFalse(Option::get(DiscoveryFile::OPTION_FILE_HASH));
+    }
+
+    public function test_olderCopyWrittenByMatomoIsStillUpdatedAndRemoved()
+    {
+        // E.g. a second web node that still has the file from before the last settings change.
+        $discoveryFile = $this->makeDiscoveryFile();
+        $discoveryFile->write();
+        $olderCopy = (string) file_get_contents($this->getFilePath());
+
+        $this->settings->enableClientCredentials->setValue(false);
+        $discoveryFile->write();
+        file_put_contents($this->getFilePath(), $olderCopy);
+
+        $this->settings->enableRefreshTokens->setValue(false);
+        $this->assertSame(DiscoveryFile::STATUS_WRITTEN, $discoveryFile->write());
+
+        file_put_contents($this->getFilePath(), $olderCopy);
+        $discoveryFile->remove();
+        $this->assertFileDoesNotExist($this->getFilePath());
+    }
+
+    public function test_write_removesItsFileWhenMatomoMovedToASubdirectory()
+    {
+        $discoveryFile = $this->makeDiscoveryFile();
+        $discoveryFile->write();
+
+        Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'https://matomo.example/analytics/');
+
+        $this->assertSame(DiscoveryFile::STATUS_SKIPPED_SUBDIRECTORY, $discoveryFile->write());
+        $this->assertFileDoesNotExist($this->getFilePath());
+        $this->assertFileDoesNotExist($this->getDirectory() . '/.htaccess');
+    }
+
+    public function test_write_keepsFileNotWrittenByMatomoWhenSkipped()
+    {
+        Filesystem::mkdir($this->getDirectory());
+        file_put_contents($this->getFilePath(), '{"issuer":"https://custom.example"}');
+        Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'https://matomo.example/analytics/');
+
+        $this->assertSame(DiscoveryFile::STATUS_SKIPPED_SUBDIRECTORY, $this->makeDiscoveryFile()->write());
+        $this->assertFileExists($this->getFilePath());
     }
 
     public function test_remove_keepsFileNotWrittenByMatomo()

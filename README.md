@@ -97,6 +97,14 @@ The discovery path lives at the domain root, outside Matomo's `index.php`, so th
 
 **Root installs (Matomo at `https://example.com/`): no web server configuration needed in most cases.** The plugin writes the document as a static file to `.well-known/oauth-authorization-server` in the Matomo directory, which Apache, nginx and IIS serve like any other file. It also writes a `.htaccess` (Apache) and a `web.config` (IIS) next to it, so the file is sent as JSON. The file is written when the plugin is activated or updated, and again whenever the system settings change or another plugin is activated or deactivated. A daily scheduled task also rewrites it when the Matomo URL has changed, for example after a move to a new domain or to HTTPS. It is removed when the plugin is deactivated.
 
+**Nginx** ignores both helper files and serves the extensionless file with its `default_type`, usually `application/octet-stream`, which some clients reject. Add this inside the Matomo `server { ... }` block so it is sent as JSON:
+
+```nginx
+location = /.well-known/oauth-authorization-server {
+    default_type application/json;
+}
+```
+
 This needs the Matomo directory to be writable by PHP. If it is not, or to update the file by hand, run:
 
 ```
@@ -105,7 +113,7 @@ This needs the Matomo directory to be writable by PHP. If it is not, or to updat
 
 The file is never written over a file that was not written by Matomo, unless `--force` is given. It describes the Matomo URL configured for the install, so if Matomo is reachable under several host names, clients using the others need the web server rule below.
 
-**Check it:** *Administration → System → System Check* shows **OAuth 2.0 discovery endpoint**. It requests the discovery URL and reports whether clients can discover the authorization server. If they can't, it shows the web server rule for your server, with your subdirectory filled in.
+**Check it:** *Administration → System → System Check* shows **OAuth 2.0 discovery endpoint**. It requests the discovery URL and reports whether clients can discover the authorization server and whether the document is sent as JSON. If they can't, it shows the web server rule for your server, with your subdirectory filled in.
 
 ### Web server rule (fallback)
 

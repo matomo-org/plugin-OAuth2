@@ -83,6 +83,36 @@ class DiscoveryEndpointCheckTest extends \Piwik\Tests\Framework\TestCase\Integra
         );
     }
 
+    public function test_execute_escapesRegexCharactersOfTheSubdirectory()
+    {
+        Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'https://matomo.example/stats+(eu)/');
+
+        $comment = $this->makeCheck(404, '', 'Apache/2.4.52')->execute()[0]->getItems()[0]->getComment();
+
+        $this->assertStringContainsString('RewriteRule ^\.well-known/oauth-authorization-server/stats\+\(eu\)$ ', $comment);
+    }
+
+    public function test_execute_warnsWithNginxRuleWhenNotServedAsJson()
+    {
+        $document = (string) json_encode($this->metadata->build('https://matomo.example'));
+
+        $result = $this->makeCheck(200, $document, 'nginx/1.24.0', null, 'application/octet-stream')->execute()[0];
+
+        $this->assertSame(DiagnosticResult::STATUS_WARNING, $result->getStatus());
+        $comment = $result->getItems()[0]->getComment();
+        $this->assertStringContainsString('sent as "application/octet-stream"', $comment);
+        $this->assertStringContainsString('default_type application/json;', $comment);
+    }
+
+    public function test_execute_acceptsJsonWithCharset()
+    {
+        $document = (string) json_encode($this->metadata->build('https://matomo.example'));
+
+        $result = $this->makeCheck(200, $document, '', null, 'application/json; charset=utf-8')->execute()[0];
+
+        $this->assertSame(DiagnosticResult::STATUS_OK, $result->getStatus());
+    }
+
     public function test_execute_warnsAndEscapesWhenIssuerDoesNotMatch()
     {
         $result = $this->makeCheck(200, '{"issuer":"https://other.example/<b>"}')->execute()[0];
@@ -115,11 +145,16 @@ class DiscoveryEndpointCheckTest extends \Piwik\Tests\Framework\TestCase\Integra
         $this->assertSame('https://matomo.example/', Option::get(SettingsPiwik::OPTION_PIWIK_URL));
     }
 
-    private function makeCheck(int $status, string $body, string $serverSoftware = '', ?\Closure $onFetch = null): DiscoveryEndpointCheck
-    {
+    private function makeCheck(
+        int $status,
+        string $body,
+        string $serverSoftware = '',
+        ?\Closure $onFetch = null,
+        string $contentType = 'application/json'
+    ): DiscoveryEndpointCheck {
         $discoveryFile = new DiscoveryFile($this->metadata, new NullLogger(), '/nonexistent');
 
-        return new class ($discoveryFile, $this->metadata, $status, $body, $serverSoftware, $onFetch) extends DiscoveryEndpointCheck {
+        return new class ($discoveryFile, $this->metadata, $status, $body, $serverSoftware, $onFetch, $contentType) extends DiscoveryEndpointCheck {
             /** @var string[] */
             public array $requestedUrls = [];
 
@@ -129,7 +164,8 @@ class DiscoveryEndpointCheckTest extends \Piwik\Tests\Framework\TestCase\Integra
                 private int $status,
                 private string $body,
                 private string $serverSoftware,
-                private ?\Closure $onFetch
+                private ?\Closure $onFetch,
+                private string $contentType
             ) {
                 parent::__construct($discoveryFile, $metadata);
             }
@@ -140,7 +176,7 @@ class DiscoveryEndpointCheckTest extends \Piwik\Tests\Framework\TestCase\Integra
                 if ($this->onFetch) {
                     ($this->onFetch)();
                 }
-                return ['status' => $this->status, 'data' => $this->body];
+                return ['status' => $this->status, 'data' => $this->body, 'contentType' => $this->contentType];
             }
 
             protected function getServerSoftware(): string

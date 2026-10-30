@@ -38,9 +38,12 @@ class DiscoveryFile
     public const FILE_NAME = 'oauth-authorization-server';
 
     /**
-     * Hash of the last file content written, which identifies the file as written by this class.
+     * Hashes of the file contents written, newest first, which identify a file as written by this
+     * class. Several are kept, as an older copy may still be served, e.g. by another web node.
      */
-    public const OPTION_FILE_HASH = 'OAuth2.discoveryFileHash';
+    public const OPTION_FILE_HASHES = 'OAuth2.discoveryFileHashes';
+
+    private const MAX_FILE_HASHES = 20;
 
     /**
      * Marks the helper files below as generated, so they are only replaced or removed when they are.
@@ -64,10 +67,13 @@ class DiscoveryFile
     {
         $issuer = $this->getIssuer();
         if ($issuer === null) {
+            $this->remove();
             return self::STATUS_SKIPPED_NO_URL;
         }
 
         if ((string) parse_url($issuer, PHP_URL_PATH) !== '') {
+            // E.g. a root install moved to a subdirectory: a copy written before is now wrong.
+            $this->remove();
             return self::STATUS_SKIPPED_SUBDIRECTORY;
         }
 
@@ -79,14 +85,18 @@ class DiscoveryFile
             $existingHash = sha1((string) @file_get_contents($path));
 
             if ($existingHash === $hash) {
-                // A file with the same content that Matomo did not write stays somebody else's.
-                if ($existingHash === Option::get(self::OPTION_FILE_HASH)) {
+                // A file with the same content that Matomo did not write stays somebody else's,
+                // unless forced.
+                if ($force) {
+                    $this->rememberHash($hash);
+                }
+                if ($this->isWrittenHash($existingHash)) {
                     $this->writeHelperFiles();
                 }
                 return self::STATUS_UNCHANGED;
             }
 
-            if (!$force && $existingHash !== Option::get(self::OPTION_FILE_HASH)) {
+            if (!$force && !$this->isWrittenHash($existingHash)) {
                 $this->logger->info('OAuth2: {path} was not written by Matomo, so it is not updated.', ['path' => $path]);
                 return self::STATUS_SKIPPED_FOREIGN_FILE;
             }
@@ -109,22 +119,24 @@ class DiscoveryFile
 
     /**
      * Removes the metadata file and its helper files, if they were written by this class.
+     *
+     * The written hashes are kept, so copies left elsewhere, e.g. on another web node, are still
+     * recognised later. Uninstalling the plugin deletes them.
      */
     public function remove(): void
     {
         $path = $this->getFilePath();
 
-        if (
-            file_exists($path)
-            && sha1((string) @file_get_contents($path)) === Option::get(self::OPTION_FILE_HASH)
-            && !@unlink($path)
-        ) {
-            // Keep the hash, so the file left behind is still recognised as written by Matomo.
-            $this->logger->info('OAuth2: Could not remove {path}.', ['path' => $path]);
-            return;
-        }
+        if (file_exists($path)) {
+            if (!$this->isWrittenHash(sha1((string) @file_get_contents($path)))) {
+                return;
+            }
 
-        Option::delete(self::OPTION_FILE_HASH);
+            if (!@unlink($path)) {
+                $this->logger->info('OAuth2: Could not remove {path}.', ['path' => $path]);
+                return;
+            }
+        }
 
         foreach (['.htaccess', 'web.config'] as $helperFile) {
             $helperPath = $this->getDirectoryPath() . '/' . $helperFile;
@@ -164,7 +176,25 @@ class DiscoveryFile
 
     private function rememberHash(string $hash): void
     {
-        Option::set(self::OPTION_FILE_HASH, $hash);
+        $hashes = array_values(array_diff($this->getWrittenHashes(), [$hash]));
+        array_unshift($hashes, $hash);
+
+        Option::set(self::OPTION_FILE_HASHES, (string) json_encode(array_slice($hashes, 0, self::MAX_FILE_HASHES)));
+    }
+
+    private function isWrittenHash(string $hash): bool
+    {
+        return in_array($hash, $this->getWrittenHashes(), true);
+    }
+
+    /**
+     * @return string[]
+     */
+    private function getWrittenHashes(): array
+    {
+        $hashes = json_decode((string) Option::get(self::OPTION_FILE_HASHES), true);
+
+        return is_array($hashes) ? array_values(array_filter($hashes, 'is_string')) : [];
     }
 
     /**
@@ -190,7 +220,7 @@ class DiscoveryFile
 
     /**
      * Without these, Apache sends the extensionless file without a JSON content type and IIS
-     * refuses to serve it at all. nginx needs no helper file and ignores both.
+     * refuses to serve it at all. nginx ignores both, see the README for its content type.
      */
     private function writeHelperFiles(): void
     {

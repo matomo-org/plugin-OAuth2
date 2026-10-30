@@ -44,7 +44,7 @@ class DiscoveryFileHooksTest extends \Piwik\Tests\Framework\TestCase\Integration
         Filesystem::mkdir($this->documentRoot);
 
         Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'https://matomo.example/');
-        Option::delete(DiscoveryFile::OPTION_FILE_HASH);
+        Option::delete(DiscoveryFile::OPTION_FILE_HASHES);
     }
 
     public function tearDown(): void

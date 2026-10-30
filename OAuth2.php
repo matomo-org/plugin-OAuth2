@@ -491,6 +491,7 @@ class OAuth2 extends Plugin
     public function uninstall()
     {
         $this->removeDiscoveryFile();
+        Option::delete(DiscoveryFile::OPTION_FILE_HASHES);
 
         foreach (['oauth2_auth_code', 'oauth2_refresh_token', 'oauth2_access_token', 'oauth2_client'] as $table) {
             Db::query('DROP TABLE IF EXISTS ' . Common::prefixTable($table));
