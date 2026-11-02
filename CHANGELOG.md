@@ -1,6 +1,6 @@
 ## Changelog
 
-6.0.4
+6.0.4 - 2026-11-02
 - OAuth 2.0 clients can be selected in the activity log's "Filter by item" filter
 
 6.0.3 - 2026-10-26
