@@ -10,12 +10,15 @@
 namespace Piwik\Plugins\OAuth2\tests\Integration;
 
 use Piwik\Auth\Password;
+use Piwik\Common;
 use Piwik\Container\StaticContainer;
 use Piwik\Date;
+use Piwik\Db;
 use Piwik\Piwik;
 use Piwik\Plugins\OAuth2\API;
 use Piwik\Plugins\OAuth2\Model\ClientModel;
 use Piwik\Plugins\OAuth2\Repositories\ClientRepository;
+use Piwik\Plugins\OAuth2\Service\ClientManager;
 use Piwik\Plugins\OAuth2\tests\Fixtures\OAuth2Fixture;
 use Piwik\Plugins\UsersManager\Model as UserModel;
 use Piwik\Plugins\UsersManager\UsersManager;
@@ -284,6 +287,87 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         return [
             'empty array' => [[]],
             'blank values' => [['', ' ']],
+        ];
+    }
+
+    /**
+     * @dataProvider getEmptyGrantTypes
+     */
+    public function test_clientManagerCreate_rejectsEmptyGrantTypes(array $grantTypes)
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('At least one grant type is required');
+
+        StaticContainer::get(ClientManager::class)->create([
+            'name' => 'No grant client',
+            'redirect_uris' => ['https://client.example/callback'],
+            'grant_types' => $grantTypes,
+            'scopes' => ['matomo:read'],
+            'type' => 'confidential',
+            'active' => true,
+        ], Fixture::ADMIN_USER_LOGIN);
+    }
+
+    /**
+     * @dataProvider getEmptyGrantTypes
+     */
+    public function test_clientManagerUpdate_rejectsEmptyGrantTypes(array $grantTypes)
+    {
+        $result = $this->createConfidentialClient();
+        $clientId = $result['client']['client_id'];
+
+        try {
+            StaticContainer::get(ClientManager::class)->update($clientId, [
+                'name' => 'No grant client',
+                'redirect_uris' => ['https://client.example/callback'],
+                'grant_types' => $grantTypes,
+                'scopes' => ['matomo:read'],
+                'type' => 'confidential',
+                'active' => true,
+            ]);
+            $this->fail('Expected an exception for empty grant types');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertSame('At least one grant type is required', $e->getMessage());
+        }
+
+        $this->assertSame(
+            ['authorization_code', 'refresh_token'],
+            $this->clientModel->find($clientId)['grant_types']
+        );
+    }
+
+    /**
+     * @dataProvider getStoredEmptyGrantTypes
+     */
+    public function test_clientWithStoredEmptyGrantTypes_isNotAllowedAnyGrant(?string $storedGrantTypes)
+    {
+        $result = $this->createConfidentialClient();
+        $clientId = $result['client']['client_id'];
+
+        Db::query(
+            'UPDATE ' . Common::prefixTable('oauth2_client') . ' SET grant_types = ? WHERE client_id = ?',
+            [$storedGrantTypes, $clientId]
+        );
+
+        $clientEntity = $this->clientRepository->getClientEntity($clientId);
+        $this->assertNotNull($clientEntity);
+
+        foreach (['authorization_code', 'client_credentials', 'refresh_token'] as $grantType) {
+            $this->assertFalse(
+                $this->clientRepository->validateClient($clientId, $result['secret'], $grantType),
+                $grantType
+            );
+            $this->assertFalse($clientEntity->supportsGrantType($grantType), $grantType);
+        }
+    }
+
+    public function getStoredEmptyGrantTypes(): array
+    {
+        return [
+            'empty json array' => ['[]'],
+            'blank values' => ['["", " "]'],
+            'empty string' => [''],
+            'null' => [null],
         ];
     }
 

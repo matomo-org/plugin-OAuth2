@@ -82,11 +82,11 @@ class ClientEntity implements ClientEntityInterface
      * Used by the OAuth2 server runtime to determine whether this client may use
      * the given grant. Enforced for all clients (public and confidential), unlike
      * ClientRepository::validateClient() which the library only calls for
-     * confidential clients. An empty list means no per-client restriction.
+     * confidential clients. An empty list allows no grant.
      */
     public function supportsGrantType(string $grantType): bool
     {
-        return empty($this->allowedGrantTypes) || in_array($grantType, $this->allowedGrantTypes, true);
+        return in_array($grantType, $this->allowedGrantTypes, true);
     }
 
     public function setConfidential(bool $confidential): void
