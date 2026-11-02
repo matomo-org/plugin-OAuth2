@@ -9,6 +9,7 @@
 
 namespace Piwik\Plugins\OAuth2\Diagnostic;
 
+use Piwik\Common;
 use Piwik\Http;
 use Piwik\Option;
 use Piwik\Plugins\Diagnostics\Diagnostic\Diagnostic;
@@ -110,11 +111,16 @@ class DiscoveryEndpointCheck implements Diagnostic
      */
     public static function getDiscoveryUrl(string $issuer): string
     {
-        $parts = parse_url($issuer);
-        $origin = ($parts['scheme'] ?? 'https') . '://' . ($parts['host'] ?? '')
-            . (isset($parts['port']) ? ':' . $parts['port'] : '');
+        return self::getOrigin($issuer) . AuthorizationServerMetadata::WELL_KNOWN_PATH
+            . rtrim((string) parse_url($issuer, PHP_URL_PATH), '/');
+    }
 
-        return $origin . AuthorizationServerMetadata::WELL_KNOWN_PATH . rtrim($parts['path'] ?? '', '/');
+    private static function getOrigin(string $issuer): string
+    {
+        $parts = parse_url($issuer);
+
+        return ($parts['scheme'] ?? 'https') . '://' . ($parts['host'] ?? '')
+            . (isset($parts['port']) ? ':' . $parts['port'] : '');
     }
 
     /**
@@ -153,6 +159,11 @@ class DiscoveryEndpointCheck implements Diagnostic
         ];
     }
 
+    protected function isConsole(): bool
+    {
+        return Common::isPhpCliMode();
+    }
+
     protected function getServerSoftware(): string
     {
         $serverSoftware = $_SERVER['SERVER_SOFTWARE'] ?? '';
@@ -181,6 +192,9 @@ class DiscoveryEndpointCheck implements Diagnostic
         }
 
         $comment .= ':<br><br>' . $this->getWebServerRule($path)
+            . '<br><br>Until this is fixed in Matomo, each request forwarded this way makes Matomo store a URL starting with '
+            . htmlspecialchars(self::getOrigin($issuer) . '/' . DiscoveryFile::DIRECTORY . '/') . ' as its own URL, '
+            . 'which links in emails and reports use until Matomo is opened in a browser again.'
             . '<br><br>If clients can reach the discovery URL but Matomo cannot request itself, you can ignore this warning.';
 
         return DiagnosticResult::singleResult(self::LABEL, DiagnosticResult::STATUS_WARNING, $comment);
@@ -262,10 +276,18 @@ class DiscoveryEndpointCheck implements Diagnostic
     /**
      * The System Check strips <pre>, so the indentation is kept with non-breaking spaces.
      *
+     * The console (diagnostics:run) strips tags without decoding entities, which would break the
+     * rule when copied, and cannot tell the web server, so it points to the System Check instead.
+     *
      * @param string[] $lines
      */
     private function formatRule(array $lines): string
     {
+        if ($this->isConsole()) {
+            return 'Open Administration > System > System Check in Matomo for the configuration for your web server, '
+                . 'or see the plugin README.';
+        }
+
         $lines = array_map(static function (string $line): string {
             $indentation = strlen($line) - strlen(ltrim($line, ' '));
 

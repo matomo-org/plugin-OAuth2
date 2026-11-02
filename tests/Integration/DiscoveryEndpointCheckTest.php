@@ -117,6 +117,26 @@ class DiscoveryEndpointCheckTest extends \Piwik\Tests\Framework\TestCase\Integra
         $this->assertStringContainsString('RewriteRule ^/?\.well-known/oauth-authorization-server$ /index.php', $comment);
     }
 
+    public function test_execute_notesThatAForwardedRequestChangesTheStoredMatomoUrl()
+    {
+        $comment = $this->makeCheck(404, '', 'Apache/2.4.52')->execute()[0]->getItems()[0]->getComment();
+
+        $this->assertStringContainsString('store a URL starting with https://matomo.example/.well-known/ as its own URL', $comment);
+    }
+
+    public function test_execute_pointsToTheSystemCheckInsteadOfAnEscapedRuleOnTheConsole()
+    {
+        // diagnostics:run strips tags without decoding entities, and doesn't know the web server.
+        $check = $this->makeCheck(404, '');
+        $check->console = true;
+
+        $comment = $check->execute()[0]->getItems()[0]->getComment();
+
+        $this->assertStringContainsString('Administration > System > System Check', $comment);
+        $this->assertStringNotContainsString('RewriteRule', $comment);
+        $this->assertStringNotContainsString('&amp;', $comment);
+    }
+
     public function test_execute_warnsWithNginxRuleWhenNotServedAsJson()
     {
         $document = (string) json_encode($this->metadata->build('https://matomo.example'));
@@ -183,6 +203,8 @@ class DiscoveryEndpointCheckTest extends \Piwik\Tests\Framework\TestCase\Integra
             /** @var string[] */
             public array $requestedUrls = [];
 
+            public bool $console = false;
+
             public function __construct(
                 DiscoveryFile $discoveryFile,
                 AuthorizationServerMetadata $metadata,
@@ -207,6 +229,11 @@ class DiscoveryEndpointCheckTest extends \Piwik\Tests\Framework\TestCase\Integra
             protected function getServerSoftware(): string
             {
                 return strtolower($this->serverSoftware);
+            }
+
+            protected function isConsole(): bool
+            {
+                return $this->console;
             }
         };
     }

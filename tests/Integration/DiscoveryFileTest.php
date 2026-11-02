@@ -277,6 +277,30 @@ class DiscoveryFileTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestC
         $this->assertSame($helperInode, fileinode($this->getDirectory() . '/.htaccess'));
     }
 
+    public function test_removeOnUninstall_keepsTheHashesWhenTheFileCannotBeRemoved()
+    {
+        if (function_exists('posix_geteuid') && posix_geteuid() === 0) {
+            $this->markTestSkipped('root can remove files from a read-only directory');
+        }
+
+        $discoveryFile = $this->makeDiscoveryFile();
+        $discoveryFile->write();
+
+        chmod($this->getDirectory(), 0555);
+        try {
+            $discoveryFile->removeOnUninstall();
+        } finally {
+            chmod($this->getDirectory(), 0755);
+        }
+
+        // Still recognised, so it is removed once possible instead of being left public for good.
+        $this->assertNotFalse(Option::get(DiscoveryFile::OPTION_FILE_HASHES));
+
+        $discoveryFile->removeOnUninstall();
+        $this->assertFileDoesNotExist($this->getFilePath());
+        $this->assertFalse(Option::get(DiscoveryFile::OPTION_FILE_HASHES));
+    }
+
     public function test_remove_removesOnlyFilesWrittenByMatomo()
     {
         $discoveryFile = $this->makeDiscoveryFile();

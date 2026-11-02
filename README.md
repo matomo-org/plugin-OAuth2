@@ -130,6 +130,8 @@ Setting `write_discovery_file = 1` writes the file even with a host specific con
 
 Use a rule forwarding the discovery path to the plugin's metadata action (`index.php?module=OAuth2&action=metadata`) when Matomo is installed in a subdirectory, when the static file can't be written, or when Matomo is reachable under several host names. Use an **internal rewrite** (not a redirect), matching the **exact path with no trailing slash**.
 
+Until this is fixed in Matomo core, each forwarded request makes Matomo store a URL under `/.well-known/` as its own URL (e.g. `https://example.com/.well-known/`), which links in emails and reports use until Matomo is opened in a browser again. The plugin ignores such a URL for the discovery document.
+
 **Apache** (`.htaccess` in the Matomo root, or the vhost):
 
 ```apache

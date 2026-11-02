@@ -143,13 +143,27 @@ class DiscoveryFile
 
     /**
      * Like remove(), for callers where the file is optional.
+     *
+     * @return bool Whether no file written by this class is left.
      */
-    public function tryRemove(): void
+    public function tryRemove(): bool
     {
         try {
-            $this->remove();
+            return $this->remove();
         } catch (\Throwable $e) {
             $this->logger->warning('OAuth2: Could not remove the discovery file: {exception}', ['exception' => $e]);
+            return false;
+        }
+    }
+
+    /**
+     * Removes the file and forgets the written hashes, unless the file could not be removed: it
+     * would then stay public without Matomo recognising it as its own any more.
+     */
+    public function removeOnUninstall(): void
+    {
+        if ($this->tryRemove()) {
+            Option::delete(self::OPTION_FILE_HASHES);
         }
     }
 
@@ -158,19 +172,21 @@ class DiscoveryFile
      *
      * The written hashes are kept, so copies left elsewhere, e.g. on another web node, are still
      * recognised later. Uninstalling the plugin deletes them.
+     *
+     * @return bool Whether no file written by this class is left, false when it could not be removed.
      */
-    public function remove(): void
+    public function remove(): bool
     {
         $path = $this->getFilePath();
 
         if (file_exists($path)) {
             if (!$this->isWrittenHash(sha1((string) @file_get_contents($path)))) {
-                return;
+                return true;
             }
 
             if (!@unlink($path)) {
                 $this->logger->info('OAuth2: Could not remove {path}.', ['path' => $path]);
-                return;
+                return false;
             }
         }
 
@@ -185,6 +201,8 @@ class DiscoveryFile
         if (is_dir($this->getDirectoryPath())) {
             @rmdir($this->getDirectoryPath());
         }
+
+        return true;
     }
 
     /**

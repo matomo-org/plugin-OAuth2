@@ -46,4 +46,10 @@ return [
     'diagnostics.optional' => Piwik\DI::add([
         Piwik\DI::get(\Piwik\Plugins\OAuth2\Diagnostic\DiscoveryEndpointCheck::class),
     ]),
+    // Written by DiscoveryFile (core already ignores its .htaccess and web.config helpers). Core's
+    // file integrity scan doesn't enter dot directories today; this keeps the file from being
+    // reported, or deleted by diagnostics:unexpected-files --delete, should that change.
+    'fileintegrity.ignore' => Piwik\DI::add([
+        DiscoveryFile::DIRECTORY . '/' . DiscoveryFile::FILE_NAME,
+    ]),
 ];
