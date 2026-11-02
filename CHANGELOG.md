@@ -1,5 +1,8 @@
 ## Changelog
 
+5.3.5
+- Added code to harden client validation
+
 5.3.4 - 2026-10-26
 - Updated dependencies
 

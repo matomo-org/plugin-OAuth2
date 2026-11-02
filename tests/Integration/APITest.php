@@ -12,6 +12,7 @@ namespace Piwik\Plugins\OAuth2\tests\Integration;
 use Piwik\Auth\Password;
 use Piwik\Container\StaticContainer;
 use Piwik\Date;
+use Piwik\Piwik;
 use Piwik\Plugins\OAuth2\API;
 use Piwik\Plugins\OAuth2\Model\ClientModel;
 use Piwik\Plugins\OAuth2\Repositories\ClientRepository;
@@ -222,6 +223,68 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             '1',
             Fixture::ADMIN_USER_PASSWORD
         );
+    }
+
+    /**
+     * @dataProvider getEmptyGrantTypes
+     */
+    public function test_createClient_rejectsEmptyGrantTypes(array $grantTypes)
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage(Piwik::translate('OAuth2_InvalidGrantTypes'));
+
+        $this->api->createClient(
+            'No grant client',
+            $grantTypes,
+            'matomo:read',
+            ['https://client.example/callback'],
+            '',
+            'confidential',
+            '1',
+            Fixture::ADMIN_USER_PASSWORD
+        );
+    }
+
+    /**
+     * @dataProvider getEmptyGrantTypes
+     */
+    public function test_updateClient_rejectsEmptyGrantTypes(array $grantTypes)
+    {
+        $result = $this->createConfidentialClient();
+        $clientId = $result['client']['client_id'];
+
+        try {
+            $this->api->updateClient(
+                $clientId,
+                'No grant client',
+                $grantTypes,
+                'matomo:read',
+                ['https://client.example/callback'],
+                '',
+                'confidential',
+                '1',
+                Fixture::ADMIN_USER_PASSWORD
+            );
+            $this->fail('Expected an exception for empty grant types');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertSame(Piwik::translate('OAuth2_InvalidGrantTypes'), $e->getMessage());
+        }
+
+        $this->assertSame(
+            ['authorization_code', 'refresh_token'],
+            $this->clientModel->find($clientId)['grant_types']
+        );
+        $this->assertFalse(
+            $this->clientRepository->validateClient($clientId, $result['secret'], 'client_credentials')
+        );
+    }
+
+    public function getEmptyGrantTypes(): array
+    {
+        return [
+            'empty array' => [[]],
+            'blank values' => [['', ' ']],
+        ];
     }
 
     public function test_createClient_allowsRedirectUriWithUrlInQueryString()
