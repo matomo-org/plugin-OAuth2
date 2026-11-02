@@ -1,5 +1,8 @@
 ## Changelog
 
+6.0.5
+- Added code to harden client validation
+
 6.0.4 - 2026-11-02
 - OAuth 2.0 clients can be selected in the activity log's "Filter by item" filter
 
