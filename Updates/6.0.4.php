@@ -10,7 +10,6 @@
 namespace Piwik\Plugins\OAuth2;
 
 use Piwik\Container\StaticContainer;
-use Piwik\Log\LoggerInterface;
 use Piwik\Plugins\OAuth2\Service\DiscoveryFile;
 use Piwik\Updater;
 use Piwik\Updater\Migration\Custom as CustomMigration;
@@ -35,19 +34,8 @@ class Updates_6_0_4 extends PiwikUpdates
         $updater->executeMigrations(__FILE__, $this->getMigrations($updater));
     }
 
-    /**
-     * Best effort, like on activation: when the file cannot be written the endpoint keeps working
-     * through a web server rule, and the System Check reports it.
-     */
     public static function writeDiscoveryFile(): void
     {
-        try {
-            StaticContainer::get(DiscoveryFile::class)->write();
-        } catch (\Throwable $e) {
-            StaticContainer::get(LoggerInterface::class)->warning(
-                'OAuth2: Could not write the discovery file: {exception}',
-                ['exception' => $e]
-            );
-        }
+        StaticContainer::get(DiscoveryFile::class)->tryWrite();
     }
 }

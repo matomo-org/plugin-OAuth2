@@ -24,7 +24,7 @@ use Piwik\SettingsPiwik;
  * discovery URL at the domain root, outside the Matomo directory.
  *
  * The file is a snapshot, so it is written again whenever its content may change. Files that
- * were not written by this class are never overwritten or removed.
+ * were not written by this class are never removed, and only overwritten when forced.
  */
 class DiscoveryFile
 {
@@ -85,7 +85,7 @@ class DiscoveryFile
         }
 
         $path = $this->getFilePath();
-        $content = (string) json_encode($this->metadata->build($issuer), JSON_UNESCAPED_SLASHES);
+        $content = json_encode($this->metadata->build($issuer), JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
         $hash = sha1($content);
 
         if (file_exists($path)) {
@@ -109,6 +109,10 @@ class DiscoveryFile
             }
         }
 
+        // Remembered before the file is in place, so it is never left behind unrecognised, e.g. when
+        // storing the hash fails. A hash of a file that was not written in the end does no harm.
+        $this->rememberHash($hash);
+
         $directory = $this->getDirectoryPath();
         if (
             (!is_dir($directory) && !@mkdir($directory, 0755))
@@ -118,10 +122,35 @@ class DiscoveryFile
             return self::STATUS_NOT_WRITABLE;
         }
 
-        $this->rememberHash($hash);
         $this->writeHelperFiles();
 
         return self::STATUS_WRITTEN;
+    }
+
+    /**
+     * Like write(), for callers where the file is optional: a file that cannot be built, e.g.
+     * because a metadata listener fails, must not break the action that triggered the write.
+     * The discovery endpoint check in the System Check reports the outcome.
+     */
+    public function tryWrite(): void
+    {
+        try {
+            $this->write();
+        } catch (\Throwable $e) {
+            $this->logger->warning('OAuth2: Could not write the discovery file: {exception}', ['exception' => $e]);
+        }
+    }
+
+    /**
+     * Like remove(), for callers where the file is optional.
+     */
+    public function tryRemove(): void
+    {
+        try {
+            $this->remove();
+        } catch (\Throwable $e) {
+            $this->logger->warning('OAuth2: Could not remove the discovery file: {exception}', ['exception' => $e]);
+        }
     }
 
     /**
@@ -179,12 +208,19 @@ class DiscoveryFile
      *
      * Read from the option rather than SettingsPiwik::getPiwikUrl(), which during a web request
      * returns the host of that request, so the file doesn't depend on where it was written from.
+     *
+     * A web server rule forwarding the discovery URL to Matomo makes Matomo store that request's
+     * URL, e.g. <host>/.well-known/, until it is opened normally again. Such a URL is not used, as
+     * the Matomo directory it points to is unknown.
      */
     public function getIssuer(): ?string
     {
         $url = rtrim((string) Option::get(SettingsPiwik::OPTION_PIWIK_URL), '/');
+        if ($url === '' || preg_match('~/' . preg_quote(self::DIRECTORY, '~') . '(/|$)~', (string) parse_url($url, PHP_URL_PATH))) {
+            return null;
+        }
 
-        return $url === '' ? null : $url;
+        return $url;
     }
 
     public function getFilePath(): string
@@ -255,9 +291,14 @@ class DiscoveryFile
     {
         $path = $this->getDirectoryPath() . '/' . $fileName;
 
-        if (file_exists($path) && !$this->isGenerated($path)) {
-            $this->logger->info('OAuth2: {path} was not written by Matomo, so it is not updated.', ['path' => $path]);
-            return;
+        if (file_exists($path)) {
+            if (!$this->isGenerated($path)) {
+                $this->logger->info('OAuth2: {path} was not written by Matomo, so it is not updated.', ['path' => $path]);
+                return;
+            }
+            if (@file_get_contents($path) === $content) {
+                return;
+            }
         }
 
         $this->writeFile($path, $content);

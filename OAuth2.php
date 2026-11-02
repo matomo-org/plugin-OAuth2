@@ -111,7 +111,7 @@ class OAuth2 extends Plugin
      *
      * @param string $pluginName
      */
-    public function onPluginActivationChanged($pluginName)
+    public function onPluginActivationChanged($pluginName): void
     {
         // This plugin's own activation is handled by activate() and deactivate().
         if ($pluginName !== 'OAuth2') {
@@ -119,32 +119,9 @@ class OAuth2 extends Plugin
         }
     }
 
-    /**
-     * Best effort: a discovery file that cannot be written must not break the action that changed
-     * it, the discovery endpoint check in the System Check reports the outcome.
-     */
-    public function writeDiscoveryFile()
+    public function writeDiscoveryFile(): void
     {
-        try {
-            StaticContainer::get(DiscoveryFile::class)->write();
-        } catch (\Throwable $e) {
-            StaticContainer::get(LoggerInterface::class)->warning(
-                'OAuth2: Could not write the discovery file: {exception}',
-                ['exception' => $e]
-            );
-        }
-    }
-
-    private function removeDiscoveryFile(): void
-    {
-        try {
-            StaticContainer::get(DiscoveryFile::class)->remove();
-        } catch (\Throwable $e) {
-            StaticContainer::get(LoggerInterface::class)->warning(
-                'OAuth2: Could not remove the discovery file: {exception}',
-                ['exception' => $e]
-            );
-        }
+        StaticContainer::get(DiscoveryFile::class)->tryWrite();
     }
 
     public function getStylesheetFiles(&$stylesheets)
@@ -419,7 +396,7 @@ class OAuth2 extends Plugin
 
     public function deactivate()
     {
-        $this->removeDiscoveryFile();
+        StaticContainer::get(DiscoveryFile::class)->tryRemove();
     }
 
     public function install()
@@ -490,7 +467,7 @@ class OAuth2 extends Plugin
 
     public function uninstall()
     {
-        $this->removeDiscoveryFile();
+        StaticContainer::get(DiscoveryFile::class)->tryRemove();
         Option::delete(DiscoveryFile::OPTION_FILE_HASHES);
 
         foreach (['oauth2_auth_code', 'oauth2_refresh_token', 'oauth2_access_token', 'oauth2_client'] as $table) {

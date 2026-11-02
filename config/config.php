@@ -46,8 +46,4 @@ return [
     'diagnostics.optional' => Piwik\DI::add([
         Piwik\DI::get(\Piwik\Plugins\OAuth2\Diagnostic\DiscoveryEndpointCheck::class),
     ]),
-    // Written by DiscoveryFile, its .htaccess and web.config helpers are already ignored by core.
-    'fileintegrity.ignore' => Piwik\DI::add([
-        DiscoveryFile::DIRECTORY . '/' . DiscoveryFile::FILE_NAME,
-    ]),
 ];

@@ -12,6 +12,7 @@ namespace Piwik\Plugins\OAuth2\tests\Integration;
 use Piwik\Config;
 use Piwik\Container\StaticContainer;
 use Piwik\Filesystem;
+use Piwik\Log\LoggerInterface;
 use Piwik\Log\NullLogger;
 use Piwik\Option;
 use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
@@ -184,6 +185,7 @@ class DiscoveryFileTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestC
     public function test_isEnabled_isOffByDefaultWithAHostSpecificConfig()
     {
         // Instances on one codebase share the document root, so none of them can own the file.
+        $previousResolver = $GLOBALS['CONFIG_INI_PATH_RESOLVER'] ?? null;
         $GLOBALS['CONFIG_INI_PATH_RESOLVER'] = static function (): string {
             return PIWIK_USER_PATH . '/config/analytics.example.config.ini.php';
         };
@@ -196,7 +198,7 @@ class DiscoveryFileTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestC
             Config::getInstance()->OAuth2 = ['write_discovery_file' => 1];
             $this->assertTrue($this->makeDiscoveryFile()->isEnabled());
         } finally {
-            unset($GLOBALS['CONFIG_INI_PATH_RESOLVER']);
+            $GLOBALS['CONFIG_INI_PATH_RESOLVER'] = $previousResolver;
         }
     }
 
@@ -237,6 +239,42 @@ class DiscoveryFileTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestC
 
         $discoveryFile->remove();
         $this->assertFileDoesNotExist($this->getFilePath());
+    }
+
+    public function test_write_recognisesTheFileEvenWhenWritingItFailed()
+    {
+        if (function_exists('posix_geteuid') && posix_geteuid() === 0) {
+            $this->markTestSkipped('root can write to a read-only directory');
+        }
+
+        // The hash is stored before the file is put in place, so a file that ends up written
+        // without the rest of write() completing is still recognised as Matomo's.
+        chmod($this->documentRoot, 0555);
+        try {
+            $this->assertSame(DiscoveryFile::STATUS_NOT_WRITABLE, $this->makeDiscoveryFile()->write());
+        } finally {
+            chmod($this->documentRoot, 0755);
+        }
+
+        $metadata = new AuthorizationServerMetadata($this->settings, new ScopeRepository($this->settings));
+        Filesystem::mkdir($this->getDirectory());
+        file_put_contents($this->getFilePath(), json_encode($metadata->build('https://matomo.example'), JSON_UNESCAPED_SLASHES));
+
+        $this->makeDiscoveryFile()->remove();
+        $this->assertFileDoesNotExist($this->getFilePath());
+    }
+
+    public function test_write_leavesUnchangedHelperFilesInPlace()
+    {
+        $discoveryFile = $this->makeDiscoveryFile();
+        $discoveryFile->write();
+        $helperInode = fileinode($this->getDirectory() . '/.htaccess');
+
+        $this->settings->enableClientCredentials->setValue(false);
+        $this->assertSame(DiscoveryFile::STATUS_WRITTEN, $discoveryFile->write());
+
+        clearstatcache();
+        $this->assertSame($helperInode, fileinode($this->getDirectory() . '/.htaccess'));
     }
 
     public function test_remove_removesOnlyFilesWrittenByMatomo()
@@ -311,14 +349,72 @@ class DiscoveryFileTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestC
         $discoveryFile = StaticContainer::get(DiscoveryFile::class);
         $discoveryFile->write();
 
-        $settings = new SystemSettings();
-        $settings->enableRefreshTokens->setValue(false);
-        $settings->save();
+        try {
+            $settings = new SystemSettings();
+            $settings->enableRefreshTokens->setValue(false);
+            $settings->save();
 
-        $document = json_decode((string) file_get_contents($discoveryFile->getFilePath()), true);
-        $this->assertSame(['authorization_code', 'client_credentials'], $document['grant_types_supported']);
+            $document = json_decode((string) file_get_contents($discoveryFile->getFilePath()), true);
+            $this->assertSame(['authorization_code', 'client_credentials'], $document['grant_types_supported']);
+        } finally {
+            $discoveryFile->remove();
+        }
+    }
 
-        $discoveryFile->remove();
+    /**
+     * @dataProvider getUrlsStoredFromAForwardedDiscoveryRequest
+     */
+    public function test_write_ignoresAMatomoUrlStoredFromAForwardedDiscoveryRequest(string $storedUrl)
+    {
+        $discoveryFile = $this->makeDiscoveryFile();
+        $discoveryFile->write();
+
+        // What Matomo stores when a web server rule forwards the discovery URL to index.php.
+        Option::set(SettingsPiwik::OPTION_PIWIK_URL, $storedUrl);
+
+        $this->assertNull($discoveryFile->getIssuer());
+        $this->assertSame(DiscoveryFile::STATUS_SKIPPED_NO_URL, $discoveryFile->write());
+        $this->assertFileDoesNotExist($this->getFilePath());
+    }
+
+    public function getUrlsStoredFromAForwardedDiscoveryRequest(): iterable
+    {
+        yield 'root install' => ['https://matomo.example/.well-known/'];
+        yield 'subdirectory install' => ['https://matomo.example/.well-known/oauth-authorization-server/'];
+    }
+
+    public function test_getIssuer_keepsAPathThatOnlyStartsLikeTheWellKnownDirectory()
+    {
+        Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'https://matomo.example/.well-knownish/');
+
+        $this->assertSame('https://matomo.example/.well-knownish', $this->makeDiscoveryFile()->getIssuer());
+    }
+
+    public function test_write_failsWithoutWritingWhenTheDocumentCannotBeEncoded()
+    {
+        $metadata = $this->createMock(AuthorizationServerMetadata::class);
+        $metadata->method('build')->willReturn(['issuer' => "\xB1"]);
+        $discoveryFile = new DiscoveryFile($metadata, new NullLogger(), $this->documentRoot);
+
+        try {
+            $discoveryFile->write();
+            $this->fail('Expected a JsonException.');
+        } catch (\JsonException $e) {
+            $this->assertFileDoesNotExist($this->getFilePath());
+        }
+    }
+
+    public function test_tryWrite_logsInsteadOfThrowing()
+    {
+        $metadata = $this->createMock(AuthorizationServerMetadata::class);
+        $metadata->method('build')->willThrowException(new \RuntimeException('listener failed'));
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())->method('warning')
+            ->with($this->stringContains('Could not write the discovery file'));
+
+        (new DiscoveryFile($metadata, $logger, $this->documentRoot))->tryWrite();
+
+        $this->assertFileDoesNotExist($this->getFilePath());
     }
 
     private function makeDiscoveryFile(): DiscoveryFile

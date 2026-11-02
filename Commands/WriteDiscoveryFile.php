@@ -42,7 +42,7 @@ class WriteDiscoveryFile extends ConsoleCommand
                 $output->writeln($path . ' is up to date.');
                 return self::SUCCESS;
             case DiscoveryFile::STATUS_SKIPPED_NO_URL:
-                $output->writeln('<comment>The Matomo URL is not known yet. Open Matomo in a browser once, then run this command again.</comment>');
+                $output->writeln('<comment>The Matomo URL is not known yet, or was stored from a discovery request a web server rule forwarded to Matomo. Open Matomo in a browser, then run this command again.</comment>');
                 return self::SUCCESS;
             case DiscoveryFile::STATUS_SKIPPED_SUBDIRECTORY:
                 $output->writeln('<comment>Matomo is installed in a subdirectory, so the discovery URL is at the domain root. Add a web server rule instead, see the plugin README.</comment>');

@@ -28,6 +28,6 @@ class Tasks extends \Piwik\Plugin\Tasks
      */
     public function writeDiscoveryFile(): void
     {
-        $this->discoveryFile->write();
+        $this->discoveryFile->tryWrite();
     }
 }

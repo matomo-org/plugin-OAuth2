@@ -57,6 +57,18 @@ class DiscoveryEndpointCheckTest extends \Piwik\Tests\Framework\TestCase\Integra
         $this->assertSame(['https://matomo.example/.well-known/oauth-authorization-server'], $check->requestedUrls);
     }
 
+    public function test_execute_warnsWhenTheCurrentDocumentCannotBeBuilt()
+    {
+        $body = (string) json_encode($this->metadata->build('https://matomo.example'));
+        $this->metadata = $this->createMock(AuthorizationServerMetadata::class);
+        $this->metadata->method('build')->willThrowException(new \RuntimeException('listener <failed>'));
+
+        $result = $this->makeCheck(200, $body)->execute()[0];
+
+        $this->assertSame(DiagnosticResult::STATUS_WARNING, $result->getStatus());
+        $this->assertStringContainsString('could not be built: listener &lt;failed&gt;', $result->getItems()[0]->getComment());
+    }
+
     public function test_execute_warnsWithRuleForDetectedServerWhenNotFound()
     {
         $result = $this->makeCheck(404, 'Not Found', 'nginx/1.24.0')->execute()[0];

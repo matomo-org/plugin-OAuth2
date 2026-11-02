@@ -39,7 +39,8 @@ class DiscoveryEndpointCheck implements Diagnostic
             return [DiagnosticResult::singleResult(
                 self::LABEL,
                 DiagnosticResult::STATUS_INFORMATIONAL,
-                'The Matomo URL is not known yet, so the discovery endpoint could not be checked.'
+                'The Matomo URL is not known yet, or was stored from a discovery request a web server rule forwarded to Matomo, '
+                . 'so the discovery endpoint could not be checked. Open Matomo in a browser, then check again.'
             )];
         }
 
@@ -65,12 +66,21 @@ class DiscoveryEndpointCheck implements Diagnostic
                 . '" instead of "' . htmlspecialchars($issuer) . '".')];
         }
 
-        if ($document != $this->metadata->build($issuer)) {
+        try {
+            $currentDocument = $this->metadata->build($issuer);
+        } catch (\Throwable $e) {
+            // E.g. a listener of OAuth2.authorizationServerMetadata fails, which also keeps the
+            // file from being written.
+            return [$this->warning($url, $issuer, 'The current discovery document could not be built: ' . htmlspecialchars($e->getMessage()) . '.')];
+        }
+
+        if ($document != $currentDocument) {
             return [$this->warning(
                 $url,
                 $issuer,
                 'It returned an outdated document. If ' . DiscoveryFile::DIRECTORY . '/' . DiscoveryFile::FILE_NAME
-                . ' exists in the Matomo directory, run <code>./console oauth2:write-discovery-file</code> to update it.'
+                . ' exists in the Matomo directory, run <code>./console oauth2:write-discovery-file</code> to update it, '
+                . 'with <code>--force</code> if it was not written by Matomo.'
             )];
         }
 
@@ -162,7 +172,8 @@ class DiscoveryEndpointCheck implements Diagnostic
                 . '<code>[OAuth2] write_discovery_file = 0</code> is set, '
                 . 'so forward the discovery URL to Matomo in your web server configuration';
         } elseif ($path === '') {
-            $comment .= 'Make sure the Matomo directory is writable and run <code>./console oauth2:write-discovery-file</code>, '
+            $comment .= 'Make sure the Matomo directory is writable and run <code>./console oauth2:write-discovery-file</code> '
+                . '(with <code>--force</code> if a file there was not written by Matomo), '
                 . 'or forward the discovery URL to Matomo in your web server configuration';
         } else {
             $comment .= 'As Matomo is installed in a subdirectory, the discovery URL is at the domain root. '

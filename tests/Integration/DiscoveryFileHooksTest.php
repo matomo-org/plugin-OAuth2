@@ -11,8 +11,10 @@ namespace Piwik\Plugins\OAuth2\tests\Integration;
 
 use Piwik\Container\StaticContainer;
 use Piwik\Filesystem;
+use Piwik\Log\LoggerInterface;
 use Piwik\Option;
 use Piwik\Plugins\OAuth2\OAuth2;
+use Piwik\Plugins\OAuth2\Service\AuthorizationServerMetadata;
 use Piwik\Plugins\OAuth2\Service\DiscoveryFile;
 use Piwik\Plugins\OAuth2\Tasks;
 use Piwik\Plugins\OAuth2\tests\Fixtures\OAuth2Fixture;
@@ -92,13 +94,22 @@ class DiscoveryFileHooksTest extends \Piwik\Tests\Framework\TestCase\Integration
         $this->assertSame('https://matomo.example', $this->getWrittenIssuer());
     }
 
-    public function test_update_doesNotFailWhenTheFileCannotBeBuilt()
+    public function test_hooks_doNotFailWhenTheFileCannotBeBuilt()
     {
-        $discoveryFile = $this->createMock(DiscoveryFile::class);
-        $discoveryFile->method('write')->willThrowException(new \RuntimeException('listener failed'));
-        StaticContainer::getContainer()->set(DiscoveryFile::class, $discoveryFile);
+        // E.g. a listener of OAuth2.authorizationServerMetadata throws.
+        $metadata = $this->createMock(AuthorizationServerMetadata::class);
+        $metadata->method('build')->willThrowException(new \RuntimeException('listener failed'));
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->exactly(4))->method('warning');
+        StaticContainer::getContainer()->set(
+            DiscoveryFile::class,
+            new DiscoveryFile($metadata, $logger, $this->documentRoot)
+        );
 
         Updates_6_0_4::writeDiscoveryFile();
+        StaticContainer::get(Tasks::class)->writeDiscoveryFile();
+        (new OAuth2())->onPluginActivationChanged('SomeOtherPlugin');
+        (new OAuth2())->writeDiscoveryFile();
 
         $this->assertFileDoesNotExist($this->getFilePath());
     }
