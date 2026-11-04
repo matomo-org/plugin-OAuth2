@@ -1,6 +1,6 @@
 ## Changelog
 
-6.0.4
+6.0.4 - 2026-11-02
 - OAuth 2.0 clients can be selected in the activity log's "Filter by item" filter
 - OAuth 2.0 clients such as MCP integrations can now discover the authorization server on root installs without a web server rewrite rule. The plugin writes the discovery document to `.well-known/oauth-authorization-server` in the Matomo directory and keeps it up to date, and the new `oauth2:write-discovery-file` command writes it by hand.
 - Instances using a host specific config don't write the discovery file, as they share it with the other instances of the codebase; others can turn it off with `[OAuth2] write_discovery_file = 0`. Such setups use a web server rule instead.
