@@ -385,18 +385,14 @@ class OAuth2 extends Plugin
         self::setupRSAKeys();
         self::setEncryptionKey();
 
-        // The plugin's config, which loads the prefixed dependencies, is only read once the
-        // plugin is active, so they are not available yet while it is being activated.
-        $autoload = __DIR__ . '/vendor/autoload.php';
-        if (file_exists($autoload)) {
-            require_once $autoload;
-        }
+        self::loadDependencies();
         $this->writeDiscoveryFile();
     }
 
     public function deactivate()
     {
-        StaticContainer::get(DiscoveryFile::class)->tryRemove();
+        $discoveryFile = self::getDiscoveryFileOfInactivePlugin();
+        $discoveryFile?->tryRemove();
     }
 
     public function install()
@@ -467,10 +463,44 @@ class OAuth2 extends Plugin
 
     public function uninstall()
     {
-        StaticContainer::get(DiscoveryFile::class)->removeOnUninstall();
+        $discoveryFile = self::getDiscoveryFileOfInactivePlugin();
+        $discoveryFile?->removeOnUninstall();
 
         foreach (['oauth2_auth_code', 'oauth2_refresh_token', 'oauth2_access_token', 'oauth2_client'] as $table) {
             Db::query('DROP TABLE IF EXISTS ' . Common::prefixTable($table));
+        }
+    }
+
+    /**
+     * The plugin's config, which loads the prefixed dependencies, is only read while the plugin is
+     * active, so they are not available yet while it is activated, nor any more while it is
+     * uninstalled.
+     */
+    private static function loadDependencies(): void
+    {
+        $autoload = __DIR__ . '/vendor/autoload.php';
+        if (file_exists($autoload)) {
+            require_once $autoload;
+        }
+    }
+
+    /**
+     * Removing the discovery file is best effort, so a failure here never keeps the plugin from
+     * being deactivated or uninstalled.
+     */
+    private static function getDiscoveryFileOfInactivePlugin(): ?DiscoveryFile
+    {
+        try {
+            self::loadDependencies();
+
+            return StaticContainer::get(DiscoveryFile::class);
+        } catch (\Throwable $e) {
+            StaticContainer::get(LoggerInterface::class)->warning(
+                'OAuth2: Could not remove the discovery file: {exception}',
+                ['exception' => $e]
+            );
+
+            return null;
         }
     }
 

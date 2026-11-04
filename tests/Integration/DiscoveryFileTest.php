@@ -346,6 +346,26 @@ class DiscoveryFileTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestC
         $this->assertFileDoesNotExist($this->getDirectory() . '/.htaccess');
     }
 
+    public function test_write_reportsAFileThatShouldNoLongerBeServedButCannotBeRemoved()
+    {
+        if (function_exists('posix_geteuid') && posix_geteuid() === 0) {
+            $this->markTestSkipped('root can remove files from a read-only directory');
+        }
+
+        $discoveryFile = $this->makeDiscoveryFile();
+        $discoveryFile->write();
+
+        Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'https://matomo.example/analytics/');
+
+        chmod($this->getDirectory(), 0555);
+        try {
+            $this->assertSame(DiscoveryFile::STATUS_NOT_REMOVABLE, $discoveryFile->write());
+        } finally {
+            chmod($this->getDirectory(), 0755);
+        }
+        $this->assertFileExists($this->getFilePath());
+    }
+
     public function test_write_keepsFileNotWrittenByMatomoWhenSkipped()
     {
         Filesystem::mkdir($this->getDirectory());

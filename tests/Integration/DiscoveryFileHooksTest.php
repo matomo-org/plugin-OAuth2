@@ -9,7 +9,9 @@
 
 namespace Piwik\Plugins\OAuth2\tests\Integration;
 
+use Piwik\Common;
 use Piwik\Container\StaticContainer;
+use Piwik\Db;
 use Piwik\Filesystem;
 use Piwik\Log\LoggerInterface;
 use Piwik\Option;
@@ -18,10 +20,10 @@ use Piwik\Plugins\OAuth2\Service\AuthorizationServerMetadata;
 use Piwik\Plugins\OAuth2\Service\DiscoveryFile;
 use Piwik\Plugins\OAuth2\Tasks;
 use Piwik\Plugins\OAuth2\tests\Fixtures\OAuth2Fixture;
-use Piwik\Plugins\OAuth2\Updates_6_0_4;
+use Piwik\Plugins\OAuth2\Updates_6_0_5;
 use Piwik\SettingsPiwik;
 
-require_once __DIR__ . '/../../Updates/6.0.4.php';
+require_once __DIR__ . '/../../Updates/6.0.5.php';
 
 /**
  * Covers the places that write or remove the discovery file. The test environment points the
@@ -89,7 +91,7 @@ class DiscoveryFileHooksTest extends \Piwik\Tests\Framework\TestCase\Integration
 
     public function test_update_writesTheFile()
     {
-        Updates_6_0_4::writeDiscoveryFile();
+        Updates_6_0_5::writeDiscoveryFile();
 
         $this->assertSame('https://matomo.example', $this->getWrittenIssuer());
     }
@@ -106,12 +108,32 @@ class DiscoveryFileHooksTest extends \Piwik\Tests\Framework\TestCase\Integration
             new DiscoveryFile($metadata, $logger, $this->documentRoot)
         );
 
-        Updates_6_0_4::writeDiscoveryFile();
+        Updates_6_0_5::writeDiscoveryFile();
         StaticContainer::get(Tasks::class)->writeDiscoveryFile();
         (new OAuth2())->onPluginActivationChanged('SomeOtherPlugin');
         (new OAuth2())->writeDiscoveryFile();
 
         $this->assertFileDoesNotExist($this->getFilePath());
+    }
+
+    public function test_uninstall_dropsTheTablesWhenTheFileCannotBeRemoved()
+    {
+        // E.g. the plugin's dependencies cannot be loaded while it is inactive.
+        $plugin = new OAuth2();
+        $plugin->activate();
+        StaticContainer::getContainer()->set(DiscoveryFile::class, \Piwik\DI::factory(function () {
+            throw new \Error('Interface not found');
+        }));
+
+        try {
+            $plugin->deactivate();
+            $plugin->uninstall();
+
+            $this->assertSame([], Db::fetchAll("SHOW TABLES LIKE '" . Common::prefixTable('oauth2_client') . "'"));
+        } finally {
+            $plugin->install();
+        }
+        $this->assertFileExists($this->getFilePath());
     }
 
     public function test_scheduledTask_updatesTheIssuerAfterTheMatomoUrlChanged()

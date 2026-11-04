@@ -9,7 +9,10 @@
 
 namespace Piwik\Plugins\OAuth2\tests\Integration;
 
+use Piwik\Common;
 use Piwik\Config;
+use Piwik\Container\StaticContainer;
+use Piwik\Plugins\OAuth2\Controller;
 use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
 use Piwik\Plugins\OAuth2\Service\AuthorizationServerMetadata;
 use Piwik\Plugins\OAuth2\SystemSettings;
@@ -128,6 +131,24 @@ class WellKnownMetadataTest extends \Piwik\Tests\Framework\TestCase\IntegrationT
         $this->assertSame('https://matomo.example/oauth/register', $metadata['registration_endpoint']);
         // The observer can also override values built by this plugin.
         $this->assertSame('https://matomo.example/oauth/token', $metadata['token_endpoint']);
+    }
+
+    public function test_metadataAction_mayOnlyBeCachedByTheClient()
+    {
+        // Its URLs come from the request's host, which a shared cache may not key on.
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        Common::$headersSentInTests = [];
+
+        ob_start();
+        try {
+            StaticContainer::get(Controller::class)->metadata();
+        } finally {
+            $body = (string) ob_get_clean();
+            unset($_SERVER['REQUEST_METHOD']);
+        }
+
+        $this->assertSame('private, max-age=3600', Common::getSentHeader('Cache-Control'));
+        $this->assertSame('https://matomo.example', json_decode($body, true)['issuer']);
     }
 
     private function simulateRequest(string $host, string $requestUri): void

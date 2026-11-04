@@ -20,7 +20,7 @@ use Piwik\Updates as PiwikUpdates;
  * authorization server without a web server rewrite rule. Fresh installs get it from
  * OAuth2::activate().
  */
-class Updates_6_0_4 extends PiwikUpdates
+class Updates_6_0_5 extends PiwikUpdates
 {
     public function getMigrations(Updater $updater): array
     {

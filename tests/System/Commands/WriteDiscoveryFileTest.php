@@ -108,6 +108,25 @@ class WriteDiscoveryFileTest extends ConsoleCommandTestCase
         $this->assertStringContainsString('Could not write', $this->applicationTester->getDisplay());
     }
 
+    public function test_failsWhenAFileThatShouldNoLongerBeServedCannotBeRemoved()
+    {
+        if (function_exists('posix_geteuid') && posix_geteuid() === 0) {
+            $this->markTestSkipped('root can remove files from a read-only directory');
+        }
+
+        $this->assertSame(0, $this->runCommand());
+        Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'https://matomo.example/analytics/');
+
+        $directory = $this->documentRoot . '/' . DiscoveryFile::DIRECTORY;
+        chmod($directory, 0555);
+        try {
+            $this->assertSame(1, $this->runCommand());
+        } finally {
+            chmod($directory, 0755);
+        }
+        $this->assertStringContainsString('could not be removed', $this->applicationTester->getDisplay());
+    }
+
     private function runCommand(array $options = []): int
     {
         return $this->applicationTester->run(array_merge(['command' => 'oauth2:write-discovery-file'], $options));

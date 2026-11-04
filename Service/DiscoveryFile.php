@@ -35,6 +35,7 @@ class DiscoveryFile
     public const STATUS_SKIPPED_SUBDIRECTORY = 'skipped_subdirectory';
     public const STATUS_SKIPPED_FOREIGN_FILE = 'skipped_foreign_file';
     public const STATUS_NOT_WRITABLE = 'not_writable';
+    public const STATUS_NOT_REMOVABLE = 'not_removable';
 
     public const DIRECTORY = '.well-known';
     public const FILE_NAME = 'oauth-authorization-server';
@@ -68,20 +69,17 @@ class DiscoveryFile
     public function write(bool $force = false): string
     {
         if (!$this->isEnabled()) {
-            $this->remove();
-            return self::STATUS_DISABLED;
+            return $this->removeOrReport(self::STATUS_DISABLED);
         }
 
         $issuer = $this->getIssuer();
         if ($issuer === null) {
-            $this->remove();
-            return self::STATUS_SKIPPED_NO_URL;
+            return $this->removeOrReport(self::STATUS_SKIPPED_NO_URL);
         }
 
         if ((string) parse_url($issuer, PHP_URL_PATH) !== '') {
             // E.g. a root install moved to a subdirectory: a copy written before is now wrong.
-            $this->remove();
-            return self::STATUS_SKIPPED_SUBDIRECTORY;
+            return $this->removeOrReport(self::STATUS_SKIPPED_SUBDIRECTORY);
         }
 
         $path = $this->getFilePath();
@@ -154,6 +152,15 @@ class DiscoveryFile
             $this->logger->warning('OAuth2: Could not remove the discovery file: {exception}', ['exception' => $e]);
             return false;
         }
+    }
+
+    /**
+     * Removes a file written before that should no longer be served, and returns the given status,
+     * or STATUS_NOT_REMOVABLE when it stays public.
+     */
+    private function removeOrReport(string $status): string
+    {
+        return $this->remove() ? $status : self::STATUS_NOT_REMOVABLE;
     }
 
     /**

@@ -50,6 +50,9 @@ class WriteDiscoveryFile extends ConsoleCommand
             case DiscoveryFile::STATUS_SKIPPED_FOREIGN_FILE:
                 $output->writeln('<comment>' . $path . ' was not written by Matomo and was left unchanged. Use --force to replace it.</comment>');
                 return self::SUCCESS;
+            case DiscoveryFile::STATUS_NOT_REMOVABLE:
+                $output->writeln('<error>' . $path . ' should no longer be served, but could not be removed. Make sure the directory is writable, or remove it by hand.</error>');
+                return self::FAILURE;
             default:
                 $output->writeln('<error>Could not write ' . $path . '. Make sure the directory is writable, or add a web server rule instead, see the plugin README.</error>');
                 return self::FAILURE;
