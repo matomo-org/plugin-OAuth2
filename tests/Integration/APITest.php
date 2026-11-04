@@ -234,7 +234,7 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
     public function test_createClient_rejectsEmptyGrantTypes(array $grantTypes)
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage(Piwik::translate('OAuth2_InvalidGrantTypes'));
+        $this->expectExceptionMessage(Piwik::translate('OAuth2_GrantTypeRequired'));
 
         $this->api->createClient(
             'No grant client',
@@ -270,7 +270,7 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             );
             $this->fail('Expected an exception for empty grant types');
         } catch (\InvalidArgumentException $e) {
-            $this->assertSame(Piwik::translate('OAuth2_InvalidGrantTypes'), $e->getMessage());
+            $this->assertSame(Piwik::translate('OAuth2_GrantTypeRequired'), $e->getMessage());
         }
 
         $this->assertSame(

@@ -2,6 +2,7 @@
 
 5.3.5
 - Added code to harden client validation
+- OAuth 2.0 clients without a grant type can no longer obtain tokens until one is selected
 
 5.3.4 - 2026-10-26
 - Updated dependencies
