@@ -384,7 +384,7 @@ class API extends \Piwik\Plugin\API
     private function validateGrantTypes(array $grantTypes): array
     {
         if (empty($grantTypes)) {
-            throw new \InvalidArgumentException(Piwik::translate('OAuth2_InvalidGrantTypes'));
+            throw new \InvalidArgumentException(Piwik::translate('OAuth2_GrantTypeRequired'));
         }
 
         $allowedGrantTypes = [
