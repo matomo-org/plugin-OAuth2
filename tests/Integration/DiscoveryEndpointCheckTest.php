@@ -10,6 +10,7 @@
 namespace Piwik\Plugins\OAuth2\tests\Integration;
 
 use Piwik\Config;
+use Piwik\Container\StaticContainer;
 use Piwik\Log\NullLogger;
 use Piwik\Option;
 use Piwik\Plugins\Diagnostics\Diagnostic\DiagnosticResult;
@@ -20,6 +21,8 @@ use Piwik\Plugins\OAuth2\Service\DiscoveryFile;
 use Piwik\Plugins\OAuth2\SystemSettings;
 use Piwik\Plugins\OAuth2\tests\Fixtures\OAuth2Fixture;
 use Piwik\SettingsPiwik;
+use Piwik\Tests\Framework\Fixture;
+use Piwik\Translation\Translator;
 
 /**
  * @group OAuth2
@@ -39,6 +42,16 @@ class DiscoveryEndpointCheckTest extends \Piwik\Tests\Framework\TestCase\Integra
         $settings = new SystemSettings();
         $this->metadata = new AuthorizationServerMetadata($settings, new ScopeRepository($settings));
         Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'https://matomo.example/');
+
+        // The assertions below check the English texts, which the test environment doesn't load.
+        Fixture::loadAllTranslations();
+    }
+
+    public function tearDown(): void
+    {
+        Fixture::resetTranslations();
+
+        parent::tearDown();
     }
 
     public function test_getDiscoveryUrl_insertsWellKnownSegmentBeforeIssuerPath()
@@ -54,6 +67,7 @@ class DiscoveryEndpointCheckTest extends \Piwik\Tests\Framework\TestCase\Integra
         $result = $check->execute()[0];
 
         $this->assertSame(DiagnosticResult::STATUS_OK, $result->getStatus());
+        $this->assertSame('OAuth 2.0 discovery endpoint', $result->getLabel());
         $this->assertSame(['https://matomo.example/.well-known/oauth-authorization-server'], $check->requestedUrls);
     }
 
@@ -225,7 +239,7 @@ class DiscoveryEndpointCheckTest extends \Piwik\Tests\Framework\TestCase\Integra
                 private ?\Closure $onFetch,
                 private string $contentType
             ) {
-                parent::__construct($discoveryFile, $metadata);
+                parent::__construct($discoveryFile, $metadata, StaticContainer::get(Translator::class));
             }
 
             protected function fetch(string $url): array

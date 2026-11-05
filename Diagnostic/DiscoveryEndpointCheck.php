@@ -18,6 +18,7 @@ use Piwik\Plugins\OAuth2\Service\AuthorizationServerMetadata;
 use Piwik\Plugins\OAuth2\Service\DiscoveryFile;
 use Piwik\SettingsPiwik;
 use Piwik\SettingsServer;
+use Piwik\Translation\Translator;
 
 /**
  * Checks that clients can discover the authorization server: requests the RFC 8414 discovery URL
@@ -25,11 +26,10 @@ use Piwik\SettingsServer;
  */
 class DiscoveryEndpointCheck implements Diagnostic
 {
-    private const LABEL = 'OAuth 2.0 discovery endpoint';
-
     public function __construct(
         private DiscoveryFile $discoveryFile,
-        private AuthorizationServerMetadata $metadata
+        private AuthorizationServerMetadata $metadata,
+        private Translator $translator
     ) {
     }
 
@@ -38,10 +38,9 @@ class DiscoveryEndpointCheck implements Diagnostic
         $issuer = $this->discoveryFile->getIssuer();
         if ($issuer === null) {
             return [DiagnosticResult::singleResult(
-                self::LABEL,
+                $this->getLabel(),
                 DiagnosticResult::STATUS_INFORMATIONAL,
-                'The Matomo URL is not known yet, or was stored from a discovery request a web server rule forwarded to Matomo, '
-                . 'so the discovery endpoint could not be checked. Open Matomo in a browser, then check again.'
+                $this->translator->translate('OAuth2_DiscoveryCheckUrlUnknown')
             )];
         }
 
@@ -49,12 +48,14 @@ class DiscoveryEndpointCheck implements Diagnostic
             // Matomo stores the URL of the last request it dispatched, so this is also the case
             // after a single request over http on an install that is reachable over https.
             return [DiagnosticResult::singleResult(
-                self::LABEL,
+                $this->getLabel(),
                 DiagnosticResult::STATUS_WARNING,
-                'The Matomo URL is stored as ' . htmlspecialchars($issuer) . ', but OAuth 2.0 discovery requires https, '
-                . 'so the discovery endpoint was not checked and the discovery file is not updated. Matomo stores the URL '
-                . 'it was last opened with, so open Matomo over https, and set <code>force_ssl = 1</code> in the '
-                . '<code>[General]</code> section of config/config.ini.php so it is only used over https.'
+                $this->translator->translate('OAuth2_DiscoveryCheckUrlNotHttps', [
+                    htmlspecialchars($issuer),
+                    '<code>force_ssl = 1</code>',
+                    '<code>[General]</code>',
+                    'config/config.ini.php',
+                ])
             )];
         }
 
@@ -63,21 +64,23 @@ class DiscoveryEndpointCheck implements Diagnostic
         try {
             $response = $this->fetchKeepingMatomoUrl($url);
         } catch (\Exception $e) {
-            return [$this->warning($url, $issuer, 'Matomo could not request it: ' . htmlspecialchars($e->getMessage()) . '.')];
+            return [$this->warning($url, $issuer, $this->translator->translate('OAuth2_DiscoveryCheckRequestFailed', htmlspecialchars($e->getMessage())))];
         }
 
         if ($response['status'] !== 200) {
-            return [$this->warning($url, $issuer, 'It responded with HTTP status ' . $response['status'] . '.')];
+            return [$this->warning($url, $issuer, $this->translator->translate('OAuth2_DiscoveryCheckHttpStatus', (string) $response['status']))];
         }
 
         $document = json_decode($response['data'], true);
         if (!is_array($document)) {
-            return [$this->warning($url, $issuer, 'It did not return a JSON document.')];
+            return [$this->warning($url, $issuer, $this->translator->translate('OAuth2_DiscoveryCheckNotJson'))];
         }
 
         if (($document['issuer'] ?? null) !== $issuer) {
-            return [$this->warning($url, $issuer, 'It returned the issuer "' . htmlspecialchars(is_string($document['issuer'] ?? null) ? $document['issuer'] : '')
-                . '" instead of "' . htmlspecialchars($issuer) . '".')];
+            return [$this->warning($url, $issuer, $this->translator->translate('OAuth2_DiscoveryCheckIssuerMismatch', [
+                htmlspecialchars(is_string($document['issuer'] ?? null) ? $document['issuer'] : ''),
+                htmlspecialchars($issuer),
+            ]))];
         }
 
         try {
@@ -85,16 +88,18 @@ class DiscoveryEndpointCheck implements Diagnostic
         } catch (\Throwable $e) {
             // E.g. a listener of OAuth2.authorizationServerMetadata fails, which also keeps the
             // file from being written.
-            return [$this->warning($url, $issuer, 'The current discovery document could not be built: ' . htmlspecialchars($e->getMessage()) . '.')];
+            return [$this->warning($url, $issuer, $this->translator->translate('OAuth2_DiscoveryCheckBuildFailed', htmlspecialchars($e->getMessage())))];
         }
 
         if ($document != $currentDocument) {
             return [$this->warning(
                 $url,
                 $issuer,
-                'It returned an outdated document. If ' . DiscoveryFile::DIRECTORY . '/' . DiscoveryFile::FILE_NAME
-                . ' exists in the Matomo directory, run <code>./console oauth2:write-discovery-file</code> to update it, '
-                . 'with <code>--force</code> if it was not written by Matomo.'
+                $this->translator->translate('OAuth2_DiscoveryCheckOutdated', [
+                    DiscoveryFile::DIRECTORY . '/' . DiscoveryFile::FILE_NAME,
+                    '<code>./console oauth2:write-discovery-file</code>',
+                    '<code>--force</code>',
+                ])
             )];
         }
 
@@ -103,18 +108,20 @@ class DiscoveryEndpointCheck implements Diagnostic
         $contentType = strtolower(trim(explode(';', $response['contentType'])[0]));
         if ($contentType !== 'application/json') {
             return [DiagnosticResult::singleResult(
-                self::LABEL,
+                $this->getLabel(),
                 DiagnosticResult::STATUS_WARNING,
-                'OAuth 2.0 clients can request the discovery document at ' . htmlspecialchars($url) . ', but it is sent as "'
-                . htmlspecialchars($contentType) . '" instead of "application/json", which some clients reject. '
-                . 'Configure the web server to send it as JSON:<br><br>' . $this->getContentTypeRule()
+                $this->translator->translate('OAuth2_DiscoveryCheckNotSentAsJson', [
+                    htmlspecialchars($url),
+                    htmlspecialchars($contentType),
+                    'application/json',
+                ]) . '<br><br>' . $this->getContentTypeRule()
             )];
         }
 
         return [DiagnosticResult::singleResult(
-            self::LABEL,
+            $this->getLabel(),
             DiagnosticResult::STATUS_OK,
-            'OAuth 2.0 clients can discover this authorization server at ' . htmlspecialchars($url) . '.'
+            $this->translator->translate('OAuth2_DiscoveryCheckOk', htmlspecialchars($url))
         )];
     }
 
@@ -188,29 +195,36 @@ class DiscoveryEndpointCheck implements Diagnostic
     {
         $path = rtrim((string) parse_url($issuer, PHP_URL_PATH), '/');
 
-        $comment = 'OAuth 2.0 clients such as MCP integrations cannot discover this authorization server at '
-            . htmlspecialchars($url) . '. ' . $reason . '<br><br>';
+        $comment = $this->translator->translate('OAuth2_DiscoveryCheckNotDiscoverable', htmlspecialchars($url))
+            . ' ' . $reason . '<br><br>';
 
         if ($path === '' && !$this->discoveryFile->isEnabled()) {
-            $comment .= 'Writing the discovery file is turned off, as Matomo uses a host specific config or '
-                . '<code>[OAuth2] write_discovery_file = 0</code> is set, '
-                . 'so forward the discovery URL to Matomo in your web server configuration';
+            $comment .= $this->translator->translate(
+                'OAuth2_DiscoveryCheckFileTurnedOff',
+                '<code>[OAuth2] write_discovery_file = 0</code>'
+            );
         } elseif ($path === '') {
-            $comment .= 'Make sure the Matomo directory is writable and run <code>./console oauth2:write-discovery-file</code> '
-                . '(with <code>--force</code> if a file there was not written by Matomo), '
-                . 'or forward the discovery URL to Matomo in your web server configuration';
+            $comment .= $this->translator->translate('OAuth2_DiscoveryCheckWriteFileOrForward', [
+                '<code>./console oauth2:write-discovery-file</code>',
+                '<code>--force</code>',
+            ]);
         } else {
-            $comment .= 'As Matomo is installed in a subdirectory, the discovery URL is at the domain root. '
-                . 'Forward it to Matomo in the web server configuration of the domain';
+            $comment .= $this->translator->translate('OAuth2_DiscoveryCheckSubdirectory');
         }
 
-        $comment .= ':<br><br>' . $this->getWebServerRule($path)
-            . '<br><br>Until this is fixed in Matomo, each request forwarded this way makes Matomo store a URL starting with '
-            . htmlspecialchars(self::getOrigin($issuer) . '/' . DiscoveryFile::DIRECTORY . '/') . ' as its own URL, '
-            . 'which links in emails and reports use until Matomo is opened in a browser again.'
-            . '<br><br>If clients can reach the discovery URL but Matomo cannot request itself, you can ignore this warning.';
+        $comment .= '<br><br>' . $this->getWebServerRule($path)
+            . '<br><br>' . $this->translator->translate(
+                'OAuth2_DiscoveryCheckForwardingChangesMatomoUrl',
+                htmlspecialchars(self::getOrigin($issuer) . '/' . DiscoveryFile::DIRECTORY . '/')
+            )
+            . '<br><br>' . $this->translator->translate('OAuth2_DiscoveryCheckIgnoreIfReachable');
 
-        return DiagnosticResult::singleResult(self::LABEL, DiagnosticResult::STATUS_WARNING, $comment);
+        return DiagnosticResult::singleResult($this->getLabel(), DiagnosticResult::STATUS_WARNING, $comment);
+    }
+
+    private function getLabel(): string
+    {
+        return $this->translator->translate('OAuth2_DiscoveryEndpointCheck');
     }
 
     private function getWebServerRule(string $path): string
@@ -221,7 +235,7 @@ class DiscoveryEndpointCheck implements Diagnostic
 
         if (SettingsServer::isIIS() || strpos($server, 'iis') !== false) {
             $rule = [
-                'IIS (URL Rewrite module, inside <rules> of web.config):',
+                $this->translator->translate('OAuth2_DiscoveryCheckIisRewriteRule', ['<rules>', 'web.config']),
                 '<rule name="OAuth2 discovery" stopProcessing="true">',
                 '    <match url="^' . $pattern . '" />',
                 '    <action type="Rewrite" url="' . ltrim(str_replace('&', '&amp;', $target), '/') . '" />',
@@ -229,14 +243,14 @@ class DiscoveryEndpointCheck implements Diagnostic
             ];
         } elseif (strpos($server, 'nginx') !== false) {
             $rule = [
-                'nginx (inside the server block):',
+                $this->translator->translate('OAuth2_DiscoveryCheckNginxServerBlock'),
                 'location = ' . AuthorizationServerMetadata::WELL_KNOWN_PATH . $path . ' {',
                 '    rewrite ^ ' . $target . ' last;',
                 '}',
             ];
         } else {
             $rule = [
-                'Apache (.htaccess in the domain root, or the virtual host):',
+                $this->translator->translate('OAuth2_DiscoveryCheckApacheRewriteRule', '.htaccess'),
                 'RewriteEngine On',
                 // In a virtual host the path keeps its leading slash, in .htaccess it doesn't.
                 'RewriteRule ^/?' . $pattern . ' ' . $target . ' [L,QSA]',
@@ -257,7 +271,7 @@ class DiscoveryEndpointCheck implements Diagnostic
 
         if (SettingsServer::isIIS() || strpos($server, 'iis') !== false) {
             $rule = [
-                'IIS (web.config in the Matomo directory):',
+                $this->translator->translate('OAuth2_DiscoveryCheckIisContentType', 'web.config'),
                 '<location path="' . ltrim($path, '/') . '">',
                 '    <system.webServer>',
                 '        <staticContent>',
@@ -269,14 +283,14 @@ class DiscoveryEndpointCheck implements Diagnostic
             ];
         } elseif (strpos($server, 'nginx') !== false) {
             $rule = [
-                'nginx (inside the server block):',
+                $this->translator->translate('OAuth2_DiscoveryCheckNginxServerBlock'),
                 'location = ' . $path . ' {',
                 '    default_type application/json;',
                 '}',
             ];
         } else {
             $rule = [
-                'Apache (virtual host):',
+                $this->translator->translate('OAuth2_DiscoveryCheckApacheVirtualHost'),
                 '<Location "' . $path . '">',
                 '    ForceType application/json',
                 '</Location>',
@@ -297,8 +311,7 @@ class DiscoveryEndpointCheck implements Diagnostic
     private function formatRule(array $lines): string
     {
         if ($this->isConsole()) {
-            return 'Open Administration > System > System Check in Matomo for the configuration for your web server, '
-                . 'or see the plugin README.';
+            return $this->translator->translate('OAuth2_DiscoveryCheckSeeSystemCheck');
         }
 
         $lines = array_map(static function (string $line): string {
