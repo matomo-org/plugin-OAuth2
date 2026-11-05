@@ -169,6 +169,8 @@ class DiscoveryEndpointCheck implements Diagnostic
      */
     protected function fetch(string $url): array
     {
+        // With $getExtendedInfo the response is always this array, which Matomo 5 doesn't declare yet.
+        /** @var array{status: int|null, headers?: array|null, data?: string|null} $response */
         $response = Http::sendHttpRequest($url, 5, null, null, 0, false, false, true);
         $contentType = $response['headers']['Content-Type'] ?? '';
 
