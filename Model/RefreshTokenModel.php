@@ -16,10 +16,14 @@ use Piwik\Date;
 class RefreshTokenModel
 {
     private string $table;
+    private string $accessTokenTable;
+    private string $clientTable;
 
     public function __construct()
     {
         $this->table = Common::prefixTable('oauth2_refresh_token');
+        $this->accessTokenTable = Common::prefixTable('oauth2_access_token');
+        $this->clientTable = Common::prefixTable('oauth2_client');
     }
 
     public function persist(array $data): void
@@ -54,8 +58,16 @@ class RefreshTokenModel
 
     public function isRevoked(string $tokenId): bool
     {
-        $row = Db::fetchRow('SELECT revoked FROM ' . $this->table . ' WHERE token_id = ?', [$tokenId]);
-        return empty($row) || (bool) $row['revoked'] === true;
+        $row = Db::fetchRow(
+            'SELECT token.revoked, client.active AS client_active
+             FROM ' . $this->table . ' token
+             LEFT JOIN ' . $this->accessTokenTable . ' access_token ON access_token.token_id = token.access_token_id
+             LEFT JOIN ' . $this->clientTable . ' client ON client.client_id = access_token.client_id
+             WHERE token.token_id = ?',
+            [$tokenId]
+        );
+
+        return empty($row) || (bool) $row['revoked'] === true || empty($row['client_active']);
     }
 
     public function deleteByClient(string $clientId): void
