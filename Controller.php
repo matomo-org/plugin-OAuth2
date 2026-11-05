@@ -242,10 +242,11 @@ class Controller extends ControllerAdmin
      */
     public function metadata()
     {
-        // This is a public, cacheable document. Matomo's normal dispatch starts a session,
-        // which queues a session cookie and PHP's session cache-limiter headers
-        // (Expires/Pragma: no-cache). Strip those so the response is cookie-free and cleanly
-        // cacheable; the Cache-Control header sent below replaces the session's one.
+        // This is a public document. Matomo's normal dispatch starts a session, which queues a
+        // session cookie and PHP's session cache-limiter headers (Expires/Pragma: no-cache).
+        // Strip those so the response is cookie-free; the Cache-Control header sent below
+        // replaces the session's one. Clients may cache it, shared caches may not: its URLs come
+        // from the request's host, which a shared cache may not key on, e.g. a forwarded host.
         if (!headers_sent()) {
             header_remove('Set-Cookie');
             header_remove('Expires');
@@ -271,7 +272,7 @@ class Controller extends ControllerAdmin
         $response = (new Response())
             ->withStatus(200)
             ->withHeader('Content-Type', 'application/json; charset=utf-8')
-            ->withHeader('Cache-Control', 'public, max-age=3600')
+            ->withHeader('Cache-Control', 'private, max-age=3600')
             ->withBody($psr17Factory->createStream($body));
 
         return $this->emitResponse($response);
