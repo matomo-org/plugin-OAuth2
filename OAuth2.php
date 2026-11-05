@@ -22,6 +22,7 @@ use Piwik\Plugins\OAuth2\Access\OAuth2Access;
 use Piwik\Plugins\OAuth2\Auth\Oauth2Auth;
 use Piwik\Plugins\OAuth2\Auth\ResourceServerAuthenticator;
 use Piwik\Plugins\OAuth2\Service\ClientManager;
+use Piwik\Plugins\OAuth2\Service\DiscoveryFile;
 use Piwik\Plugins\SitesManager\Model as SitesManagerModel;
 
 class OAuth2 extends Plugin
@@ -98,7 +99,29 @@ class OAuth2 extends Plugin
             'Vue.getComponents' => 'registerVueComponents',
             'Translate.getClientSideTranslationKeys' => 'getClientSideTranslationKeys',
             'AssetManager.getStylesheetFiles' => 'getStylesheetFiles',
+            'SystemSettings.updated' => 'writeDiscoveryFile',
+            'PluginManager.pluginActivated' => 'onPluginActivationChanged',
+            'PluginManager.pluginDeactivated' => 'onPluginActivationChanged',
         ];
+    }
+
+    /**
+     * Other plugins can extend the discovery document, and settings decide what it contains, so
+     * the static copy is written again whenever either may have changed it.
+     *
+     * @param string $pluginName
+     */
+    public function onPluginActivationChanged($pluginName): void
+    {
+        // This plugin's own activation is handled by activate() and deactivate().
+        if ($pluginName !== 'OAuth2') {
+            $this->writeDiscoveryFile();
+        }
+    }
+
+    public function writeDiscoveryFile(): void
+    {
+        self::getDiscoveryFile()?->tryWrite();
     }
 
     public function getStylesheetFiles(&$stylesheets)
@@ -361,6 +384,13 @@ class OAuth2 extends Plugin
     {
         self::setupRSAKeys();
         self::setEncryptionKey();
+
+        $this->writeDiscoveryFile();
+    }
+
+    public function deactivate()
+    {
+        self::getDiscoveryFile()?->tryRemove();
     }
 
     public function install()
@@ -431,8 +461,44 @@ class OAuth2 extends Plugin
 
     public function uninstall()
     {
+        self::getDiscoveryFile()?->removeOnUninstall();
+
         foreach (['oauth2_auth_code', 'oauth2_refresh_token', 'oauth2_access_token', 'oauth2_client'] as $table) {
             Db::query('DROP TABLE IF EXISTS ' . Common::prefixTable($table));
+        }
+    }
+
+    /**
+     * The plugin's config, which loads the prefixed dependencies, is only read while the plugin is
+     * active, so they are not available yet while it is activated, nor any more while it is
+     * uninstalled.
+     */
+    private static function loadDependencies(): void
+    {
+        $autoload = __DIR__ . '/vendor/autoload.php';
+        if (file_exists($autoload)) {
+            require_once $autoload;
+        }
+    }
+
+    /**
+     * Writing and removing the discovery file is best effort, so a failure here never keeps the
+     * plugin from being activated, deactivated, uninstalled or updated, nor settings from being
+     * saved or other plugins from being activated.
+     */
+    private static function getDiscoveryFile(): ?DiscoveryFile
+    {
+        try {
+            self::loadDependencies();
+
+            return StaticContainer::get(DiscoveryFile::class);
+        } catch (\Throwable $e) {
+            StaticContainer::get(LoggerInterface::class)->warning(
+                'OAuth2: Could not update the discovery file: {exception}',
+                ['exception' => $e]
+            );
+
+            return null;
         }
     }
 
