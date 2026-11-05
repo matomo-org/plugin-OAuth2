@@ -117,6 +117,17 @@ class DiscoveryEndpointCheckTest extends \Piwik\Tests\Framework\TestCase\Integra
         $this->assertStringContainsString('RewriteRule ^/?\.well-known/oauth-authorization-server$ /index.php', $comment);
     }
 
+    public function test_execute_warnsWhenTheMatomoUrlIsHttp()
+    {
+        // A single request over http makes Matomo store an http URL, even if it is reachable over https.
+        Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'http://matomo.example/');
+
+        $result = $this->makeCheck(200, '{}', 'Apache/2.4.52')->execute()[0];
+
+        $this->assertSame(DiagnosticResult::STATUS_WARNING, $result->getStatus());
+        $this->assertStringContainsString('force_ssl = 1', $result->getItems()[0]->getComment());
+    }
+
     public function test_execute_notesThatAForwardedRequestChangesTheStoredMatomoUrl()
     {
         $comment = $this->makeCheck(404, '', 'Apache/2.4.52')->execute()[0]->getItems()[0]->getComment();

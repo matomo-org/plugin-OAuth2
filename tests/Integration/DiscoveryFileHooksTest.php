@@ -116,6 +116,21 @@ class DiscoveryFileHooksTest extends \Piwik\Tests\Framework\TestCase\Integration
         $this->assertFileDoesNotExist($this->getFilePath());
     }
 
+    public function test_hooks_doNotFailWhenTheServiceCannotBeCreated()
+    {
+        StaticContainer::getContainer()->set(DiscoveryFile::class, \Piwik\DI::factory(function () {
+            throw new \Error('Interface not found');
+        }));
+
+        $plugin = new OAuth2();
+        $plugin->activate();
+        $plugin->onPluginActivationChanged('SomeOtherPlugin');
+        $plugin->writeDiscoveryFile();
+        Updates_6_0_5::writeDiscoveryFile();
+
+        $this->assertFileDoesNotExist($this->getFilePath());
+    }
+
     public function test_uninstall_dropsTheTablesWhenTheFileCannotBeRemoved()
     {
         // E.g. the plugin's dependencies cannot be loaded while it is inactive.

@@ -9,8 +9,6 @@
 
 namespace Piwik\Plugins\OAuth2;
 
-use Piwik\Container\StaticContainer;
-use Piwik\Plugins\OAuth2\Service\DiscoveryFile;
 use Piwik\Updater;
 use Piwik\Updater\Migration\Custom as CustomMigration;
 use Piwik\Updates as PiwikUpdates;
@@ -36,6 +34,6 @@ class Updates_6_0_5 extends PiwikUpdates
 
     public static function writeDiscoveryFile(): void
     {
-        StaticContainer::get(DiscoveryFile::class)->tryWrite();
+        (new OAuth2())->writeDiscoveryFile();
     }
 }

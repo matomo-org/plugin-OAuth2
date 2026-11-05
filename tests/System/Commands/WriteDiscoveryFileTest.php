@@ -67,6 +67,15 @@ class WriteDiscoveryFileTest extends ConsoleCommandTestCase
         $this->assertStringContainsString('installed in a subdirectory', $this->applicationTester->getDisplay());
     }
 
+    public function test_succeedsWithoutWritingTheFileWhenTheMatomoUrlIsHttp()
+    {
+        Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'http://matomo.example/');
+
+        $this->assertSame(0, $this->runCommand());
+        $this->assertStringContainsString('force_ssl = 1', $this->applicationTester->getDisplay());
+        $this->assertFileDoesNotExist($this->getFilePath());
+    }
+
     public function test_keepsAFileNotWrittenByMatomoUnlessForced()
     {
         Filesystem::mkdir($this->documentRoot . '/' . DiscoveryFile::DIRECTORY);

@@ -45,6 +45,19 @@ class DiscoveryEndpointCheck implements Diagnostic
             )];
         }
 
+        if (!DiscoveryFile::isHttps($issuer)) {
+            // Matomo stores the URL of the last request it dispatched, so this is also the case
+            // after a single request over http on an install that is reachable over https.
+            return [DiagnosticResult::singleResult(
+                self::LABEL,
+                DiagnosticResult::STATUS_WARNING,
+                'The Matomo URL is stored as ' . htmlspecialchars($issuer) . ', but OAuth 2.0 discovery requires https, '
+                . 'so the discovery endpoint was not checked and the discovery file is not updated. Matomo stores the URL '
+                . 'it was last opened with, so open Matomo over https, and set <code>force_ssl = 1</code> in the '
+                . '<code>[General]</code> section of config/config.ini.php so it is only used over https.'
+            )];
+        }
+
         $url = self::getDiscoveryUrl($issuer);
 
         try {

@@ -346,6 +346,19 @@ class DiscoveryFileTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestC
         $this->assertFileDoesNotExist($this->getDirectory() . '/.htaccess');
     }
 
+    public function test_write_keepsTheFileWhenTheMatomoUrlIsHttp()
+    {
+        // Matomo stores the URL of the last request, so a single request over http changes it.
+        $discoveryFile = $this->makeDiscoveryFile();
+        $discoveryFile->write();
+
+        Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'http://matomo.example/');
+
+        $this->assertSame(DiscoveryFile::STATUS_SKIPPED_HTTP, $discoveryFile->write());
+        $document = json_decode((string) file_get_contents($this->getFilePath()), true);
+        $this->assertSame('https://matomo.example', $document['issuer']);
+    }
+
     public function test_write_reportsAFileThatShouldNoLongerBeServedButCannotBeRemoved()
     {
         if (function_exists('posix_geteuid') && posix_geteuid() === 0) {

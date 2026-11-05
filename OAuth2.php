@@ -121,7 +121,7 @@ class OAuth2 extends Plugin
 
     public function writeDiscoveryFile(): void
     {
-        StaticContainer::get(DiscoveryFile::class)->tryWrite();
+        self::getDiscoveryFile()?->tryWrite();
     }
 
     public function getStylesheetFiles(&$stylesheets)
@@ -385,14 +385,12 @@ class OAuth2 extends Plugin
         self::setupRSAKeys();
         self::setEncryptionKey();
 
-        self::loadDependencies();
         $this->writeDiscoveryFile();
     }
 
     public function deactivate()
     {
-        $discoveryFile = self::getDiscoveryFileOfInactivePlugin();
-        $discoveryFile?->tryRemove();
+        self::getDiscoveryFile()?->tryRemove();
     }
 
     public function install()
@@ -463,8 +461,7 @@ class OAuth2 extends Plugin
 
     public function uninstall()
     {
-        $discoveryFile = self::getDiscoveryFileOfInactivePlugin();
-        $discoveryFile?->removeOnUninstall();
+        self::getDiscoveryFile()?->removeOnUninstall();
 
         foreach (['oauth2_auth_code', 'oauth2_refresh_token', 'oauth2_access_token', 'oauth2_client'] as $table) {
             Db::query('DROP TABLE IF EXISTS ' . Common::prefixTable($table));
@@ -485,10 +482,11 @@ class OAuth2 extends Plugin
     }
 
     /**
-     * Removing the discovery file is best effort, so a failure here never keeps the plugin from
-     * being deactivated or uninstalled.
+     * Writing and removing the discovery file is best effort, so a failure here never keeps the
+     * plugin from being activated, deactivated, uninstalled or updated, nor settings from being
+     * saved or other plugins from being activated.
      */
-    private static function getDiscoveryFileOfInactivePlugin(): ?DiscoveryFile
+    private static function getDiscoveryFile(): ?DiscoveryFile
     {
         try {
             self::loadDependencies();
@@ -496,7 +494,7 @@ class OAuth2 extends Plugin
             return StaticContainer::get(DiscoveryFile::class);
         } catch (\Throwable $e) {
             StaticContainer::get(LoggerInterface::class)->warning(
-                'OAuth2: Could not remove the discovery file: {exception}',
+                'OAuth2: Could not update the discovery file: {exception}',
                 ['exception' => $e]
             );
 

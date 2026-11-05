@@ -47,6 +47,10 @@ class WriteDiscoveryFile extends ConsoleCommand
             case DiscoveryFile::STATUS_SKIPPED_SUBDIRECTORY:
                 $output->writeln('<comment>Matomo is installed in a subdirectory, so the discovery URL is at the domain root. Add a web server rule instead, see the plugin README.</comment>');
                 return self::SUCCESS;
+            case DiscoveryFile::STATUS_SKIPPED_HTTP:
+                $output->writeln('<comment>The Matomo URL is not https, which OAuth 2.0 discovery requires, so the file was left unchanged. '
+                    . 'Open Matomo over https, and set force_ssl = 1 in the [General] section of config/config.ini.php so it is only used over https.</comment>');
+                return self::SUCCESS;
             case DiscoveryFile::STATUS_SKIPPED_FOREIGN_FILE:
                 $output->writeln('<comment>' . $path . ' was not written by Matomo and was left unchanged. Use --force to replace it.</comment>');
                 return self::SUCCESS;

@@ -33,6 +33,7 @@ class DiscoveryFile
     public const STATUS_UNCHANGED = 'unchanged';
     public const STATUS_SKIPPED_NO_URL = 'skipped_no_url';
     public const STATUS_SKIPPED_SUBDIRECTORY = 'skipped_subdirectory';
+    public const STATUS_SKIPPED_HTTP = 'skipped_http';
     public const STATUS_SKIPPED_FOREIGN_FILE = 'skipped_foreign_file';
     public const STATUS_NOT_WRITABLE = 'not_writable';
     public const STATUS_NOT_REMOVABLE = 'not_removable';
@@ -75,6 +76,14 @@ class DiscoveryFile
         $issuer = $this->getIssuer();
         if ($issuer === null) {
             return $this->removeOrReport(self::STATUS_SKIPPED_NO_URL);
+        }
+
+        if (!self::isHttps($issuer)) {
+            // RFC 8414 requires an https issuer. Matomo stores the URL of the last request it
+            // dispatched, so a single request over http on an install also reachable over https
+            // would otherwise replace the https document. The file is kept as it is.
+            $this->logger->info('OAuth2: The Matomo URL {url} is not https, so the discovery file is not updated.', ['url' => $issuer]);
+            return self::STATUS_SKIPPED_HTTP;
         }
 
         if ((string) parse_url($issuer, PHP_URL_PATH) !== '') {
@@ -246,6 +255,11 @@ class DiscoveryFile
         }
 
         return $url;
+    }
+
+    public static function isHttps(string $url): bool
+    {
+        return strtolower((string) parse_url($url, PHP_URL_SCHEME)) === 'https';
     }
 
     public function getFilePath(): string
