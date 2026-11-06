@@ -91,7 +91,7 @@ class DiscoveryEndpointCheck implements Diagnostic
             return [$this->warning($url, $issuer, $this->translator->translate('OAuth2_DiscoveryCheckBuildFailed', htmlspecialchars($e->getMessage())))];
         }
 
-        if ($document != $currentDocument) {
+        if ($document !== $currentDocument) {
             return [$this->warning(
                 $url,
                 $issuer,
@@ -243,7 +243,9 @@ class DiscoveryEndpointCheck implements Diagnostic
             ];
         } elseif (strpos($server, 'nginx') !== false) {
             $rule = [
-                $this->translator->translate('OAuth2_DiscoveryCheckNginxServerBlock'),
+                // nginx refuses to load two blocks for the same path, so this one has to replace the
+                // block from getContentTypeRule() if that was added before.
+                $this->translator->translate('OAuth2_DiscoveryCheckNginxRewriteRule'),
                 'location = ' . AuthorizationServerMetadata::WELL_KNOWN_PATH . $path . ' {',
                 '    rewrite ^ ' . $target . ' last;',
                 '}',
