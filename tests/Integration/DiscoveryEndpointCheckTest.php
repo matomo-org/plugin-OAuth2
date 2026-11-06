@@ -113,6 +113,18 @@ class DiscoveryEndpointCheckTest extends \Piwik\Tests\Framework\TestCase\Integra
         );
     }
 
+    public function test_execute_suggestsNginxRuleForSubdirectoryInstallsWithoutReplacingAContentTypeBlock()
+    {
+        // The content type block is only suggested for root installs, so there is nothing to replace.
+        Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'https://matomo.example/analytics/');
+
+        $comment = $this->makeCheck(404, '', 'nginx/1.24.0')->execute()[0]->getItems()[0]->getComment();
+
+        $this->assertStringContainsString('location = /.well-known/oauth-authorization-server/analytics {', $comment);
+        $this->assertStringContainsString('nginx (inside the server block):', $comment);
+        $this->assertStringNotContainsString('only sets the content type', $comment);
+    }
+
     public function test_execute_escapesRegexCharactersOfTheSubdirectory()
     {
         Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'https://matomo.example/stats+(eu)/');
@@ -209,12 +221,23 @@ class DiscoveryEndpointCheckTest extends \Piwik\Tests\Framework\TestCase\Integra
         // The file is rewritten when its content changes at all, so the check must not call it current.
         $document = ['issuer' => 'https://matomo.example', 'require_pushed_authorization_requests' => true];
         $this->metadata = $this->createMock(AuthorizationServerMetadata::class);
-        $this->metadata->method('build')->willReturn(['require_pushed_authorization_requests' => '1'] + $document);
+        $this->metadata->method('build')->willReturn(['issuer' => 'https://matomo.example', 'require_pushed_authorization_requests' => '1']);
 
         $result = $this->makeCheck(200, (string) json_encode($document))->execute()[0];
 
         $this->assertSame(DiagnosticResult::STATUS_WARNING, $result->getStatus());
         $this->assertStringContainsString('outdated', $result->getItems()[0]->getComment());
+    }
+
+    public function test_execute_isOkWhenTheWrittenFileChangedTypesThroughJson()
+    {
+        // A listener may add values JSON can't keep, such as a whole-number float or an empty object.
+        $this->metadata = $this->createMock(AuthorizationServerMetadata::class);
+        $this->metadata->method('build')->willReturn(['issuer' => 'https://matomo.example', 'x_version' => 1.0, 'x_options' => (object) []]);
+
+        $result = $this->makeCheck(200, DiscoveryFile::encode($this->metadata->build('https://matomo.example')))->execute()[0];
+
+        $this->assertSame(DiagnosticResult::STATUS_OK, $result->getStatus());
     }
 
     public function test_execute_keepsMatomoUrlWhenRequestOverwritesIt()
