@@ -64,9 +64,9 @@ class ResourceServerAuthenticator
             return;
         }
 
-        // A client is removed together with its owner, so one that outlived them was left behind by
-        // a cleanup that did not complete. Its login is free to be given to somebody else, and the
-        // token must not start authenticating as whoever holds it now.
+        // A client is paused and loses its owner when the owner is deleted, so one that still names
+        // a deleted owner was left behind by a cleanup that did not complete. Its login is free to be
+        // given to somebody else, and the token must not start authenticating as whoever holds it now.
         $owner = $this->userModel->getUser($client['owner_login']);
         if (empty($owner['login'])) {
             return;

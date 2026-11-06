@@ -17,6 +17,9 @@ use Piwik\Updates as PiwikUpdates;
  * Writes the static discovery file for existing installs, so clients can discover the
  * authorization server without a web server rewrite rule. Fresh installs get it from
  * OAuth2::activate().
+ *
+ * Also pauses the clients of users deleted before clients were paused on user deletion, which
+ * are otherwise still listed as active although they can no longer authenticate.
  */
 class Updates_6_0_5 extends PiwikUpdates
 {
@@ -24,6 +27,7 @@ class Updates_6_0_5 extends PiwikUpdates
     {
         return [
             new CustomMigration([self::class, 'writeDiscoveryFile'], './console oauth2:write-discovery-file'),
+            new CustomMigration([self::class, 'pauseClientsWithoutOwner'], './console oauth2:pause-clients-without-owner'),
         ];
     }
 
@@ -35,5 +39,10 @@ class Updates_6_0_5 extends PiwikUpdates
     public static function writeDiscoveryFile(): void
     {
         (new OAuth2())->writeDiscoveryFile();
+    }
+
+    public static function pauseClientsWithoutOwner(): void
+    {
+        (new OAuth2())->pauseClientsWithoutOwner();
     }
 }
