@@ -134,6 +134,7 @@
     "DiscoveryCheckIisContentType": "IIS (%1$s in the Matomo directory):",
     "DiscoveryCheckIisRewriteRule": "IIS (URL Rewrite module, inside %1$s of %2$s):",
     "DiscoveryCheckIssuerMismatch": "It returned the issuer \"%1$s\" instead of \"%2$s\".",
+    "DiscoveryCheckNginxRewriteRule": "nginx (inside the server block, replacing the block for this path that only sets the content type, if you added it):",
     "DiscoveryCheckNginxServerBlock": "nginx (inside the server block):",
     "DiscoveryCheckNotDiscoverable": "OAuth 2.0 clients such as MCP integrations cannot discover this authorization server at %1$s.",
     "DiscoveryCheckNotJson": "It did not return a JSON document.",
