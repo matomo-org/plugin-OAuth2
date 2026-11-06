@@ -130,69 +130,99 @@ class OAuth2 extends Plugin
     }
 
     /**
-     * Removes the OAuth clients and credentials belonging to a deleted user.
+     * Pauses the OAuth clients of a deleted user and removes their credentials.
      *
      * A login may be handed to a different person later on, and clients and tokens are associated
-     * with it as plain text, so anything left behind here would authenticate as whoever holds the
-     * login next. The listener is registered in the first callback group because
-     * `EventDispatcher::postEvent()` does not isolate observers from each other, and a listener of
-     * another plugin throwing before this one would otherwise skip the cleanup entirely.
+     * with it as plain text, so anything left usable here would authenticate as whoever holds the
+     * login next. The clients are paused and lose their owner rather than being deleted, so that an
+     * administrator can still see what the integration was. The listener is registered in the first
+     * callback group because `EventDispatcher::postEvent()` does not isolate observers from each
+     * other, and a listener of another plugin throwing before this one would otherwise skip the
+     * cleanup entirely.
      *
      * @param string $userLogin
      */
     public function onUserDeleted($userLogin)
     {
         $clientManager = StaticContainer::get(ClientManager::class);
-        $logger = StaticContainer::get(LoggerInterface::class);
-        $deletedClients = [];
+        $pausedClients = [];
 
         try {
             // The credentials go first, so that failing part way through leaves an unusable client
             // behind instead of a token that still authenticates.
             $clientManager->deleteCredentialsForUser($userLogin);
 
-            $deletedClients = $clientManager->deleteClientsForOwner($userLogin);
+            $pausedClients = $clientManager->pauseClientsForOwner($userLogin);
         } catch (\Throwable $e) {
             // UsersManager logs one generic message for the whole event, which is not enough to tell
             // that OAuth credentials outlived their owner, so name the failure here. It is not
             // rethrown, as this listener runs first and would otherwise skip the cleanup of every
             // other plugin. Whatever is left behind stays unusable, see ClientRepository.
-            $logger->error(
-                'Failed to remove the OAuth2 clients and credentials of the deleted user {login}',
-                ['login' => $userLogin, 'exception' => $e]
+            StaticContainer::get(LoggerInterface::class)->error(
+                'Failed to pause the OAuth2 clients and remove the credentials of a deleted user.'
+                    . ' Run ./console oauth2:pause-clients-without-owner to pause them.',
+                ['exception' => $e]
             );
         }
 
-        // Every client above is already gone by now, so a listener throwing here cannot cost a
-        // deletion, only the activity log entries of the clients it did not reach. Post one at a
-        // time, as `EventDispatcher::postEvent()` does not isolate observers from each other.
-        foreach ($deletedClients as $client) {
+        $this->reportClientsPausedForDeletedOwner($pausedClients);
+    }
+
+    /**
+     * Pauses the clients whose owner no longer exists, left behind by users deleted before their
+     * clients were paused on deletion.
+     *
+     * @return int The number of clients paused.
+     */
+    public function pauseClientsWithoutOwner(): int
+    {
+        $pausedClients = StaticContainer::get(ClientManager::class)->pauseClientsWithoutOwner();
+
+        $this->reportClientsPausedForDeletedOwner($pausedClients);
+
+        return count($pausedClients);
+    }
+
+    /**
+     * @param array $clients The paused clients, as they were stored before they were paused.
+     */
+    private function reportClientsPausedForDeletedOwner(array $clients): void
+    {
+        // Every client is already paused by now, so a listener throwing here cannot cost a pause,
+        // only the activity log entries of the clients it did not reach. Post one at a time, as
+        // `EventDispatcher::postEvent()` does not isolate observers from each other.
+        foreach ($clients as $client) {
             try {
                 /**
-                 * Triggered after an OAuth 2.0 client was removed because its owner was deleted.
+                 * Triggered after an OAuth 2.0 client was paused because its owner was deleted.
                  *
-                 * Clients removed this way never pass through the API, so `API.OAuth2.deleteClient.end`
-                 * does not report them and this is the only event that does. The activity log relies
-                 * on it to keep naming the clients a user deletion took with it.
+                 * The client also loses its owner, so it can never be resumed. Clients paused this
+                 * way never pass through the API, so `API.OAuth2.setClientActive.end` does not report
+                 * them and this is the only event that does. The activity log relies on it to name
+                 * the clients a user deletion paused.
+                 *
+                 * Replaces `OAuth2.deleteClientWithOwner.end`, which is no longer triggered as clients
+                 * are now paused instead of deleted with their owner.
                  *
                  * **Example**
                  *
-                 *     Piwik::addAction('OAuth2.deleteClientWithOwner.end', function ($activityData) {
+                 *     Piwik::addAction('OAuth2.pauseClientOfDeletedOwner.end', function ($activityData) {
                  *         Log::info(sprintf(
-                 *             'OAuth2 client %s was removed with its owner %s',
+                 *             'OAuth2 client %s was paused as its owner %s was deleted',
                  *             $activityData['client']['client_id'],
                  *             $activityData['ownerLogin']
                  *         ));
                  *     });
                  *
-                 * @param array $activityData Details of the removed client:
+                 * @param array $activityData Details of the paused client:
                  *
                  *                            - `version`: the payload version, currently `v1`.
-                 *                            - `client`: the removed client, with `client_id`, `name`,
-                 *                              `type` and `active`. The secret is never included.
+                 *                            - `client`: the paused client, with `client_id`, `name`,
+                 *                              `type` and `active`, where `active` is whether it was
+                 *                              active before it was paused. The secret is never included.
                  *                            - `ownerLogin`: the login of the deleted owner.
                  */
-                Piwik::postEvent('OAuth2.deleteClientWithOwner.end', [
+                Piwik::postEvent('OAuth2.pauseClientOfDeletedOwner.end', [
                     [
                         'version' => 'v1',
                         // only the fields the activity log displays, never the secret hash
@@ -202,15 +232,14 @@ class OAuth2 extends Plugin
                             'type' => $client['type'] ?? null,
                             'active' => $client['active'] ?? null,
                         ],
-                        'ownerLogin' => $userLogin,
+                        'ownerLogin' => $client['owner_login'] ?? null,
                     ],
                 ]);
             } catch (\Throwable $e) {
-                $logger->error(
-                    'Failed to report the removal of the OAuth2 client {clientId} of the deleted user {login}',
+                StaticContainer::get(LoggerInterface::class)->error(
+                    'Failed to report the pausing of the OAuth2 client {clientId} of a deleted user',
                     [
                         'clientId' => $client['client_id'] ?? null,
-                        'login' => $userLogin,
                         'exception' => $e,
                     ]
                 );
@@ -312,6 +341,8 @@ class OAuth2 extends Plugin
         $translationKeys[] = 'OAuth2_AdminClientActions';
         $translationKeys[] = 'OAuth2_AdminActive';
         $translationKeys[] = 'OAuth2_AdminDisabled';
+        $translationKeys[] = 'OAuth2_AdminDisabledOwnerDeleted';
+        $translationKeys[] = 'OAuth2_ClientOwnerDeletedCannotActivate';
         $translationKeys[] = 'OAuth2_AdminRotateSecret';
         $translationKeys[] = 'OAuth2_AdminDelete';
         $translationKeys[] = 'OAuth2_AdminEdit';
@@ -504,7 +535,6 @@ class OAuth2 extends Plugin
 
     /**
      * @param $type
-     * @return string
      */
     public static function getRSAKey($type = 'private'): string
     {
@@ -515,9 +545,6 @@ class OAuth2 extends Plugin
         return $optionValue;
     }
 
-    /**
-     * @return string
-     */
     public static function getEncryptionKey(): string
     {
         $value = Option::get(self::OAUTH2_ENCRYPTION_OPTION_KEY);
@@ -527,7 +554,6 @@ class OAuth2 extends Plugin
 
     /**
      * @param $isForce
-     * @return bool
      */
     public static function setupRSAKeys($isForce = false): bool
     {
@@ -562,7 +588,6 @@ class OAuth2 extends Plugin
 
     /**
      * @param $isForce
-     * @return void
      */
     public static function setEncryptionKey($isForce = false): void
     {
