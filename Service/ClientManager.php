@@ -203,9 +203,14 @@ class ClientManager
 
     private function assertOwnerExists(array $client): void
     {
-        if (!$this->ownerExists($client)) {
-            throw new \InvalidArgumentException(Piwik::translate('OAuth2_ClientOwnerDeletedCannotActivate'));
+        if ($this->ownerExists($client)) {
+            return;
         }
+
+        // an owner is still set when the client was never paused, eg after a failed cleanup
+        throw new \InvalidArgumentException(Piwik::translate(empty($client['owner_login'])
+            ? 'OAuth2_ClientOwnerDeletedCannotActivate'
+            : 'OAuth2_ClientOwnerMissingCannotActivate'));
     }
 
     private function generateSecret(): string

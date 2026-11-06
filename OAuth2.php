@@ -159,7 +159,8 @@ class OAuth2 extends Plugin
             // rethrown, as this listener runs first and would otherwise skip the cleanup of every
             // other plugin. Whatever is left behind stays unusable, see ClientRepository.
             StaticContainer::get(LoggerInterface::class)->error(
-                'Failed to pause the OAuth2 clients and remove the credentials of a deleted user',
+                'Failed to pause the OAuth2 clients and remove the credentials of a deleted user.'
+                    . ' Run ./console oauth2:pause-clients-without-owner to pause them.',
                 ['exception' => $e]
             );
         }
@@ -534,7 +535,6 @@ class OAuth2 extends Plugin
 
     /**
      * @param $type
-     * @return string
      */
     public static function getRSAKey($type = 'private'): string
     {
@@ -545,9 +545,6 @@ class OAuth2 extends Plugin
         return $optionValue;
     }
 
-    /**
-     * @return string
-     */
     public static function getEncryptionKey(): string
     {
         $value = Option::get(self::OAUTH2_ENCRYPTION_OPTION_KEY);
@@ -557,7 +554,6 @@ class OAuth2 extends Plugin
 
     /**
      * @param $isForce
-     * @return bool
      */
     public static function setupRSAKeys($isForce = false): bool
     {
@@ -592,7 +588,6 @@ class OAuth2 extends Plugin
 
     /**
      * @param $isForce
-     * @return void
      */
     public static function setEncryptionKey($isForce = false): void
     {

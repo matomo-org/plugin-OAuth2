@@ -92,6 +92,7 @@
     "ClientIdException": "clientId must be a 32 character hexadecimal string",
     "ClientNotFound": "OAuth 2.0 client not found",
     "ClientOwnerDeletedCannotActivate": "This OAuth 2.0 client was paused because the user who created it was deleted, and it cannot be activated again. Delete it and create a new client instead.",
+    "ClientOwnerMissingCannotActivate": "The user who created this OAuth 2.0 client no longer exists, so it cannot be activated. Delete it and create a new client instead.",
     "ErrorXNotProvided": "Please provide a value for \"%1$s\".",
     "EncryptionKeyNotConfigured": "OAuth 2.0 encryption key is not configured.",
     "InvalidAuthorizationRequest": "Invalid authorization request.",

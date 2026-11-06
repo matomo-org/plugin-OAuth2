@@ -290,6 +290,20 @@ class UserDeletionCleanupTest extends \Piwik\Tests\Framework\TestCase\Integratio
         self::assertFalse($repository->validateClient($clientId, 'any-secret', 'client_credentials'));
     }
 
+    public function testClientOutlivingItsOwnerCannotBeActivatedWithAMessageThatDoesNotClaimItWasPaused()
+    {
+        $this->createUser(self::OWNER);
+        $clientId = $this->createClient(self::OWNER);
+        $this->deleteUserRowOnly(self::OWNER);
+
+        try {
+            $this->clientManager->setActive($clientId, true);
+            self::fail('A client whose owner no longer exists must not be activated');
+        } catch (\InvalidArgumentException $e) {
+            self::assertSame(Piwik::translate('OAuth2_ClientOwnerMissingCannotActivate'), $e->getMessage());
+        }
+    }
+
     private function deleteUserRowOnly(string $login): void
     {
         Db::query('DELETE FROM ' . Common::prefixTable('user') . ' WHERE login = ?', [$login]);
