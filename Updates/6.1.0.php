@@ -21,7 +21,7 @@ use Piwik\Updates as PiwikUpdates;
  * Also pauses the clients of users deleted before clients were paused on user deletion, which
  * are otherwise still listed as active although they can no longer authenticate.
  */
-class Updates_6_0_5 extends PiwikUpdates
+class Updates_6_1_0 extends PiwikUpdates
 {
     public function getMigrations(Updater $updater): array
     {

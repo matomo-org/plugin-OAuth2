@@ -32,7 +32,7 @@ class PauseClientsWithoutOwnerTest extends ConsoleCommandTestCase
     {
         $orphanId = $this->createClientOf('departedUser');
         $keptId = $this->createClientOf('stayingUser');
-        // deleting only the row leaves the client as a user deleted before 6.0.5 left it
+        // deleting only the row leaves the client as a user deleted before 6.1.0 left it
         Db::query('DELETE FROM ' . Common::prefixTable('user') . ' WHERE login = ?', ['departedUser']);
 
         $this->assertSame(0, $this->runCommand());
