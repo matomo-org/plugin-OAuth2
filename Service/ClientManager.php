@@ -10,10 +10,12 @@
 namespace Piwik\Plugins\OAuth2\Service;
 
 use Piwik\Date;
+use Piwik\Piwik;
 use Piwik\Plugins\OAuth2\Model\AccessTokenModel;
 use Piwik\Plugins\OAuth2\Model\AuthCodeModel;
 use Piwik\Plugins\OAuth2\Model\ClientModel;
 use Piwik\Plugins\OAuth2\Model\RefreshTokenModel;
+use Piwik\Plugins\UsersManager\Model as UserModel;
 
 class ClientManager
 {
@@ -21,7 +23,8 @@ class ClientManager
         private ClientModel $clientModel,
         private AccessTokenModel $accessTokenModel,
         private RefreshTokenModel $refreshTokenModel,
-        private AuthCodeModel $authCodeModel
+        private AuthCodeModel $authCodeModel,
+        private UserModel $userModel
     ) {
     }
 
@@ -64,6 +67,10 @@ class ClientManager
         $type = $this->normalizeType($data['type'] ?? null);
         $grantTypes = $this->normalizeGrantTypes($data['grant_types'] ?? []);
         $this->assertGrantTypesAreAllowed($grantTypes, $type);
+
+        if ((bool) ($data['active'] ?? true)) {
+            $this->assertOwnerExists($existingClient);
+        }
 
         $secret = null;
         $secretHash = $existingClient['secret_hash'] ?? null;
@@ -113,6 +120,10 @@ class ClientManager
             throw new \InvalidArgumentException('Client not found');
         }
 
+        if ($active) {
+            $this->assertOwnerExists($existingClient);
+        }
+
         $this->clientModel->setActive($clientId, $active);
 
         return $this->clientModel->find($clientId);
@@ -139,19 +150,67 @@ class ClientManager
     }
 
     /**
-     * Removes every client the given user owns, together with the credentials issued for them.
+     * Pauses every client the given user owns and removes the credentials issued for them.
      *
-     * @return array The clients that were removed, as they were stored before the deletion.
+     * The owner is cleared rather than kept, as tokens of a client act as its owner, and the login
+     * is free to be given to somebody else. A client paused this way can therefore never be resumed.
+     *
+     * @return array The clients that were paused, as they were stored before.
      */
-    public function deleteClientsForOwner(string $ownerLogin): array
+    public function pauseClientsForOwner(string $ownerLogin): array
     {
-        $clients = $this->clientModel->allByOwner($ownerLogin);
+        return $this->pauseAndClearOwner($this->clientModel->allByOwner($ownerLogin));
+    }
 
+    /**
+     * Pauses the clients whose owner no longer exists, such as those of users deleted before
+     * {@see pauseClientsForOwner()} was called on user deletion.
+     *
+     * @return array The clients that were paused, as they were stored before.
+     */
+    public function pauseClientsWithoutOwner(): array
+    {
+        $clients = array_filter($this->clientModel->all(), function (array $client): bool {
+            return ($client['owner_login'] ?? '') !== '' && !$this->ownerExists($client);
+        });
+
+        return $this->pauseAndClearOwner(array_values($clients));
+    }
+
+    private function pauseAndClearOwner(array $clients): array
+    {
         foreach ($clients as $client) {
-            $this->delete($client['client_id']);
+            // credentials first, so failing part way through never leaves a usable token behind
+            $this->refreshTokenModel->deleteByClient($client['client_id']);
+            $this->accessTokenModel->deleteByClient($client['client_id']);
+            $this->authCodeModel->deleteByClient($client['client_id']);
+            $this->clientModel->pauseAndClearOwner($client['client_id']);
         }
 
         return $clients;
+    }
+
+    private function ownerExists(array $client): bool
+    {
+        if (empty($client['owner_login'])) {
+            return false;
+        }
+
+        $owner = $this->userModel->getUser($client['owner_login']);
+
+        return !empty($owner['login']);
+    }
+
+    private function assertOwnerExists(array $client): void
+    {
+        if ($this->ownerExists($client)) {
+            return;
+        }
+
+        // an owner is still set when the client was never paused, eg after a failed cleanup
+        throw new \InvalidArgumentException(Piwik::translate(empty($client['owner_login'])
+            ? 'OAuth2_ClientOwnerDeletedCannotActivate'
+            : 'OAuth2_ClientOwnerMissingCannotActivate'));
     }
 
     private function generateSecret(): string

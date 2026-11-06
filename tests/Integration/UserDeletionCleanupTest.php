@@ -19,7 +19,7 @@ use Piwik\Plugins\OAuth2\Model\AuthCodeModel;
 use Piwik\Plugins\OAuth2\Model\ClientModel;
 use Piwik\Plugins\OAuth2\Model\RefreshTokenModel;
 use Piwik\Piwik;
-use Piwik\Plugins\OAuth2\Activity\DeleteClientWithOwner;
+use Piwik\Plugins\OAuth2\Activity\PauseClientOfDeletedOwner;
 use Piwik\Plugins\OAuth2\OAuth2;
 use Piwik\Plugins\OAuth2\Repositories\ClientRepository;
 use Piwik\Plugins\OAuth2\Service\ClientManager;
@@ -61,18 +61,114 @@ class UserDeletionCleanupTest extends \Piwik\Tests\Framework\TestCase\Integratio
         FakeAccess::clearAccess(true);
     }
 
-    public function test_deleteUser_removesTheClientsTheUserOwnsAndTheirCredentials()
+    public function test_deleteUser_pausesTheClientsTheUserOwns_clearsTheirOwner_andRemovesTheirCredentials()
     {
         $this->createUser(self::OWNER);
+        $this->createUser(self::OTHER_OWNER);
         $clientId = $this->createClient(self::OWNER);
         $this->issueCredentials($clientId, self::OWNER);
+        $this->issueCredentials($clientId, self::OTHER_OWNER);
 
         UsersManagerAPI::getInstance()->deleteUser(self::OWNER);
 
-        self::assertNull($this->clientModel->find($clientId));
+        $client = $this->clientModel->find($clientId);
+        self::assertNotNull($client);
+        self::assertFalse($client['active']);
+        self::assertSame('', $client['owner_login']);
         self::assertSame(0, $this->countAccessTokens($clientId));
         self::assertSame(0, $this->countRefreshTokens($clientId));
         self::assertSame(0, $this->countAuthCodes($clientId));
+    }
+
+    public function test_pausedClientOfDeletedOwner_staysUnusable_whenTheLoginIsGivenToSomebodyElse()
+    {
+        $this->createUser(self::OWNER);
+        $clientId = $this->createClient(self::OWNER);
+
+        UsersManagerAPI::getInstance()->deleteUser(self::OWNER);
+        $this->createUser(self::OWNER);
+
+        $repository = StaticContainer::get(ClientRepository::class);
+        self::assertNull($repository->getClientEntity($clientId));
+        self::assertFalse($repository->validateClient($clientId, 'any-secret', 'client_credentials'));
+
+        try {
+            $this->clientManager->setActive($clientId, true);
+            self::fail('A client of a deleted owner must not be resumed');
+        } catch (\InvalidArgumentException $e) {
+            self::assertSame(Piwik::translate('OAuth2_ClientOwnerDeletedCannotActivate'), $e->getMessage());
+        }
+
+        self::assertFalse($this->clientModel->find($clientId)['active']);
+    }
+
+    public function test_pausedClientOfDeletedOwner_cannotBeActivatedThroughAnUpdate_butCanBeEditedWhilePaused()
+    {
+        $this->createUser(self::OWNER);
+        $clientId = $this->createClient(self::OWNER);
+        UsersManagerAPI::getInstance()->deleteUser(self::OWNER);
+
+        $data = [
+            'name' => 'Renamed client',
+            'grant_types' => ['authorization_code', 'refresh_token'],
+            'scopes' => ['matomo:read'],
+            'redirect_uris' => ['https://client.example/callback'],
+            'type' => 'confidential',
+        ];
+
+        try {
+            $this->clientManager->update($clientId, $data + ['active' => '1']);
+            self::fail('A client of a deleted owner must not be activated through an update');
+        } catch (\InvalidArgumentException $e) {
+            self::assertSame(Piwik::translate('OAuth2_ClientOwnerDeletedCannotActivate'), $e->getMessage());
+        }
+
+        self::assertFalse($this->clientModel->find($clientId)['active']);
+
+        $this->clientManager->update($clientId, $data + ['active' => '0']);
+
+        $client = $this->clientModel->find($clientId);
+        self::assertSame('Renamed client', $client['name']);
+        self::assertFalse($client['active']);
+        self::assertSame('', $client['owner_login']);
+    }
+
+    public function test_pauseClientsWithoutOwner_pausesTheClientsOfAlreadyDeletedUsers_andReportsThem()
+    {
+        $this->createUser(self::OWNER);
+        $this->createUser(self::OTHER_OWNER);
+        $orphanId = $this->createClient(self::OWNER);
+        $ownedId = $this->createClient(self::OTHER_OWNER);
+        $this->issueCredentials($orphanId, self::OTHER_OWNER);
+
+        // a user deleted before clients were paused on deletion left its client active
+        $this->deleteUserRowOnly(self::OWNER);
+
+        $posted = [];
+        Piwik::addAction('OAuth2.pauseClientOfDeletedOwner.end', function ($activityData) use (&$posted) {
+            $posted[] = $activityData;
+        });
+
+        (new OAuth2())->pauseClientsWithoutOwner();
+
+        $orphan = $this->clientModel->find($orphanId);
+        self::assertFalse($orphan['active']);
+        self::assertSame('', $orphan['owner_login']);
+        self::assertSame(0, $this->countAccessTokens($orphanId));
+        self::assertSame(0, $this->countAuthCodes($orphanId));
+
+        $owned = $this->clientModel->find($ownedId);
+        self::assertTrue($owned['active']);
+        self::assertSame(self::OTHER_OWNER, $owned['owner_login']);
+
+        self::assertCount(1, $posted);
+        self::assertSame($orphanId, $posted[0]['client']['client_id']);
+        self::assertSame(self::OWNER, $posted[0]['ownerLogin']);
+
+        // running it again finds nothing left to pause
+        $posted = [];
+        (new OAuth2())->pauseClientsWithoutOwner();
+        self::assertSame([], $posted);
     }
 
     public function test_deleteUser_removesTheCredentialsIssuedForAnotherUsersClient_butKeepsThatClient()
@@ -96,13 +192,13 @@ class UserDeletionCleanupTest extends \Piwik\Tests\Framework\TestCase\Integratio
         self::assertSame(1, $this->countRefreshTokens($clientId));
     }
 
-    public function test_deleteUser_reportsEveryRemovedClientToTheActivityLog()
+    public function test_deleteUser_reportsEveryPausedClientToTheActivityLog()
     {
         $this->createUser(self::OWNER);
         $clientId = $this->createClient(self::OWNER);
 
         $posted = [];
-        Piwik::addAction('OAuth2.deleteClientWithOwner.end', function ($activityData) use (&$posted) {
+        Piwik::addAction('OAuth2.pauseClientOfDeletedOwner.end', function ($activityData) use (&$posted) {
             $posted[] = $activityData;
         });
 
@@ -115,10 +211,11 @@ class UserDeletionCleanupTest extends \Piwik\Tests\Framework\TestCase\Integratio
         // the secret must never reach a listener or the stored activity
         self::assertArrayNotHasKey('secret_hash', $posted[0]['client']);
 
-        $activity = new DeleteClientWithOwner();
+        $activity = new PauseClientOfDeletedOwner();
         $extracted = $activity->extractParams([$posted[0]]);
 
         self::assertSame($clientId, $extracted['client']['id']);
+        self::assertTrue($extracted['client']['active'], 'active reports the state before the pause');
         self::assertSame(self::OWNER, $extracted['ownerLogin']);
         self::assertArrayNotHasKey('secret_hash', $extracted['client']);
     }
@@ -133,7 +230,7 @@ class UserDeletionCleanupTest extends \Piwik\Tests\Framework\TestCase\Integratio
         ];
 
         $seen = [];
-        Piwik::addAction('OAuth2.deleteClientWithOwner.end', function ($activityData) use (&$seen) {
+        Piwik::addAction('OAuth2.pauseClientOfDeletedOwner.end', function ($activityData) use (&$seen) {
             $seen[] = $activityData['client']['client_id'];
 
             // a listener of another plugin failing on the first client must not hide the rest
@@ -148,9 +245,9 @@ class UserDeletionCleanupTest extends \Piwik\Tests\Framework\TestCase\Integratio
         sort($seen);
         self::assertSame($clientIds, $seen);
 
-        // the clients are deleted before any event is posted, so a listener can never keep one alive
+        // the clients are paused before any event is posted, so a listener can never keep one active
         foreach ($clientIds as $clientId) {
-            self::assertNull($this->clientModel->find($clientId));
+            self::assertFalse($this->clientModel->find($clientId)['active']);
         }
     }
 
@@ -173,7 +270,7 @@ class UserDeletionCleanupTest extends \Piwik\Tests\Framework\TestCase\Integratio
         $plugin->onUserDeleted(self::OWNER);
         $plugin->onUserDeleted(self::OWNER);
 
-        self::assertNull($this->clientModel->find($clientId));
+        self::assertFalse($this->clientModel->find($clientId)['active']);
         self::assertSame(0, $this->countAccessTokens($clientId));
     }
 
@@ -187,10 +284,29 @@ class UserDeletionCleanupTest extends \Piwik\Tests\Framework\TestCase\Integratio
 
         // Delete the user row without posting the event, standing in for a cleanup that did not
         // complete, so that the client is left behind while its owner is gone.
-        Db::query('DELETE FROM ' . Common::prefixTable('user') . ' WHERE login = ?', [self::OWNER]);
+        $this->deleteUserRowOnly(self::OWNER);
 
         self::assertNull($repository->getClientEntity($clientId));
         self::assertFalse($repository->validateClient($clientId, 'any-secret', 'client_credentials'));
+    }
+
+    public function testClientOutlivingItsOwnerCannotBeActivatedWithAMessageThatDoesNotClaimItWasPaused()
+    {
+        $this->createUser(self::OWNER);
+        $clientId = $this->createClient(self::OWNER);
+        $this->deleteUserRowOnly(self::OWNER);
+
+        try {
+            $this->clientManager->setActive($clientId, true);
+            self::fail('A client whose owner no longer exists must not be activated');
+        } catch (\InvalidArgumentException $e) {
+            self::assertSame(Piwik::translate('OAuth2_ClientOwnerMissingCannotActivate'), $e->getMessage());
+        }
+    }
+
+    private function deleteUserRowOnly(string $login): void
+    {
+        Db::query('DELETE FROM ' . Common::prefixTable('user') . ' WHERE login = ?', [$login]);
     }
 
     private function createUser(string $login): void
