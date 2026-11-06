@@ -87,7 +87,7 @@ class API extends \Piwik\Plugin\API
      * `client_credentials`, or `refresh_token`.
      *
      * @param string          $name          Display name shown in the Matomo UI.
-     * @param string[]        $grantTypes    Grant types to enable (`authorization_code`, `client_credentials`, `refresh_token`).
+     * @param string[]        $grantTypes    At least one grant type to enable (`authorization_code`, `client_credentials`, `refresh_token`).
      * @param string          $scope         Single scope identifier to allow for the client. Must match one of the enabled OAuth2 scopes.
      * @param string|string[] $redirectUris Allowed redirect URIs (array or newline-separated string).
      * @param string          $description   Optional description for administrators.
@@ -143,7 +143,7 @@ class API extends \Piwik\Plugin\API
      *
      * @param string          $clientId     32-character hexadecimal client identifier.
      * @param string          $name         Display name shown in the Matomo UI.
-     * @param string[]        $grantTypes   Grant types to enable (`authorization_code`, `client_credentials`, `refresh_token`).
+     * @param string[]        $grantTypes   At least one grant type to enable (`authorization_code`, `client_credentials`, `refresh_token`).
      * @param string          $scope        Single scope identifier to allow for the client. Must match one of the enabled OAuth2 scopes.
      * @param string|string[] $redirectUris Allowed redirect URIs (array or newline-separated string).
      * @param string          $description  Optional description for administrators.
@@ -383,6 +383,10 @@ class API extends \Piwik\Plugin\API
 
     private function validateGrantTypes(array $grantTypes): array
     {
+        if (empty($grantTypes)) {
+            throw new \InvalidArgumentException(Piwik::translate('OAuth2_GrantTypeRequired'));
+        }
+
         $allowedGrantTypes = [
             'authorization_code',
             'client_credentials',
