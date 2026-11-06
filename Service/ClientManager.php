@@ -181,6 +181,10 @@ class ClientManager
 
     private function assertGrantTypesAreAllowed(array $grantTypes, string $type): void
     {
+        if (empty($grantTypes)) {
+            throw new \InvalidArgumentException('At least one grant type is required');
+        }
+
         if ($type === 'public' && in_array('client_credentials', $grantTypes, true)) {
             throw new \InvalidArgumentException('Public clients cannot use the client_credentials grant type');
         }
