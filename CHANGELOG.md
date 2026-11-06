@@ -7,6 +7,8 @@
 - Added IIS instructions for the discovery endpoint to the README, and an nginx block that sends the static file as JSON.
 - The discovery document reports the Matomo base URL as `issuer` when it is requested as `index.php?module=OAuth2&action=metadata`, instead of a URL ending in `index.php`.
 - The discovery document served by `index.php?module=OAuth2&action=metadata` is now sent with `Cache-Control: private`, so only clients cache it and shared caches such as proxies don't, as its URLs come from the request.
+- Added code to harden client validation
+- OAuth 2.0 clients without a grant type can no longer obtain tokens until one is selected
 
 6.0.4 - 2026-11-02
 - OAuth 2.0 clients can be selected in the activity log's "Filter by item" filter

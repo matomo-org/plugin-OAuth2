@@ -43,7 +43,7 @@ class ClientRepository implements ClientRepositoryInterface
             return false;
         }
 
-        if (!empty($grantType) && !empty($row['grant_types']) && !in_array($grantType, $row['grant_types'], true)) {
+        if (!empty($grantType) && !in_array($grantType, $row['grant_types'] ?? [], true)) {
             return false;
         }
 

@@ -96,6 +96,7 @@
     "InvalidScopeValue": "Invalid scope value.",
     "InvalidRedirectUri": "Invalid redirect_uri",
     "InvalidGrantTypes": "Unsupported grant_types",
+    "GrantTypeRequired": "Select at least one grant type.",
     "MultipleScopesNotAllowed": "Multiple scopes are not allowed.",
     "NoAccessForRequestedScopes": "Your Matomo user does not have the access level required for any of the requested scopes (%1$s). Sign in with a user that has the required access, or ask an administrator to grant it to you.",
     "InvalidClientToRotateSecretExceptionMessage": "Invalid client, please check your client type.",
