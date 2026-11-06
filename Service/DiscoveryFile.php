@@ -18,9 +18,9 @@ use Piwik\SettingsPiwik;
  * Writes the authorization server metadata (RFC 8414) as a static file at
  * <document root>/.well-known/oauth-authorization-server.
  *
- * Every web server serves an existing file without further configuration, so on root installs
- * clients can discover the authorization server without a rewrite rule forwarding the path to
- * the metadata controller action. Subdirectory installs are skipped, as RFC 8414 places their
+ * Web servers serve an existing file, so on root installs clients can discover the authorization
+ * server without a rewrite rule forwarding the path to the metadata controller action. Apache and
+ * IIS need the helper files written next to it, and nginx a content type, see writeHelperFiles(). Subdirectory installs are skipped, as RFC 8414 places their
  * discovery URL at the domain root, outside the Matomo directory.
  *
  * The file is a snapshot, so it is written again whenever its content may change. Files that
@@ -92,7 +92,7 @@ class DiscoveryFile
         }
 
         $path = $this->getFilePath();
-        $content = json_encode($this->metadata->build($issuer), JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+        $content = self::encode($this->metadata->build($issuer));
         $hash = sha1($content);
 
         if (file_exists($path)) {
@@ -132,6 +132,16 @@ class DiscoveryFile
         $this->writeHelperFiles();
 
         return self::STATUS_WRITTEN;
+    }
+
+    /**
+     * Encodes the document as it is written to the file.
+     *
+     * @param array<string, mixed> $document
+     */
+    public static function encode(array $document): string
+    {
+        return json_encode($document, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
     }
 
     /**

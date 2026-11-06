@@ -84,7 +84,8 @@ class DiscoveryEndpointCheck implements Diagnostic
         }
 
         try {
-            $currentDocument = $this->metadata->build($issuer);
+            // Compared as written to the file, where e.g. 1.0 becomes 1 and an empty object an array.
+            $currentDocument = json_decode(DiscoveryFile::encode($this->metadata->build($issuer)), true);
         } catch (\Throwable $e) {
             // E.g. a listener of OAuth2.authorizationServerMetadata fails, which also keeps the
             // file from being written.
@@ -244,8 +245,9 @@ class DiscoveryEndpointCheck implements Diagnostic
         } elseif (strpos($server, 'nginx') !== false) {
             $rule = [
                 // nginx refuses to load two blocks for the same path, so this one has to replace the
-                // block from getContentTypeRule() if that was added before.
-                $this->translator->translate('OAuth2_DiscoveryCheckNginxRewriteRule'),
+                // block from getContentTypeRule() if that was added before. That is only ever
+                // suggested for root installs.
+                $this->translator->translate($path === '' ? 'OAuth2_DiscoveryCheckNginxRewriteRule' : 'OAuth2_DiscoveryCheckNginxServerBlock'),
                 'location = ' . AuthorizationServerMetadata::WELL_KNOWN_PATH . $path . ' {',
                 '    rewrite ^ ' . $target . ' last;',
                 '}',
