@@ -159,8 +159,8 @@ class OAuth2 extends Plugin
             // rethrown, as this listener runs first and would otherwise skip the cleanup of every
             // other plugin. Whatever is left behind stays unusable, see ClientRepository.
             StaticContainer::get(LoggerInterface::class)->error(
-                'Failed to pause the OAuth2 clients and remove the credentials of the deleted user {login}',
-                ['login' => $userLogin, 'exception' => $e]
+                'Failed to pause the OAuth2 clients and remove the credentials of a deleted user',
+                ['exception' => $e]
             );
         }
 
@@ -236,10 +236,9 @@ class OAuth2 extends Plugin
                 ]);
             } catch (\Throwable $e) {
                 StaticContainer::get(LoggerInterface::class)->error(
-                    'Failed to report the pausing of the OAuth2 client {clientId} of the deleted user {login}',
+                    'Failed to report the pausing of the OAuth2 client {clientId} of a deleted user',
                     [
                         'clientId' => $client['client_id'] ?? null,
-                        'login' => $client['owner_login'] ?? null,
                         'exception' => $e,
                     ]
                 );
