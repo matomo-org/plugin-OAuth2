@@ -105,9 +105,12 @@ class DiscoveryEndpointCheck implements Diagnostic
         }
 
         // Some clients reject the document without a JSON content type. Only the static file can be
-        // served with another one, as Matomo always sends JSON.
+        // served with another one, as Matomo always sends JSON. Subdirectory installs have no static
+        // file, so their document comes from elsewhere, and forwarding the path to Matomo fixes it.
         $contentType = strtolower(trim(explode(';', $response['contentType'])[0]));
         if ($contentType !== 'application/json') {
+            $path = rtrim((string) parse_url($issuer, PHP_URL_PATH), '/');
+
             return [DiagnosticResult::singleResult(
                 $this->getLabel(),
                 DiagnosticResult::STATUS_WARNING,
@@ -115,7 +118,7 @@ class DiscoveryEndpointCheck implements Diagnostic
                     htmlspecialchars($url),
                     htmlspecialchars($contentType),
                     'application/json',
-                ]) . '<br><br>' . $this->getContentTypeRule()
+                ]) . '<br><br>' . ($path === '' ? $this->getContentTypeRule() : $this->getWebServerRule($path))
             )];
         }
 
