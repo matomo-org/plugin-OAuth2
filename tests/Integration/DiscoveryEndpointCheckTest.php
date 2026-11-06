@@ -188,6 +188,21 @@ class DiscoveryEndpointCheckTest extends \Piwik\Tests\Framework\TestCase\Integra
         $this->assertStringContainsString('default_type application/json;', $comment);
     }
 
+    public function test_execute_suggestsTheRuleInsteadOfAContentTypeBlockForSubdirectoryInstalls()
+    {
+        // The content type block is for the static file, which subdirectory installs don't have.
+        Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'https://matomo.example/analytics/');
+        $document = (string) json_encode($this->metadata->build('https://matomo.example/analytics'));
+
+        $result = $this->makeCheck(200, $document, 'nginx/1.24.0', null, 'text/html')->execute()[0];
+
+        $this->assertSame(DiagnosticResult::STATUS_WARNING, $result->getStatus());
+        $comment = $result->getItems()[0]->getComment();
+        $this->assertStringContainsString('sent as "text/html"', $comment);
+        $this->assertStringContainsString('rewrite ^ /analytics/index.php?module=OAuth2&amp;action=metadata last;', $comment);
+        $this->assertStringNotContainsString('default_type', $comment);
+    }
+
     public function test_execute_acceptsJsonWithCharset()
     {
         $document = (string) json_encode($this->metadata->build('https://matomo.example'));
