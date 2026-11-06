@@ -277,8 +277,8 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
             ['authorization_code', 'refresh_token'],
             $this->clientModel->find($clientId)['grant_types']
         );
-        $this->assertFalse(
-            $this->clientRepository->validateClient($clientId, $result['secret'], 'client_credentials')
+        $this->assertTrue(
+            $this->clientRepository->validateClient($clientId, $result['secret'], 'authorization_code')
         );
     }
 
