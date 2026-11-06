@@ -1,0 +1,320 @@
+<?php
+
+/**
+ * Matomo - free/libre analytics platform
+ *
+ * @link    https://matomo.org
+ * @license https://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
+ */
+
+namespace Piwik\Plugins\OAuth2\tests\Integration;
+
+use Piwik\Config;
+use Piwik\Container\StaticContainer;
+use Piwik\Log\NullLogger;
+use Piwik\Option;
+use Piwik\Plugins\Diagnostics\Diagnostic\DiagnosticResult;
+use Piwik\Plugins\OAuth2\Diagnostic\DiscoveryEndpointCheck;
+use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
+use Piwik\Plugins\OAuth2\Service\AuthorizationServerMetadata;
+use Piwik\Plugins\OAuth2\Service\DiscoveryFile;
+use Piwik\Plugins\OAuth2\SystemSettings;
+use Piwik\Plugins\OAuth2\tests\Fixtures\OAuth2Fixture;
+use Piwik\SettingsPiwik;
+use Piwik\Tests\Framework\Fixture;
+use Piwik\Translation\Translator;
+
+/**
+ * @group OAuth2
+ * @group DiscoveryFile
+ * @group Plugins
+ */
+class DiscoveryEndpointCheckTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
+{
+    public static $fixture = null;
+
+    private AuthorizationServerMetadata $metadata;
+
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        $settings = new SystemSettings();
+        $this->metadata = new AuthorizationServerMetadata($settings, new ScopeRepository($settings));
+        Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'https://matomo.example/');
+
+        // The assertions below check the English texts, which the test environment doesn't load.
+        Fixture::loadAllTranslations();
+    }
+
+    public function tearDown(): void
+    {
+        Fixture::resetTranslations();
+
+        parent::tearDown();
+    }
+
+    public function test_getDiscoveryUrl_insertsWellKnownSegmentBeforeIssuerPath()
+    {
+        $this->assertSame('https://matomo.example/.well-known/oauth-authorization-server', DiscoveryEndpointCheck::getDiscoveryUrl('https://matomo.example'));
+        $this->assertSame('https://matomo.example:8443/.well-known/oauth-authorization-server/analytics', DiscoveryEndpointCheck::getDiscoveryUrl('https://matomo.example:8443/analytics'));
+    }
+
+    public function test_execute_isOkWhenTheCurrentDocumentIsServed()
+    {
+        $check = $this->makeCheck(200, (string) json_encode($this->metadata->build('https://matomo.example')));
+
+        $result = $check->execute()[0];
+
+        $this->assertSame(DiagnosticResult::STATUS_OK, $result->getStatus());
+        $this->assertSame('OAuth 2.0 discovery endpoint', $result->getLabel());
+        $this->assertSame(['https://matomo.example/.well-known/oauth-authorization-server'], $check->requestedUrls);
+    }
+
+    public function test_execute_warnsWhenTheCurrentDocumentCannotBeBuilt()
+    {
+        $body = (string) json_encode($this->metadata->build('https://matomo.example'));
+        $this->metadata = $this->createMock(AuthorizationServerMetadata::class);
+        $this->metadata->method('build')->willThrowException(new \RuntimeException('listener <failed>'));
+
+        $result = $this->makeCheck(200, $body)->execute()[0];
+
+        $this->assertSame(DiagnosticResult::STATUS_WARNING, $result->getStatus());
+        $this->assertStringContainsString('could not be built: listener &lt;failed&gt;', $result->getItems()[0]->getComment());
+    }
+
+    public function test_execute_warnsWithRuleForDetectedServerWhenNotFound()
+    {
+        $result = $this->makeCheck(404, 'Not Found', 'nginx/1.24.0')->execute()[0];
+
+        $this->assertSame(DiagnosticResult::STATUS_WARNING, $result->getStatus());
+        $comment = $result->getItems()[0]->getComment();
+        $this->assertStringContainsString('HTTP status 404', $comment);
+        $this->assertStringContainsString('oauth2:write-discovery-file', $comment);
+        $this->assertStringContainsString('location = /.well-known/oauth-authorization-server {', $comment);
+        // nginx refuses to load it next to the block that only sets the content type.
+        $this->assertStringContainsString('replacing the block for this path that only sets the content type', $comment);
+        // Indented with non-breaking spaces, as the System Check strips <pre>.
+        $this->assertStringContainsString('&nbsp;&nbsp;&nbsp;&nbsp;rewrite ^ /index.php?module=OAuth2&amp;action=metadata last;', $comment);
+    }
+
+    public function test_execute_suggestsDomainRootRuleForSubdirectoryInstalls()
+    {
+        Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'https://matomo.example/analytics/');
+        $check = $this->makeCheck(404, '', 'Apache/2.4.52 (Ubuntu)');
+
+        $comment = $check->execute()[0]->getItems()[0]->getComment();
+
+        $this->assertSame(['https://matomo.example/.well-known/oauth-authorization-server/analytics'], $check->requestedUrls);
+        $this->assertStringNotContainsString('oauth2:write-discovery-file', $comment);
+        $this->assertStringContainsString(
+            'RewriteRule ^/?\.well-known/oauth-authorization-server/analytics$ /analytics/index.php?module=OAuth2&amp;action=metadata [L,QSA]',
+            $comment
+        );
+    }
+
+    public function test_execute_suggestsNginxRuleForSubdirectoryInstallsWithoutReplacingAContentTypeBlock()
+    {
+        // The content type block is only suggested for root installs, so there is nothing to replace.
+        Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'https://matomo.example/analytics/');
+
+        $comment = $this->makeCheck(404, '', 'nginx/1.24.0')->execute()[0]->getItems()[0]->getComment();
+
+        $this->assertStringContainsString('location = /.well-known/oauth-authorization-server/analytics {', $comment);
+        $this->assertStringContainsString('nginx (inside the server block):', $comment);
+        $this->assertStringNotContainsString('only sets the content type', $comment);
+    }
+
+    public function test_execute_escapesRegexCharactersOfTheSubdirectory()
+    {
+        Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'https://matomo.example/stats+(eu)/');
+
+        $comment = $this->makeCheck(404, '', 'Apache/2.4.52')->execute()[0]->getItems()[0]->getComment();
+
+        $this->assertStringContainsString('RewriteRule ^/?\.well-known/oauth-authorization-server/stats\+\(eu\)$ ', $comment);
+    }
+
+    public function test_execute_suggestsOnlyTheRuleWhenWritingTheFileIsTurnedOff()
+    {
+        Config::getInstance()->OAuth2 = ['write_discovery_file' => 0];
+
+        $comment = $this->makeCheck(404, '', 'Apache/2.4.52')->execute()[0]->getItems()[0]->getComment();
+
+        $this->assertStringContainsString('write_discovery_file = 0', $comment);
+        $this->assertStringNotContainsString('./console oauth2:write-discovery-file', $comment);
+        $this->assertStringContainsString('RewriteRule ^/?\.well-known/oauth-authorization-server$ /index.php', $comment);
+    }
+
+    public function test_execute_warnsWhenTheMatomoUrlIsHttp()
+    {
+        // A single request over http makes Matomo store an http URL, even if it is reachable over https.
+        Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'http://matomo.example/');
+
+        $result = $this->makeCheck(200, '{}', 'Apache/2.4.52')->execute()[0];
+
+        $this->assertSame(DiagnosticResult::STATUS_WARNING, $result->getStatus());
+        $this->assertStringContainsString('force_ssl = 1', $result->getItems()[0]->getComment());
+    }
+
+    public function test_execute_notesThatAForwardedRequestChangesTheStoredMatomoUrl()
+    {
+        $comment = $this->makeCheck(404, '', 'Apache/2.4.52')->execute()[0]->getItems()[0]->getComment();
+
+        $this->assertStringContainsString('store a URL starting with https://matomo.example/.well-known/ as its own URL', $comment);
+    }
+
+    public function test_execute_pointsToTheSystemCheckInsteadOfAnEscapedRuleOnTheConsole()
+    {
+        // diagnostics:run strips tags without decoding entities, and doesn't know the web server.
+        $check = $this->makeCheck(404, '');
+        $check->console = true;
+
+        $comment = $check->execute()[0]->getItems()[0]->getComment();
+
+        $this->assertStringContainsString('Administration > System > System Check', $comment);
+        $this->assertStringNotContainsString('RewriteRule', $comment);
+        $this->assertStringNotContainsString('&amp;', $comment);
+    }
+
+    public function test_execute_warnsWithNginxRuleWhenNotServedAsJson()
+    {
+        $document = (string) json_encode($this->metadata->build('https://matomo.example'));
+
+        $result = $this->makeCheck(200, $document, 'nginx/1.24.0', null, 'application/octet-stream')->execute()[0];
+
+        $this->assertSame(DiagnosticResult::STATUS_WARNING, $result->getStatus());
+        $comment = $result->getItems()[0]->getComment();
+        $this->assertStringContainsString('sent as "application/octet-stream"', $comment);
+        $this->assertStringContainsString('default_type application/json;', $comment);
+    }
+
+    public function test_execute_suggestsTheRuleInsteadOfAContentTypeBlockForSubdirectoryInstalls()
+    {
+        // The content type block is for the static file, which subdirectory installs don't have.
+        Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'https://matomo.example/analytics/');
+        $document = (string) json_encode($this->metadata->build('https://matomo.example/analytics'));
+
+        $result = $this->makeCheck(200, $document, 'nginx/1.24.0', null, 'text/html')->execute()[0];
+
+        $this->assertSame(DiagnosticResult::STATUS_WARNING, $result->getStatus());
+        $comment = $result->getItems()[0]->getComment();
+        $this->assertStringContainsString('sent as "text/html"', $comment);
+        $this->assertStringContainsString('rewrite ^ /analytics/index.php?module=OAuth2&amp;action=metadata last;', $comment);
+        $this->assertStringNotContainsString('default_type', $comment);
+    }
+
+    public function test_execute_acceptsJsonWithCharset()
+    {
+        $document = (string) json_encode($this->metadata->build('https://matomo.example'));
+
+        $result = $this->makeCheck(200, $document, '', null, 'application/json; charset=utf-8')->execute()[0];
+
+        $this->assertSame(DiagnosticResult::STATUS_OK, $result->getStatus());
+    }
+
+    public function test_execute_warnsAndEscapesWhenIssuerDoesNotMatch()
+    {
+        $result = $this->makeCheck(200, '{"issuer":"https://other.example/<b>"}')->execute()[0];
+
+        $this->assertSame(DiagnosticResult::STATUS_WARNING, $result->getStatus());
+        $this->assertStringContainsString('https://other.example/&lt;b&gt;', $result->getItems()[0]->getComment());
+    }
+
+    public function test_execute_warnsWhenServedDocumentIsOutdated()
+    {
+        $document = $this->metadata->build('https://matomo.example');
+        $document['grant_types_supported'] = ['authorization_code'];
+
+        $result = $this->makeCheck(200, (string) json_encode($document))->execute()[0];
+
+        $this->assertSame(DiagnosticResult::STATUS_WARNING, $result->getStatus());
+        $this->assertStringContainsString('outdated', $result->getItems()[0]->getComment());
+    }
+
+    public function test_execute_warnsWhenServedDocumentDiffersOnlyInValueTypes()
+    {
+        // The file is rewritten when its content changes at all, so the check must not call it current.
+        $document = ['issuer' => 'https://matomo.example', 'require_pushed_authorization_requests' => true];
+        $this->metadata = $this->createMock(AuthorizationServerMetadata::class);
+        $this->metadata->method('build')->willReturn(['issuer' => 'https://matomo.example', 'require_pushed_authorization_requests' => '1']);
+
+        $result = $this->makeCheck(200, (string) json_encode($document))->execute()[0];
+
+        $this->assertSame(DiagnosticResult::STATUS_WARNING, $result->getStatus());
+        $this->assertStringContainsString('outdated', $result->getItems()[0]->getComment());
+    }
+
+    public function test_execute_isOkWhenTheWrittenFileChangedTypesThroughJson()
+    {
+        // A listener may add values JSON can't keep, such as a whole-number float or an empty object.
+        $this->metadata = $this->createMock(AuthorizationServerMetadata::class);
+        $this->metadata->method('build')->willReturn(['issuer' => 'https://matomo.example', 'x_version' => 1.0, 'x_options' => (object) []]);
+
+        $result = $this->makeCheck(200, DiscoveryFile::encode($this->metadata->build('https://matomo.example')))->execute()[0];
+
+        $this->assertSame(DiagnosticResult::STATUS_OK, $result->getStatus());
+    }
+
+    public function test_execute_keepsMatomoUrlWhenRequestOverwritesIt()
+    {
+        // What a rewritten discovery request does when Matomo dispatches it.
+        $check = $this->makeCheck(404, '', '', function () {
+            Option::set(SettingsPiwik::OPTION_PIWIK_URL, 'https://matomo.example/.well-known/');
+        });
+
+        $check->execute();
+
+        Option::clearCachedOption(SettingsPiwik::OPTION_PIWIK_URL);
+        $this->assertSame('https://matomo.example/', Option::get(SettingsPiwik::OPTION_PIWIK_URL));
+    }
+
+    private function makeCheck(
+        int $status,
+        string $body,
+        string $serverSoftware = '',
+        ?\Closure $onFetch = null,
+        string $contentType = 'application/json'
+    ): DiscoveryEndpointCheck {
+        $discoveryFile = new DiscoveryFile($this->metadata, new NullLogger(), '/nonexistent');
+
+        return new class ($discoveryFile, $this->metadata, $status, $body, $serverSoftware, $onFetch, $contentType) extends DiscoveryEndpointCheck {
+            /** @var string[] */
+            public array $requestedUrls = [];
+
+            public bool $console = false;
+
+            public function __construct(
+                DiscoveryFile $discoveryFile,
+                AuthorizationServerMetadata $metadata,
+                private int $status,
+                private string $body,
+                private string $serverSoftware,
+                private ?\Closure $onFetch,
+                private string $contentType
+            ) {
+                parent::__construct($discoveryFile, $metadata, StaticContainer::get(Translator::class));
+            }
+
+            protected function fetch(string $url): array
+            {
+                $this->requestedUrls[] = $url;
+                if ($this->onFetch) {
+                    ($this->onFetch)();
+                }
+                return ['status' => $this->status, 'data' => $this->body, 'contentType' => $this->contentType];
+            }
+
+            protected function getServerSoftware(): string
+            {
+                return strtolower($this->serverSoftware);
+            }
+
+            protected function isConsole(): bool
+            {
+                return $this->console;
+            }
+        };
+    }
+}
+
+DiscoveryEndpointCheckTest::$fixture = new OAuth2Fixture();

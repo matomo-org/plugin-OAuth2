@@ -1,6 +1,12 @@
 ## Changelog
 
 5.3.5
+- OAuth 2.0 clients such as MCP integrations can now discover the authorization server on root installs without a web server rewrite rule. The plugin writes the discovery document to `.well-known/oauth-authorization-server` in the Matomo directory and keeps it up to date, and the new `oauth2:write-discovery-file` command writes it by hand. It is only written for an `https` Matomo URL; set `force_ssl = 1` if Matomo is also reachable over `http`.
+- Instances using a host specific config don't write the discovery file, as they share it with the other instances of the codebase; others can turn it off with `[OAuth2] write_discovery_file = 0`. Such setups use a web server rule instead.
+- Added an **OAuth 2.0 discovery endpoint** check to the System Check. It reports whether clients can discover the authorization server and whether the document is sent as JSON, and shows the web server configuration to add if not.
+- Added IIS instructions for the discovery endpoint to the README, and an nginx block that sends the static file as JSON.
+- The discovery document reports the Matomo base URL as `issuer` when it is requested as `index.php?module=OAuth2&action=metadata`, instead of a URL ending in `index.php`.
+- The discovery document served by `index.php?module=OAuth2&action=metadata` is now sent with `Cache-Control: private`, so only clients cache it and shared caches such as proxies don't, as its URLs come from the request.
 - Added code to harden client validation
 - OAuth 2.0 clients without a grant type can no longer obtain tokens until one is selected
 
