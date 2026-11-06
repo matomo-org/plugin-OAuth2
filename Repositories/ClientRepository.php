@@ -64,8 +64,9 @@ class ClientRepository implements ClientRepositoryInterface
 
     /**
      * A client whose owner no longer exists must not take part in any grant, as its tokens would
-     * be issued for a login that is free to be given to somebody else. Clients are removed when
-     * their owner is deleted, so this only ever holds for the ones a failed cleanup left behind.
+     * be issued for a login that is free to be given to somebody else. Clients are paused and lose
+     * their owner when the owner is deleted, so this only ever holds for the ones a failed cleanup
+     * left behind.
      */
     private function hasExistingOwner(array $row): bool
     {

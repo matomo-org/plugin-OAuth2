@@ -11,6 +11,10 @@ namespace Piwik\Plugins\OAuth2\Activity;
 
 use Piwik\Piwik;
 
+/**
+ * Kept so the activity log can still describe entries recorded before 5.4.0, when clients were
+ * deleted together with their owner. Its event is no longer posted, see PauseClientOfDeletedOwner.
+ */
 class DeleteClientWithOwner extends BaseActivity
 {
     protected $eventName = 'OAuth2.deleteClientWithOwner.end';
