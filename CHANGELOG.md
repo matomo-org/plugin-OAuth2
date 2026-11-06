@@ -9,7 +9,7 @@
 - The discovery document served by `index.php?module=OAuth2&action=metadata` is now sent with `Cache-Control: private`, so only clients cache it and shared caches such as proxies don't, as its URLs come from the request.
 - Added code to harden client validation
 - OAuth 2.0 clients without a grant type can no longer obtain tokens until one is selected
-- Deleting a user now pauses the OAuth 2.0 clients they created instead of deleting them, and records this in the activity log. Such clients can't be resumed; delete them and create a new client instead
+- Deleting a user now pauses the OAuth 2.0 clients they created instead of deleting them, and records this in the activity log. Such clients are listed as "Disabled, owner deleted" and can't be resumed; delete them and create a new client instead
 - Clients whose creator was deleted before this change are paused on update instead of being listed as active. The new `oauth2:pause-clients-without-owner` command does the same by hand
 - The `OAuth2.deleteClientWithOwner.end` event is no longer triggered; use `OAuth2.pauseClientOfDeletedOwner.end` instead
 

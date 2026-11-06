@@ -34,6 +34,7 @@
     "AdminClientActions": "Actions",
     "AdminActive": "Active",
     "AdminDisabled": "Disabled",
+    "AdminDisabledOwnerDeleted": "Disabled, owner deleted",
     "AdminRotateSecret": "Rotate secret",
     "AdminPause": "Pause",
     "AdminResume": "Resume",

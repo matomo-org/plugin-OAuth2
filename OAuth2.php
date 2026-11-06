@@ -341,6 +341,8 @@ class OAuth2 extends Plugin
         $translationKeys[] = 'OAuth2_AdminClientActions';
         $translationKeys[] = 'OAuth2_AdminActive';
         $translationKeys[] = 'OAuth2_AdminDisabled';
+        $translationKeys[] = 'OAuth2_AdminDisabledOwnerDeleted';
+        $translationKeys[] = 'OAuth2_ClientOwnerDeletedCannotActivate';
         $translationKeys[] = 'OAuth2_AdminRotateSecret';
         $translationKeys[] = 'OAuth2_AdminDelete';
         $translationKeys[] = 'OAuth2_AdminEdit';
