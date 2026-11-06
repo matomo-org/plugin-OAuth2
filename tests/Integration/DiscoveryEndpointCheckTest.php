@@ -92,6 +92,8 @@ class DiscoveryEndpointCheckTest extends \Piwik\Tests\Framework\TestCase\Integra
         $this->assertStringContainsString('HTTP status 404', $comment);
         $this->assertStringContainsString('oauth2:write-discovery-file', $comment);
         $this->assertStringContainsString('location = /.well-known/oauth-authorization-server {', $comment);
+        // nginx refuses to load it next to the block that only sets the content type.
+        $this->assertStringContainsString('replacing the block for this path that only sets the content type', $comment);
         // Indented with non-breaking spaces, as the System Check strips <pre>.
         $this->assertStringContainsString('&nbsp;&nbsp;&nbsp;&nbsp;rewrite ^ /index.php?module=OAuth2&amp;action=metadata last;', $comment);
     }
@@ -195,6 +197,19 @@ class DiscoveryEndpointCheckTest extends \Piwik\Tests\Framework\TestCase\Integra
     {
         $document = $this->metadata->build('https://matomo.example');
         $document['grant_types_supported'] = ['authorization_code'];
+
+        $result = $this->makeCheck(200, (string) json_encode($document))->execute()[0];
+
+        $this->assertSame(DiagnosticResult::STATUS_WARNING, $result->getStatus());
+        $this->assertStringContainsString('outdated', $result->getItems()[0]->getComment());
+    }
+
+    public function test_execute_warnsWhenServedDocumentDiffersOnlyInValueTypes()
+    {
+        // The file is rewritten when its content changes at all, so the check must not call it current.
+        $document = ['issuer' => 'https://matomo.example', 'require_pushed_authorization_requests' => true];
+        $this->metadata = $this->createMock(AuthorizationServerMetadata::class);
+        $this->metadata->method('build')->willReturn(['require_pushed_authorization_requests' => '1'] + $document);
 
         $result = $this->makeCheck(200, (string) json_encode($document))->execute()[0];
 

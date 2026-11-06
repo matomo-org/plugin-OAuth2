@@ -151,6 +151,8 @@ location = /.well-known/oauth-authorization-server {
 }
 ```
 
+This block replaces the `default_type` one above: if you added that, remove it, as nginx refuses to load two `location` blocks for the same path.
+
 **IIS** (requires the [URL Rewrite](https://www.iis.net/downloads/microsoft/url-rewrite) module; inside `<system.webServer>` of the root `web.config`):
 
 ```xml
