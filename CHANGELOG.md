@@ -9,6 +9,7 @@
 - The discovery document served by `index.php?module=OAuth2&action=metadata` is now sent with `Cache-Control: private`, so only clients cache it and shared caches such as proxies don't, as its URLs come from the request.
 - Added code to harden client validation
 - OAuth 2.0 clients without a grant type can no longer obtain tokens until one is selected
+- Updated dependencies
 
 5.3.4 - 2026-10-26
 - Updated dependencies
