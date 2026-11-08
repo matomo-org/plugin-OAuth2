@@ -185,6 +185,7 @@ import {
 } from 'CoreHome';
 import { Field, PasswordConfirmation } from 'CorePluginsAdmin';
 import { Client, ClientForm } from '../types';
+import showHttpErrorMessage from '../showHttpErrorMessage';
 
 const notificationId = 'oauth2clientedit';
 
@@ -333,6 +334,10 @@ export default defineComponent({
           active: !!client.active,
         };
         this.originalScope = this.form.scope;
+      }).catch((e) => {
+        if (!showHttpErrorMessage(e)) {
+          throw e;
+        }
       }).finally(() => {
         this.loading = false;
       });
@@ -392,6 +397,10 @@ export default defineComponent({
           const code = `<code>${this.visibleSecret}</code>`;
           const message = `${this.translate('OAuth2_AdminRotatedNotification')}<br>${this.translate('OAuth2_ClientSecretDisplayedNotification', code)}`;
           this.showNotification(`<span class="success-msg-created">${message}</span>`, 'success', 'transient');
+        }
+      }).catch((e) => {
+        if (!showHttpErrorMessage(e)) {
+          throw e;
         }
       }).finally(() => {
         this.loading = false;
@@ -461,6 +470,10 @@ export default defineComponent({
             );
           }
         }, 50);
+      }).catch((e) => {
+        if (!showHttpErrorMessage(e)) {
+          throw e;
+        }
       }).finally(() => {
         this.loading = false;
       });

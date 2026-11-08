@@ -14,6 +14,7 @@ use Piwik\Container\StaticContainer;
 use Piwik\Common;
 use Piwik\Db;
 use Piwik\DbHelper;
+use Piwik\Exception\NoPrivilegesException;
 use Piwik\Log\LoggerInterface;
 use Piwik\Option;
 use Piwik\Piwik;
@@ -277,7 +278,7 @@ class OAuth2 extends Plugin
             'updateUser'                 => 'OAuth2_UpdateUserBlocked',
         ];
         if ($pluginName === 'UsersManager' && isset($blockedUsersManagerMethods[$methodName])) {
-            throw new \Exception(Piwik::translate($blockedUsersManagerMethods[$methodName]));
+            throw new NoPrivilegesException(Piwik::translate($blockedUsersManagerMethods[$methodName]), 403);
         }
 
         // Not permitted for read-scope OAuth2 tokens; write and above may proceed.
@@ -287,7 +288,7 @@ class OAuth2 extends Plugin
             && in_array($methodName, $readScopeBlockedMethods, true)
             && !$this->scopeGrantsAtLeastWrite($auth->getPrimaryScope())
         ) {
-            throw new \Exception(Piwik::translate('OAuth2_SetUserPreferenceBlocked'));
+            throw new NoPrivilegesException(Piwik::translate('OAuth2_SetUserPreferenceBlocked'), 403);
         }
 
         $access = Access::getInstance();

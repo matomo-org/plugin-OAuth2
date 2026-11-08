@@ -143,6 +143,30 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         $this->assertSame('Test confidential client', $client['name']);
     }
 
+    public function test_getClient_failsWith404ForUnknownClient()
+    {
+        $this->expectException(\Piwik\Exception\ThingNotFoundException::class);
+        $this->expectExceptionCode(404);
+
+        $this->api->getClient(str_repeat('a', 32));
+    }
+
+    public function test_setClientActive_failsWith404ForUnknownClient()
+    {
+        $this->expectException(\Piwik\Exception\ThingNotFoundException::class);
+        $this->expectExceptionCode(404);
+
+        StaticContainer::get(ClientManager::class)->setActive(str_repeat('a', 32), true);
+    }
+
+    public function test_getClient_failsWith400ForMalformedClientId()
+    {
+        $this->expectException(\Piwik\Http\BadRequestException::class);
+        $this->expectExceptionCode(400);
+
+        $this->api->getClient('not-a-client-id');
+    }
+
     public function test_getScopes_returnsConfiguredScopesForSuperUsers()
     {
         $this->assertSame(
@@ -193,7 +217,8 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
 
     public function test_createClient_rejectsPublicClientCredentialsGrant()
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(\Piwik\Http\BadRequestException::class);
+        $this->expectExceptionCode(400);
         $this->expectExceptionMessage('Public clients cannot use the client_credentials grant type');
 
         $this->api->createClient(
@@ -213,7 +238,8 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
      */
     public function test_createClient_rejectsInvalidRedirectUris($redirectUris)
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(\Piwik\Http\BadRequestException::class);
+        $this->expectExceptionCode(400);
         $this->expectExceptionMessage('Invalid redirect_uri');
 
         $this->api->createClient(
@@ -233,7 +259,8 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
      */
     public function test_createClient_rejectsEmptyGrantTypes(array $grantTypes)
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(\Piwik\Http\BadRequestException::class);
+        $this->expectExceptionCode(400);
         $this->expectExceptionMessage(Piwik::translate('OAuth2_GrantTypeRequired'));
 
         $this->api->createClient(
@@ -269,7 +296,7 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
                 Fixture::ADMIN_USER_PASSWORD
             );
             $this->fail('Expected an exception for empty grant types');
-        } catch (\InvalidArgumentException $e) {
+        } catch (\Piwik\Http\BadRequestException $e) {
             $this->assertSame(Piwik::translate('OAuth2_GrantTypeRequired'), $e->getMessage());
         }
 
@@ -295,7 +322,8 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
      */
     public function test_clientManagerCreate_rejectsEmptyGrantTypes(array $grantTypes)
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(\Piwik\Http\BadRequestException::class);
+        $this->expectExceptionCode(400);
         $this->expectExceptionMessage('At least one grant type is required');
 
         StaticContainer::get(ClientManager::class)->create([
@@ -326,7 +354,7 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
                 'active' => true,
             ]);
             $this->fail('Expected an exception for empty grant types');
-        } catch (\InvalidArgumentException $e) {
+        } catch (\Piwik\Http\BadRequestException $e) {
             $this->assertSame('At least one grant type is required', $e->getMessage());
         }
 
@@ -422,6 +450,14 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
 
         $this->assertSame(['deleted' => true], $deleted);
         $this->assertNull($this->clientModel->find($result['client']['client_id']));
+    }
+
+    public function testDeleteClientFailsWith404ForUnknownClient()
+    {
+        $this->expectException(\Piwik\Exception\ThingNotFoundException::class);
+        $this->expectExceptionCode(404);
+
+        $this->api->deleteClient(str_repeat('a', 32), Fixture::ADMIN_USER_PASSWORD);
     }
 
     public function test_setClientActive_updatesPersistedClientStatus()

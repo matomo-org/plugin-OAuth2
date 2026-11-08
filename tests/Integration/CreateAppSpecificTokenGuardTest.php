@@ -105,7 +105,8 @@ class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\In
     {
         $this->installOauth2Context(self::ATTACKER_LOGIN, false, ['matomo:read']);
 
-        $this->expectException(\Exception::class);
+        $this->expectException(\Piwik\Exception\NoPrivilegesException::class);
+        $this->expectExceptionCode(403);
         $this->expectExceptionMessage(Piwik::translate('OAuth2_CreateAppSpecificTokenAuthBlocked'));
 
         $parameters = ['userLogin' => Fixture::ADMIN_USER_LOGIN];
@@ -116,7 +117,8 @@ class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\In
     {
         $this->installOauth2Context(self::ATTACKER_LOGIN, false, ['matomo:read']);
 
-        $this->expectException(\Exception::class);
+        $this->expectException(\Piwik\Exception\NoPrivilegesException::class);
+        $this->expectExceptionCode(403);
         $this->expectExceptionMessage(Piwik::translate('OAuth2_SetUserPreferenceBlocked'));
 
         $parameters = ['userLogin' => self::ATTACKER_LOGIN];
@@ -127,7 +129,8 @@ class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\In
     {
         $this->installOauth2Context(self::ATTACKER_LOGIN, false, ['matomo:read']);
 
-        $this->expectException(\Exception::class);
+        $this->expectException(\Piwik\Exception\NoPrivilegesException::class);
+        $this->expectExceptionCode(403);
         $this->expectExceptionMessage(Piwik::translate('OAuth2_SetUserPreferenceBlocked'));
 
         $parameters = ['userLogin' => self::ATTACKER_LOGIN];

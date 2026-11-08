@@ -95,7 +95,7 @@ class UserDeletionCleanupTest extends \Piwik\Tests\Framework\TestCase\Integratio
         try {
             $this->clientManager->setActive($clientId, true);
             self::fail('A client of a deleted owner must not be resumed');
-        } catch (\InvalidArgumentException $e) {
+        } catch (\Piwik\Http\BadRequestException $e) {
             self::assertSame(Piwik::translate('OAuth2_ClientOwnerDeletedCannotActivate'), $e->getMessage());
         }
 
@@ -119,7 +119,7 @@ class UserDeletionCleanupTest extends \Piwik\Tests\Framework\TestCase\Integratio
         try {
             $this->clientManager->update($clientId, $data + ['active' => '1']);
             self::fail('A client of a deleted owner must not be activated through an update');
-        } catch (\InvalidArgumentException $e) {
+        } catch (\Piwik\Http\BadRequestException $e) {
             self::assertSame(Piwik::translate('OAuth2_ClientOwnerDeletedCannotActivate'), $e->getMessage());
         }
 
@@ -299,7 +299,7 @@ class UserDeletionCleanupTest extends \Piwik\Tests\Framework\TestCase\Integratio
         try {
             $this->clientManager->setActive($clientId, true);
             self::fail('A client whose owner no longer exists must not be activated');
-        } catch (\InvalidArgumentException $e) {
+        } catch (\Piwik\Http\BadRequestException $e) {
             self::assertSame(Piwik::translate('OAuth2_ClientOwnerMissingCannotActivate'), $e->getMessage());
         }
     }
