@@ -12,6 +12,7 @@
 - Deleting a user now pauses the OAuth 2.0 clients they created instead of deleting them, and records this in the activity log. Such clients are listed as "Disabled, owner deleted" and can't be resumed; delete them and create a new client instead
 - Clients whose creator was deleted before this change are paused on update instead of being listed as active. The new `oauth2:pause-clients-without-owner` command does the same by hand
 - The `OAuth2.deleteClientWithOwner.end` event is no longer triggered; use `OAuth2.pauseClientOfDeletedOwner.end` instead
+- Updated dependencies
 
 6.0.4 - 2026-11-02
 - OAuth 2.0 clients can be selected in the activity log's "Filter by item" filter
