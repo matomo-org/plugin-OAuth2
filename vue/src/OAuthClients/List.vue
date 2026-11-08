@@ -61,7 +61,13 @@
             </td>
             <td>{{ getScopeLabel(client) }}</td>
             <td>
-              <span>
+              <span
+                v-if="isOwnerDeleted(client)"
+                :title="translate('OAuth2_ClientOwnerDeletedCannotActivate')"
+              >
+                {{ translate('OAuth2_AdminDisabledOwnerDeleted') }}
+              </span>
+              <span v-else>
                 {{
                   client.active
                     ? translate('OAuth2_AdminActive')
@@ -83,6 +89,7 @@
             <td class="created-at">{{ client.created_at }}</td>
             <td>
               <button
+                v-if="!isOwnerDeleted(client)"
                 :class="`table-action ${client.active ? 'icon-pause' : 'icon-play'}`"
                 @click.prevent="toggleClientStatus(client)"
                 :title="
@@ -202,6 +209,9 @@ export default defineComponent({
     },
   },
   methods: {
+    isOwnerDeleted(client: Client) {
+      return !client.active && !client.owner_login;
+    },
     getShortScopeLabel(scope: string) {
       const shortScopeLabels = {
         'matomo:read': this.translate('UsersManager_PrivView'),
