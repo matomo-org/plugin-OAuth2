@@ -63,7 +63,7 @@ class ClientManager
     {
         $existingClient = $this->clientModel->find($clientId);
         if (empty($existingClient)) {
-            throw new ThingNotFoundException('Client not found');
+            throw new ThingNotFoundException(Piwik::translate('OAuth2_ClientNotFound'));
         }
 
         $type = $this->normalizeType($data['type'] ?? null);
@@ -119,7 +119,7 @@ class ClientManager
     {
         $existingClient = $this->clientModel->find($clientId);
         if (empty($existingClient)) {
-            throw new ThingNotFoundException('Client not found');
+            throw new ThingNotFoundException(Piwik::translate('OAuth2_ClientNotFound'));
         }
 
         if ($active) {

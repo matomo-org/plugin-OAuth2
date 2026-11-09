@@ -14,6 +14,7 @@
 - The `OAuth2.deleteClientWithOwner.end` event is no longer triggered; use `OAuth2.pauseClientOfDeletedOwner.end` instead
 - Updated dependencies
 - Answered requests for an unknown client with HTTP 404, invalid client settings with HTTP 400 and refused token, user update and preference requests of OAuth 2.0 tokens with HTTP 403, instead of HTTP 200 with an error message
+- Deleting an unknown OAuth 2.0 client now fails with HTTP 404 instead of reporting it as deleted
 
 6.0.4 - 2026-11-02
 - OAuth 2.0 clients can be selected in the activity log's "Filter by item" filter

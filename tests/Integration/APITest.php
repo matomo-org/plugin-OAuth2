@@ -151,12 +151,52 @@ class APITest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCase
         $this->api->getClient(str_repeat('a', 32));
     }
 
-    public function test_setClientActive_failsWith404ForUnknownClient()
+    public function testSetClientActiveFailsWith404ForUnknownClient()
     {
         $this->expectException(\Piwik\Exception\ThingNotFoundException::class);
         $this->expectExceptionCode(404);
+        $this->expectExceptionMessage(Piwik::translate('OAuth2_ClientNotFound'));
 
-        StaticContainer::get(ClientManager::class)->setActive(str_repeat('a', 32), true);
+        $this->api->setClientActive(str_repeat('a', 32), '1');
+    }
+
+    public function testUpdateClientFailsWith404ForUnknownClient()
+    {
+        $this->expectException(\Piwik\Exception\ThingNotFoundException::class);
+        $this->expectExceptionCode(404);
+        $this->expectExceptionMessage(Piwik::translate('OAuth2_ClientNotFound'));
+
+        $this->api->updateClient(
+            str_repeat('a', 32),
+            'Updated client',
+            ['authorization_code'],
+            'matomo:read',
+            ['https://updated.example/callback'],
+            '',
+            'confidential',
+            '1',
+            Fixture::ADMIN_USER_PASSWORD
+        );
+    }
+
+    public function testRotateSecretFailsWith400ForPublicClient()
+    {
+        $result = $this->api->createClient(
+            'Test public client',
+            ['authorization_code'],
+            'matomo:read',
+            ['https://public-client.example/callback'],
+            '',
+            'public',
+            '1',
+            Fixture::ADMIN_USER_PASSWORD
+        );
+
+        $this->expectException(\Piwik\Http\BadRequestException::class);
+        $this->expectExceptionCode(400);
+        $this->expectExceptionMessage(Piwik::translate('OAuth2_InvalidClientToRotateSecretExceptionMessage'));
+
+        $this->api->rotateSecret($result['client']['client_id'], Fixture::ADMIN_USER_PASSWORD);
     }
 
     public function test_getClient_failsWith400ForMalformedClientId()
