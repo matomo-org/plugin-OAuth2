@@ -152,6 +152,7 @@ import {
 } from 'CoreHome';
 import { PasswordConfirmation } from 'CorePluginsAdmin';
 import { Client } from '../types';
+import showHttpErrorMessage from '../showHttpErrorMessage';
 
 const notificationId = 'oauth2clientlist';
 
@@ -277,6 +278,10 @@ export default defineComponent({
               );
               this.$emit('updated', response.client);
             }
+          }).catch((e) => {
+            if (!showHttpErrorMessage(e)) {
+              throw e;
+            }
           });
         },
       });
@@ -310,6 +315,10 @@ export default defineComponent({
           this.removeNotifications();
           this.showNotification(this.translate('OAuth2_AdminDeleted', safeClientName), 'success');
           this.$emit('deleted', client.client_id);
+        }
+      }).catch((e) => {
+        if (!showHttpErrorMessage(e)) {
+          throw e;
         }
       });
     },

@@ -10,6 +10,8 @@
 namespace Piwik\Plugins\OAuth2\Service;
 
 use Piwik\Date;
+use Piwik\Exception\ThingNotFoundException;
+use Piwik\Http\BadRequestException;
 use Piwik\Piwik;
 use Piwik\Plugins\OAuth2\Model\AccessTokenModel;
 use Piwik\Plugins\OAuth2\Model\AuthCodeModel;
@@ -61,7 +63,7 @@ class ClientManager
     {
         $existingClient = $this->clientModel->find($clientId);
         if (empty($existingClient)) {
-            throw new \InvalidArgumentException('Client not found');
+            throw new ThingNotFoundException(Piwik::translate('OAuth2_ClientNotFound'));
         }
 
         $type = $this->normalizeType($data['type'] ?? null);
@@ -117,7 +119,7 @@ class ClientManager
     {
         $existingClient = $this->clientModel->find($clientId);
         if (empty($existingClient)) {
-            throw new \InvalidArgumentException('Client not found');
+            throw new ThingNotFoundException(Piwik::translate('OAuth2_ClientNotFound'));
         }
 
         if ($active) {
@@ -208,7 +210,7 @@ class ClientManager
         }
 
         // an owner is still set when the client was never paused, eg after a failed cleanup
-        throw new \InvalidArgumentException(Piwik::translate(empty($client['owner_login'])
+        throw new BadRequestException(Piwik::translate(empty($client['owner_login'])
             ? 'OAuth2_ClientOwnerDeletedCannotActivate'
             : 'OAuth2_ClientOwnerMissingCannotActivate'));
     }
@@ -241,11 +243,11 @@ class ClientManager
     private function assertGrantTypesAreAllowed(array $grantTypes, string $type): void
     {
         if (empty($grantTypes)) {
-            throw new \InvalidArgumentException('At least one grant type is required');
+            throw new BadRequestException('At least one grant type is required');
         }
 
         if ($type === 'public' && in_array('client_credentials', $grantTypes, true)) {
-            throw new \InvalidArgumentException('Public clients cannot use the client_credentials grant type');
+            throw new BadRequestException('Public clients cannot use the client_credentials grant type');
         }
     }
 
