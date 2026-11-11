@@ -19,6 +19,7 @@ use Piwik\Piwik;
 use Piwik\Plugins\OAuth2\Auth\Oauth2Auth;
 use Piwik\Plugins\OAuth2\OAuth2;
 use Piwik\Plugins\OAuth2\tests\Fixtures\OAuth2Fixture;
+use Piwik\Plugins\OAuth2\tests\Framework\OAuth2TestKeys;
 use Piwik\Plugins\UsersManager\API as UsersManagerAPI;
 use Piwik\Plugins\UsersManager\Model as UserModel;
 use Piwik\Plugins\UsersManager\UsersManager;
@@ -36,8 +37,7 @@ class CreateAppSpecificTokenGuardTest extends \Piwik\Tests\Framework\TestCase\In
     {
         parent::setUp();
 
-        OAuth2::setupRSAKeys(true);
-        OAuth2::setEncryptionKey(true);
+        OAuth2TestKeys::install();
         Fixture::loadAllTranslations();
 
         $userModel = new UserModel();
