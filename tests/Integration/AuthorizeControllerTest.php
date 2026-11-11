@@ -17,9 +17,10 @@ use Piwik\Container\StaticContainer;
 use Piwik\Db;
 use Piwik\Nonce;
 use Piwik\Piwik;
+use Piwik\Plugins\Marketplace\Api\Service as MarketplaceApiService;
+use Piwik\Plugins\Marketplace\tests\Framework\Mock\Service as MockMarketplaceApiService;
 use Piwik\Plugins\OAuth2\Controller;
 use Piwik\Plugins\OAuth2\Entities\ClientEntity;
-use Piwik\Plugins\OAuth2\OAuth2;
 use Piwik\Plugins\OAuth2\Repositories\AccessTokenRepository;
 use Piwik\Plugins\OAuth2\Repositories\AuthCodeRepository;
 use Piwik\Plugins\OAuth2\Repositories\ClientRepository;
@@ -29,6 +30,7 @@ use Piwik\Plugins\OAuth2\Service\ClientManager;
 use Piwik\Plugins\OAuth2\Service\ServerFactory;
 use Piwik\Plugins\OAuth2\SystemSettings;
 use Piwik\Plugins\OAuth2\tests\Fixtures\OAuth2Fixture;
+use Piwik\Plugins\OAuth2\tests\Framework\OAuth2TestKeys;
 use Piwik\Tests\Framework\Fixture;
 use Piwik\Tests\Framework\Mock\FakeAccess;
 
@@ -55,8 +57,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
     {
         parent::setUp();
 
-        OAuth2::setupRSAKeys(true);
-        OAuth2::setEncryptionKey(true);
+        OAuth2TestKeys::install();
 
         FakeAccess::clearAccess(true);
 
@@ -582,6 +583,9 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
     {
         return [
             'Piwik\Access' => new FakeAccess(),
+            // Rendering the consent page builds the admin menu and checks licenses, which on cores without Marketplace
+            // API fixtures each asked the live Marketplace. The mock answers every request with an empty result.
+            MarketplaceApiService::class => new MockMarketplaceApiService(),
         ];
     }
 }

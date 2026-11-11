@@ -15,6 +15,7 @@ use Piwik\Plugins\OAuth2\API;
 use Piwik\Plugins\OAuth2\Auth\Oauth2Auth;
 use Piwik\Plugins\OAuth2\OAuth2;
 use Piwik\Plugins\OAuth2\tests\Fixtures\OAuth2Fixture;
+use Piwik\Plugins\OAuth2\tests\Framework\OAuth2TestKeys;
 use Piwik\Plugins\UsersManager\API as UsersManagerAPI;
 use Piwik\Tests\Framework\Fixture;
 
@@ -83,8 +84,7 @@ class ScopedAccessTest extends \Piwik\Tests\Framework\TestCase\IntegrationTestCa
     {
         parent::setUp();
 
-        OAuth2::setupRSAKeys(true);
-        OAuth2::setEncryptionKey(true);
+        OAuth2TestKeys::install();
 
         $this->api = API::getInstance();
     }
