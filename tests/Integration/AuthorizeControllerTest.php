@@ -17,6 +17,8 @@ use Piwik\Container\StaticContainer;
 use Piwik\Db;
 use Piwik\Nonce;
 use Piwik\Piwik;
+use Piwik\Plugins\Marketplace\Api\Service as MarketplaceApiService;
+use Piwik\Plugins\Marketplace\tests\Framework\Mock\Service as MockMarketplaceApiService;
 use Piwik\Plugins\OAuth2\Controller;
 use Piwik\Plugins\OAuth2\Entities\ClientEntity;
 use Piwik\Plugins\OAuth2\Repositories\AccessTokenRepository;
@@ -581,6 +583,9 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
     {
         return [
             'Piwik\Access' => new FakeAccess(),
+            // Rendering the consent page builds the admin menu and checks licenses, which on cores without Marketplace
+            // API fixtures each asked the live Marketplace. The mock answers every request with an empty result.
+            MarketplaceApiService::class => new MockMarketplaceApiService(),
         ];
     }
 }
