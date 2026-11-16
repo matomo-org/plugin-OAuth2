@@ -1,6 +1,6 @@
 ## Changelog
 
-6.1.1
+6.1.1 - 2026-11-16
 - Answered requests for an unknown client with HTTP 404, invalid client settings with HTTP 400 and refused token, user update and preference requests of OAuth 2.0 tokens with HTTP 403, instead of HTTP 200 with an error message
 - Deleting an unknown OAuth 2.0 client now fails with HTTP 404 instead of reporting it as deleted
 
