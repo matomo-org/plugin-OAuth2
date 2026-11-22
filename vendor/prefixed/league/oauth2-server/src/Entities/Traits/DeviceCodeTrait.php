@@ -16,6 +16,9 @@ use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ScopeEntityInterfac
 trait DeviceCodeTrait
 {
     private bool $userApproved = \false;
+    /**
+     * @deprecated This property will be removed in next major version
+     */
     private bool $includeVerificationUriComplete = \false;
     private int $interval = 5;
     private string $userCode;
@@ -75,10 +78,16 @@ trait DeviceCodeTrait
     {
         $this->userApproved = $userApproved;
     }
+    /**
+     * @deprecated This method will be removed in next major version
+     */
     public function getVerificationUriCompleteInAuthResponse() : bool
     {
         return $this->includeVerificationUriComplete;
     }
+    /**
+     * @deprecated This method will be removed in next major version
+     */
     public function setVerificationUriCompleteInAuthResponse(bool $includeVerificationUriComplete) : void
     {
         $this->includeVerificationUriComplete = $includeVerificationUriComplete;
