@@ -18,8 +18,25 @@ describe("OAuth2Consent", function () {
     const readScopeClientId = '22222222222222222222222222222222';
     const redirectUri = 'https://client.example/callback';
 
-    before(function () {
+    before(async function () {
         testEnvironment.pluginsToLoad = ['OAuth2'];
+        // the consent screen is only shown to a user signed in to the browser session
+        testEnvironment.testUseMockAuth = 0;
+        testEnvironment.save();
+
+        await page.goto('?module=Login');
+        await page.waitForSelector('#login_form_login', { visible: true });
+        await page.type('#login_form_login', superUserLogin);
+        await page.type('#login_form_password', superUserPassword);
+        await page.evaluate(function () {
+            $('#login_form_submit').click();
+        });
+        await page.waitForNetworkIdle();
+        await page.waitForSelector('.pageWrap');
+    });
+
+    after(function () {
+        delete testEnvironment.testUseMockAuth;
         testEnvironment.save();
     });
 

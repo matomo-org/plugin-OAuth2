@@ -26,6 +26,7 @@ use Piwik\Plugins\OAuth2\Service\AuthorizationServerMetadata;
 use Piwik\Plugins\OAuth2\Service\ServerFactory;
 use Piwik\Plugins\UsersManager\Model as UserModel;
 use Piwik\Request;
+use Piwik\Session\SessionFingerprint;
 use Piwik\Url;
 use Matomo\Dependencies\OAuth2\Psr\Http\Message\ResponseInterface;
 use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ClientEntityInterface;
@@ -73,6 +74,16 @@ class Controller extends ControllerAdmin
             Piwik::checkUserIsNotAnonymous();
         }
 
+        $login = Piwik::getCurrentUserLogin();
+
+        // Consent must come from the user signed in to this browser session. A request
+        // authenticated by a token (an OAuth2 Bearer token or a token_auth) is answered as the
+        // token's user, while the session cookie sent along with it may belong to someone else.
+        if (!$this->isSignedInThroughSession($login)) {
+            $this->sendResponseCode(403);
+            return Piwik::translate('OAuth2_AuthorizeRequiresSignIn');
+        }
+
         $psrRequest = $this->createServerRequest();
         $authServer = $this->serverFactory->makeAuthorizationServer();
 
@@ -86,7 +97,6 @@ class Controller extends ControllerAdmin
             return $this->renderUnauthorized(Piwik::translate('OAuth2_InvalidAuthorizationRequest'));
         }
 
-        $login = Piwik::getCurrentUserLogin();
         $userEntity = new UserEntity();
         $userEntity->setIdentifier($login);
         $authRequest->setUser($userEntity);
@@ -117,7 +127,7 @@ class Controller extends ControllerAdmin
             $decision = $post->getStringParameter('decision', '');
             $nonce = $post->getStringParameter('nonce', '');
 
-            if (!Nonce::verifyNonce('Oauth2.authorize', $nonce)) {
+            if (!Nonce::verifyNonce($this->getAuthorizeNonceName($login), $nonce)) {
                 return $this->renderUnauthorized(Piwik::translate('OAuth2_InvalidAuthorizationRequest'));
             }
 
@@ -200,7 +210,7 @@ class Controller extends ControllerAdmin
             'userEmail' => $user['email'] ?? '',
             'scopes' => $selectableScopes,
             'scopeDescriptions' => $this->scopeRepository->describeScopes(),
-            'nonce' => Nonce::getNonce('Oauth2.authorize'),
+            'nonce' => Nonce::getNonce($this->getAuthorizeNonceName($login)),
             'termsAndCondition' => $termsAndConditionUrl,
             'privacyPolicyUrl' => $privacyPolicyUrl,
         ]);
@@ -300,6 +310,22 @@ class Controller extends ControllerAdmin
     private function isPostRequest(): bool
     {
         return !empty($_SERVER['REQUEST_METHOD']) && strtoupper($_SERVER['REQUEST_METHOD']) === 'POST';
+    }
+
+    private function isSignedInThroughSession(string $login): bool
+    {
+        $sessionUser = (new SessionFingerprint())->getUser();
+
+        return is_string($sessionUser) && $sessionUser !== '' && $sessionUser === $login;
+    }
+
+    /**
+     * The consent nonce is bound to the login it was shown to, so a nonce taken from one user's
+     * consent screen cannot answer a request that is decided in another user's name.
+     */
+    private function getAuthorizeNonceName(string $login): string
+    {
+        return 'Oauth2.authorize.' . $login;
     }
 
     private function renderUnauthorized(string $message)
