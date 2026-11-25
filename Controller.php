@@ -27,6 +27,7 @@ use Piwik\Plugins\OAuth2\Service\ServerFactory;
 use Piwik\Plugins\UsersManager\Model as UserModel;
 use Piwik\Request;
 use Piwik\Session\SessionFingerprint;
+use Piwik\Session\SessionNamespace;
 use Piwik\Url;
 use Matomo\Dependencies\OAuth2\Psr\Http\Message\ResponseInterface;
 use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Entities\ClientEntityInterface;
@@ -34,6 +35,9 @@ use Matomo\Dependencies\OAuth2\League\OAuth2\Server\Exception\OAuthServerExcepti
 
 class Controller extends ControllerAdmin
 {
+    private const CONSENT_NONCE_ID = 'Oauth2.authorize';
+    private const CONSENT_TTL_SECONDS = 600;
+
     public function __construct(
         private ClientModel $clientModel,
         private ScopeRepository $scopeRepository,
@@ -127,7 +131,7 @@ class Controller extends ControllerAdmin
             $decision = $post->getStringParameter('decision', '');
             $nonce = $post->getStringParameter('nonce', '');
 
-            if (!Nonce::verifyNonce($this->getAuthorizeNonceName($login), $nonce)) {
+            if (!Nonce::verifyNonce(self::CONSENT_NONCE_ID, $nonce) || !$this->wasConsentScreenShownTo($login)) {
                 return $this->renderUnauthorized(Piwik::translate('OAuth2_InvalidAuthorizationRequest'));
             }
 
@@ -210,7 +214,7 @@ class Controller extends ControllerAdmin
             'userEmail' => $user['email'] ?? '',
             'scopes' => $selectableScopes,
             'scopeDescriptions' => $this->scopeRepository->describeScopes(),
-            'nonce' => Nonce::getNonce($this->getAuthorizeNonceName($login)),
+            'nonce' => $this->getConsentNonce($login),
             'termsAndCondition' => $termsAndConditionUrl,
             'privacyPolicyUrl' => $privacyPolicyUrl,
         ]);
@@ -320,12 +324,32 @@ class Controller extends ControllerAdmin
     }
 
     /**
-     * The consent nonce is bound to the login it was shown to, so a nonce taken from one user's
-     * consent screen cannot answer a request that is decided in another user's name.
+     * Returns the nonce of the consent form and remembers the login it is shown to, so the form
+     * can only be answered by that login, like PasswordVerifier does for a password confirmation.
      */
-    private function getAuthorizeNonceName(string $login): string
+    private function getConsentNonce(string $login): string
     {
-        return 'Oauth2.authorize.' . $login;
+        $nonce = Nonce::getNonce(self::CONSENT_NONCE_ID, self::CONSENT_TTL_SECONDS);
+
+        $session = $this->getConsentSession();
+        // the session namespace stores values through magic properties, called explicitly here
+        // and read through getIterator() below, so they can be type checked
+        $session->__set('consentShownToLogin', $login);
+        $session->setExpirationSeconds(self::CONSENT_TTL_SECONDS, 'consentShownToLogin');
+
+        return $nonce;
+    }
+
+    private function wasConsentScreenShownTo(string $login): bool
+    {
+        $shownToLogin = $this->getConsentSession()->getIterator()['consentShownToLogin'] ?? null;
+
+        return is_string($shownToLogin) && $shownToLogin === $login;
+    }
+
+    private function getConsentSession(): SessionNamespace
+    {
+        return new SessionNamespace('OAuth2');
     }
 
     private function renderUnauthorized(string $message)
