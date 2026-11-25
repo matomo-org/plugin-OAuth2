@@ -51,7 +51,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
     private array $backupPost;
     private array $backupRequest;
     private $backupRequestMethod;
-    private $backupSession;
+    private ?array $backupSession;
 
     public function setUp(): void
     {
