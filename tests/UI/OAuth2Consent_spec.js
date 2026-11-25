@@ -36,7 +36,7 @@ describe("OAuth2Consent", function () {
     });
 
     after(function () {
-        delete testEnvironment.testUseMockAuth;
+        testEnvironment.testUseMockAuth = 1;
         testEnvironment.save();
     });
 

@@ -469,6 +469,27 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
         $this->assertSame(0, $this->countAuthCodes($client['client']['client_id']));
     }
 
+    public function test_post_rejectsAFormStillOpenFromBeforeAnotherUserSignedIn()
+    {
+        $client = $this->createClient(['matomo:read']);
+        $capturedEvents = $this->captureAuthorizeDecisionEvents();
+        // a consent form is left open for another user, then the current user signs in to the
+        // same session and opens a consent screen of their own
+        $staleNonce = $this->getConsentNonceAs('otherUser', $client);
+        $currentNonce = $this->getConsentNonce($client);
+        $this->assertNotSame($staleNonce, $currentNonce);
+
+        $response = $this->requestAuthorize(
+            $this->authorizeQuery($client, 'matomo:read'),
+            ['decision' => 'allow', 'selected_scope' => 'matomo:read', 'nonce' => $staleNonce]
+        );
+
+        $this->assertSame(Piwik::translate('OAuth2_InvalidAuthorizationRequest'), $response);
+        $this->assertResponseCodeSent(400, 'Bad Request');
+        $this->assertCount(0, $capturedEvents);
+        $this->assertSame(0, $this->countAuthCodes($client['client']['client_id']));
+    }
+
     public function test_emitResponse_sendsStatusCodesCoreHasNoReasonPhraseFor()
     {
         if (!$this->recordsSentHeaders()) {

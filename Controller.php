@@ -329,6 +329,13 @@ class Controller extends ControllerAdmin
      */
     private function getConsentNonce(string $login): string
     {
+        // Another user signed in to this session since the last consent screen: discard the nonce,
+        // so a form still open from that screen can't be answered in the new user's name.
+        $shownToLogin = $this->getConsentShownToLogin();
+        if ($shownToLogin !== null && $shownToLogin !== $login) {
+            Nonce::discardNonce(self::CONSENT_NONCE_ID);
+        }
+
         $nonce = Nonce::getNonce(self::CONSENT_NONCE_ID, self::CONSENT_TTL_SECONDS);
 
         $session = $this->getConsentSession();
@@ -342,9 +349,14 @@ class Controller extends ControllerAdmin
 
     private function wasConsentScreenShownTo(string $login): bool
     {
+        return $this->getConsentShownToLogin() === $login;
+    }
+
+    private function getConsentShownToLogin(): ?string
+    {
         $shownToLogin = $this->getConsentSession()->getIterator()['consentShownToLogin'] ?? null;
 
-        return is_string($shownToLogin) && $shownToLogin === $login;
+        return is_string($shownToLogin) && $shownToLogin !== '' ? $shownToLogin : null;
     }
 
     private function getConsentSession(): SessionNamespace
