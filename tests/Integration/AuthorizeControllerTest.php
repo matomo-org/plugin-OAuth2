@@ -15,7 +15,6 @@ use Matomo\Dependencies\OAuth2\Nyholm\Psr7\ServerRequest;
 use Piwik\Common;
 use Piwik\Container\StaticContainer;
 use Piwik\Db;
-use Piwik\Nonce;
 use Piwik\Piwik;
 use Piwik\Plugins\OAuth2\Controller;
 use Piwik\Plugins\OAuth2\Entities\ClientEntity;
@@ -29,6 +28,7 @@ use Piwik\Plugins\OAuth2\Service\ServerFactory;
 use Piwik\Plugins\OAuth2\SystemSettings;
 use Piwik\Plugins\OAuth2\tests\Fixtures\OAuth2Fixture;
 use Piwik\Plugins\OAuth2\tests\Framework\OAuth2TestKeys;
+use Piwik\Session\SessionFingerprint;
 use Piwik\Tests\Framework\Fixture;
 use Piwik\Tests\Framework\Mock\FakeAccess;
 
@@ -50,6 +50,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
     private array $backupPost;
     private array $backupRequest;
     private $backupRequestMethod;
+    private ?array $backupSession;
 
     public function setUp(): void
     {
@@ -63,6 +64,10 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
         $this->backupPost = $_POST;
         $this->backupRequest = $_REQUEST;
         $this->backupRequestMethod = $_SERVER['REQUEST_METHOD'] ?? null;
+        $this->backupSession = $_SESSION ?? null;
+
+        // the consent screen is only answered for the user signed in to the browser session
+        $this->signInThroughSession(FakeAccess::$identity);
 
         $this->controller = StaticContainer::get(Controller::class);
         $this->clientManager = StaticContainer::get(ClientManager::class);
@@ -73,6 +78,12 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
         $_GET = $this->backupGet;
         $_POST = $this->backupPost;
         $_REQUEST = $this->backupRequest;
+
+        if ($this->backupSession === null) {
+            unset($_SESSION);
+        } else {
+            $_SESSION = $this->backupSession;
+        }
 
         if ($this->backupRequestMethod === null) {
             unset($_SERVER['REQUEST_METHOD']);
@@ -126,6 +137,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
     {
         $client = $this->createClient(['matomo:admin']);
         FakeAccess::clearAccess(false, [], [1], 'writeUserLogin', [1]);
+        $this->signInThroughSession(FakeAccess::$identity);
 
         $html = $this->requestAuthorize($this->authorizeQuery($client, 'matomo:read matomo:write matomo:admin'));
 
@@ -210,6 +222,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
     {
         $client = $this->createClient(['matomo:admin']);
         FakeAccess::clearAccess(false, [], [], 'noAccessLogin');
+        $this->signInThroughSession(FakeAccess::$identity);
 
         $response = $this->requestAuthorize($this->authorizeQuery($client, 'matomo:write matomo:admin'));
 
@@ -239,7 +252,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
 
         $this->requestAuthorize(
             $this->authorizeQuery($client, 'matomo:read matomo:write matomo:admin'),
-            ['decision' => 'allow', 'selected_scope' => 'matomo:write', 'nonce' => Nonce::getNonce('Oauth2.authorize')]
+            ['decision' => 'allow', 'selected_scope' => 'matomo:write', 'nonce' => $this->getConsentNonce($client)]
         );
 
         // the issued code carries only the selected scope
@@ -272,7 +285,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
 
         $response = $this->requestAuthorize(
             $this->authorizeQuery($client, 'matomo:read matomo:write'),
-            ['decision' => 'allow', 'selected_scope' => 'matomo:superuser', 'nonce' => Nonce::getNonce('Oauth2.authorize')]
+            ['decision' => 'allow', 'selected_scope' => 'matomo:superuser', 'nonce' => $this->getConsentNonce($client)]
         );
 
         $this->assertSame(Piwik::translate('OAuth2_InvalidScopeValue'), $response);
@@ -288,7 +301,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
 
         $response = $this->requestAuthorize(
             $this->authorizeQuery($client, 'matomo:read matomo:write'),
-            ['decision' => 'allow', 'nonce' => Nonce::getNonce('Oauth2.authorize')]
+            ['decision' => 'allow', 'nonce' => $this->getConsentNonce($client)]
         );
 
         $this->assertSame(Piwik::translate('OAuth2_InvalidScopeValue'), $response);
@@ -304,7 +317,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
 
         $this->requestAuthorize(
             $this->authorizeQuery($client, 'matomo:read matomo:write'),
-            ['decision' => 'deny', 'selected_scope' => 'matomo:read', 'nonce' => Nonce::getNonce('Oauth2.authorize')]
+            ['decision' => 'deny', 'selected_scope' => 'matomo:read', 'nonce' => $this->getConsentNonce($client)]
         );
 
         $this->assertCount(1, $capturedEvents);
@@ -331,7 +344,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
         $this->requestAuthorize($query, [
             'decision' => 'deny',
             'selected_scope' => 'matomo:read',
-            'nonce' => Nonce::getNonce('Oauth2.authorize'),
+            'nonce' => $this->getConsentNonce($client),
         ]);
 
         $this->assertSame('denied', $capturedEvents[0]['decision']);
@@ -355,7 +368,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
         $this->requestAuthorize($query, [
             'decision' => 'allow',
             'selected_scope' => 'matomo:read',
-            'nonce' => Nonce::getNonce('Oauth2.authorize'),
+            'nonce' => $this->getConsentNonce($client),
         ]);
 
         $this->assertSame(['matomo:read'], $this->storedAuthCodeScopes($client['client']['client_id']));
@@ -379,7 +392,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
         $response = $this->requestAuthorize($this->authorizeQuery($client, 'matomo:read'), [
             'decision' => 'something else',
             'selected_scope' => 'matomo:read',
-            'nonce' => Nonce::getNonce('Oauth2.authorize'),
+            'nonce' => $this->getConsentNonce($client),
         ]);
 
         $this->assertSame(Piwik::translate('OAuth2_InvalidAuthorizationRequest'), $response);
@@ -394,7 +407,7 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
 
         $this->requestAuthorize(
             $this->authorizeQuery($client, 'matomo:read matomo:write matomo:admin'),
-            ['decision' => 'allow', 'selected_scope' => 'matomo:read', 'nonce' => Nonce::getNonce('Oauth2.authorize')]
+            ['decision' => 'allow', 'selected_scope' => 'matomo:read', 'nonce' => $this->getConsentNonce($client)]
         );
 
         $this->assertSame(['matomo:read'], $this->storedAuthCodeScopes($client['client']['client_id']));
@@ -404,6 +417,77 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
 
         $tokenPayload = $this->exchangeCodeForTokens($client, $redirectParams['code']);
         $this->assertNotEmpty($tokenPayload['access_token']);
+    }
+
+    public function test_get_refusesARequestWithoutASessionOfTheCurrentUser()
+    {
+        $client = $this->createClient(['matomo:read']);
+        // authenticated by a token: no user is signed in to the session
+        unset($_SESSION[SessionFingerprint::USER_NAME_SESSION_VAR_NAME]);
+
+        $response = $this->requestAuthorize($this->authorizeQuery($client, 'matomo:read'));
+
+        $this->assertSame(Piwik::translate('OAuth2_AuthorizeRequiresSignIn'), $response);
+        $this->assertResponseCodeSent(403, 'Forbidden');
+    }
+
+    public function test_post_refusesConsentWhenTheSessionBelongsToAnotherUser()
+    {
+        $client = $this->createClient(['matomo:read']);
+        $capturedEvents = $this->captureAuthorizeDecisionEvents();
+
+        // the request is authenticated as the current user, e.g. by a token, while the session
+        // cookie sent along with it belongs to another user. It is refused before the POST body
+        // is read, so the nonce doesn't matter here.
+        $this->signInThroughSession('otherUser');
+        $response = $this->requestAuthorize(
+            $this->authorizeQuery($client, 'matomo:read'),
+            ['decision' => 'allow', 'selected_scope' => 'matomo:read', 'nonce' => 'unused']
+        );
+
+        $this->assertSame(Piwik::translate('OAuth2_AuthorizeRequiresSignIn'), $response);
+        $this->assertResponseCodeSent(403, 'Forbidden');
+        $this->assertCount(0, $capturedEvents);
+        $this->assertSame(0, $this->countAuthCodes($client['client']['client_id']));
+    }
+
+    public function test_post_rejectsAConsentFormThatWasShownToAnotherUser()
+    {
+        $client = $this->createClient(['matomo:read']);
+        $capturedEvents = $this->captureAuthorizeDecisionEvents();
+        $nonce = $this->getConsentNonceAs('otherUser', $client);
+
+        // the session user matches the current user, but the form was shown to another login
+        $response = $this->requestAuthorize(
+            $this->authorizeQuery($client, 'matomo:read'),
+            ['decision' => 'allow', 'selected_scope' => 'matomo:read', 'nonce' => $nonce]
+        );
+
+        $this->assertSame(Piwik::translate('OAuth2_InvalidAuthorizationRequest'), $response);
+        $this->assertResponseCodeSent(400, 'Bad Request');
+        $this->assertCount(0, $capturedEvents);
+        $this->assertSame(0, $this->countAuthCodes($client['client']['client_id']));
+    }
+
+    public function test_post_rejectsAFormStillOpenFromBeforeAnotherUserSignedIn()
+    {
+        $client = $this->createClient(['matomo:read']);
+        $capturedEvents = $this->captureAuthorizeDecisionEvents();
+        // a consent form is left open for another user, then the current user signs in to the
+        // same session and opens a consent screen of their own
+        $staleNonce = $this->getConsentNonceAs('otherUser', $client);
+        $currentNonce = $this->getConsentNonce($client);
+        $this->assertNotSame($staleNonce, $currentNonce);
+
+        $response = $this->requestAuthorize(
+            $this->authorizeQuery($client, 'matomo:read'),
+            ['decision' => 'allow', 'selected_scope' => 'matomo:read', 'nonce' => $staleNonce]
+        );
+
+        $this->assertSame(Piwik::translate('OAuth2_InvalidAuthorizationRequest'), $response);
+        $this->assertResponseCodeSent(400, 'Bad Request');
+        $this->assertCount(0, $capturedEvents);
+        $this->assertSame(0, $this->countAuthCodes($client['client']['client_id']));
     }
 
     public function test_emitResponse_sendsStatusCodesCoreHasNoReasonPhraseFor()
@@ -439,6 +523,39 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
         $this->expectExceptionMessage(Piwik::translate('OAuth2_InvalidScopeValue'));
 
         $method->invoke($this->controller, 'matomo:unknown');
+    }
+
+    private function signInThroughSession(string $login): void
+    {
+        $_SESSION[SessionFingerprint::USER_NAME_SESSION_VAR_NAME] = $login;
+    }
+
+    /**
+     * Opens the consent screen as the current user and returns the nonce of its form.
+     */
+    private function getConsentNonce(array $client): string
+    {
+        $html = $this->requestAuthorize($this->authorizeQuery($client, 'matomo:read'));
+        $this->assertSame(1, preg_match('/name="nonce" value="([^"]+)"/', $html, $matches), 'consent screen should contain a nonce');
+
+        return $matches[1];
+    }
+
+    /**
+     * Opens the consent screen as the given user, signed in to the session, and returns the
+     * nonce it was shown. Restores the super user afterwards.
+     */
+    private function getConsentNonceAs(string $login, array $client): string
+    {
+        FakeAccess::clearAccess(true, [], [], $login);
+        $this->signInThroughSession($login);
+
+        $nonce = $this->getConsentNonce($client);
+
+        FakeAccess::clearAccess(true);
+        $this->signInThroughSession(FakeAccess::$identity);
+
+        return $nonce;
     }
 
     private function createClient(array $scopes): array

@@ -1,5 +1,8 @@
 ## Changelog
 
+6.1.3
+- Hardened the consent screen: an application can only be authorized by the user signed in to Matomo in the browser, and the consent form is tied to that user
+
 6.1.2 - 2026-11-23
 - Updated dependencies
 
