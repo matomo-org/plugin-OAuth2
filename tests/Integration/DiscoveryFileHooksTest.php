@@ -20,10 +20,10 @@ use Piwik\Plugins\OAuth2\Service\AuthorizationServerMetadata;
 use Piwik\Plugins\OAuth2\Service\DiscoveryFile;
 use Piwik\Plugins\OAuth2\Tasks;
 use Piwik\Plugins\OAuth2\tests\Fixtures\OAuth2Fixture;
-use Piwik\Plugins\OAuth2\Updates_6_0_5;
+use Piwik\Plugins\OAuth2\Updates_6_1_0;
 use Piwik\SettingsPiwik;
 
-require_once __DIR__ . '/../../Updates/6.0.5.php';
+require_once __DIR__ . '/../../Updates/6.1.0.php';
 
 /**
  * Covers the places that write or remove the discovery file. The test environment points the
@@ -91,7 +91,7 @@ class DiscoveryFileHooksTest extends \Piwik\Tests\Framework\TestCase\Integration
 
     public function test_update_writesTheFile()
     {
-        Updates_6_0_5::writeDiscoveryFile();
+        Updates_6_1_0::writeDiscoveryFile();
 
         $this->assertSame('https://matomo.example', $this->getWrittenIssuer());
     }
@@ -108,7 +108,7 @@ class DiscoveryFileHooksTest extends \Piwik\Tests\Framework\TestCase\Integration
             new DiscoveryFile($metadata, $logger, $this->documentRoot)
         );
 
-        Updates_6_0_5::writeDiscoveryFile();
+        Updates_6_1_0::writeDiscoveryFile();
         StaticContainer::get(Tasks::class)->writeDiscoveryFile();
         (new OAuth2())->onPluginActivationChanged('SomeOtherPlugin');
         (new OAuth2())->writeDiscoveryFile();
@@ -126,7 +126,7 @@ class DiscoveryFileHooksTest extends \Piwik\Tests\Framework\TestCase\Integration
         $plugin->activate();
         $plugin->onPluginActivationChanged('SomeOtherPlugin');
         $plugin->writeDiscoveryFile();
-        Updates_6_0_5::writeDiscoveryFile();
+        Updates_6_1_0::writeDiscoveryFile();
 
         $this->assertFileDoesNotExist($this->getFilePath());
     }

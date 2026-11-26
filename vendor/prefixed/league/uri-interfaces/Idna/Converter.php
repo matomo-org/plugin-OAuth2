@@ -18,8 +18,11 @@ use Matomo\Dependencies\OAuth2\League\Uri\FeatureDetection;
 use Stringable;
 use function idn_to_ascii;
 use function idn_to_utf8;
+use function preg_match;
+use function preg_replace_callback;
 use function rawurldecode;
 use function strtolower;
+use function strtoupper;
 use const INTL_IDNA_VARIANT_UTS46;
 /**
  * @see https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/uidna_8h.html
@@ -29,6 +32,8 @@ final class Converter
     private const REGEXP_IDNA_PATTERN = '/[^\\x20-\\x7f]/';
     private const MAX_DOMAIN_LENGTH = 253;
     private const MAX_LABEL_LENGTH = 63;
+    private const REGEXP_CHARS_ENCODED = ',%[A-Fa-f0-9]{2},';
+    private const REGEXP_PART_UNRESERVED = 'A-Za-z\\d_\\-.~';
     /**
      * General registered name regular expression.
      *
@@ -69,10 +74,7 @@ final class Converter
      */
     public static function toAscii(BackedEnum|Stringable|string $domain, Option|int|null $options = null) : Result
     {
-        if ($domain instanceof BackedEnum) {
-            $domain = $domain->value;
-        }
-        $domain = rawurldecode((string) $domain);
+        $domain = self::filterDomain($domain);
         if (1 === preg_match(self::REGEXP_IDNA_PATTERN, $domain)) {
             FeatureDetection::supportsIdn();
             $flags = match (\true) {
@@ -116,12 +118,9 @@ final class Converter
      */
     public static function toUnicode(BackedEnum|Stringable|string $domain, Option|int|null $options = null) : Result
     {
-        if ($domain instanceof BackedEnum) {
-            $domain = $domain->value;
-        }
-        $domain = rawurldecode((string) $domain);
+        $domain = self::filterDomain($domain);
         if (\false === stripos($domain, 'xn--')) {
-            return Result::fromIntl(['result' => strtolower($domain), 'isTransitionalDifferent' => \false, 'errors' => Error::NONE->value]);
+            return Result::fromIntl(['result' => (string) preg_replace_callback('/%[A-Fa-f0-9]{2}|[^%]+|%/', static fn(array $matches): string => str_starts_with($matches[0], '%') ? strtoupper($matches[0]) : strtolower($matches[0]), $domain), 'isTransitionalDifferent' => \false, 'errors' => Error::NONE->value]);
         }
         FeatureDetection::supportsIdn();
         $flags = match (\true) {
@@ -131,9 +130,20 @@ final class Converter
         };
         idn_to_utf8($domain, $flags->toBytes(), INTL_IDNA_VARIANT_UTS46, $idnaInfo);
         if ([] === $idnaInfo) {
-            return Result::fromIntl(['result' => strtolower($domain), 'isTransitionalDifferent' => \false, 'errors' => Error::NONE->value]);
+            return Result::fromIntl(['result' => (string) preg_replace_callback('/%[A-Fa-f0-9]{2}|[^%]+|%/', static fn(array $matches): string => str_starts_with($matches[0], '%') ? strtoupper($matches[0]) : strtolower($matches[0]), $domain), 'isTransitionalDifferent' => \false, 'errors' => Error::NONE->value]);
         }
         return Result::fromIntl($idnaInfo);
+    }
+    private static function filterDomain(BackedEnum|Stringable|string $domain) : string
+    {
+        if ($domain instanceof BackedEnum) {
+            $domain = $domain->value;
+        }
+        return (string) preg_replace_callback(self::REGEXP_CHARS_ENCODED, static function (array $matches) : string {
+            $encoded = $matches[0];
+            $decoded = rawurldecode($encoded);
+            return 1 === preg_match('/^[' . self::REGEXP_PART_UNRESERVED . ']$/i', $decoded) ? strtolower($decoded) : strtoupper($encoded);
+        }, (string) $domain);
     }
     /**
      * Tells whether the submitted host is a valid IDN regardless of its format.

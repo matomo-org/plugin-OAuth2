@@ -111,6 +111,14 @@ class ClientModel
         );
     }
 
+    public function pauseAndClearOwner(string $clientId): void
+    {
+        Db::query(
+            'UPDATE ' . $this->table . ' SET active = 0, owner_login = ?, updated_at = ? WHERE client_id = ?',
+            ['', Date::now()->getDatetime(), $clientId]
+        );
+    }
+
     public function delete(string $clientId): void
     {
         Db::query('DELETE FROM ' . $this->table . ' WHERE client_id = ?', [$clientId]);

@@ -49,7 +49,7 @@ final class MultibyteStringConverter implements SignatureConverter
         $lengthS = self::octetLength($pointS);
         $totalLength = $lengthR + $lengthS + self::BYTE_SIZE + self::BYTE_SIZE;
         $lengthPrefix = $totalLength > self::ASN1_MAX_SINGLE_BYTE ? self::ASN1_LENGTH_2BYTES : '';
-        $asn1 = hex2bin(self::ASN1_SEQUENCE . $lengthPrefix . dechex($totalLength) . self::ASN1_INTEGER . dechex($lengthR) . $pointR . self::ASN1_INTEGER . dechex($lengthS) . $pointS);
+        $asn1 = hex2bin(self::ASN1_SEQUENCE . $lengthPrefix . self::encodeLength($totalLength) . self::ASN1_INTEGER . self::encodeLength($lengthR) . $pointR . self::ASN1_INTEGER . self::encodeLength($lengthS) . $pointS);
         assert(is_string($asn1));
         assert($asn1 !== '');
         return $asn1;
@@ -57,6 +57,17 @@ final class MultibyteStringConverter implements SignatureConverter
     private static function octetLength(string $data) : int
     {
         return (int) (strlen($data) / self::BYTE_SIZE);
+    }
+    /**
+     * Encodes a length as hex, ensuring it always uses full octets.
+     *
+     * {@see dechex()} drops the leading zero of a single-digit value (e.g. `1`
+     * instead of `01`), which produces an odd-length hex string that
+     * {@see hex2bin()} rejects. Padding to {@see self::BYTE_SIZE} keeps it even.
+     */
+    private static function encodeLength(int $length) : string
+    {
+        return str_pad(dechex($length), self::BYTE_SIZE, '0', STR_PAD_LEFT);
     }
     private static function preparePositiveInteger(string $data) : string
     {

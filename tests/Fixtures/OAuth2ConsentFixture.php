@@ -11,8 +11,8 @@ namespace Piwik\Plugins\OAuth2\tests\Fixtures;
 
 use Piwik\Container\StaticContainer;
 use Piwik\Plugins\OAuth2\Model\ClientModel;
-use Piwik\Plugins\OAuth2\OAuth2;
 use Piwik\Plugins\OAuth2\Service\ClientManager;
+use Piwik\Plugins\OAuth2\tests\Framework\OAuth2TestKeys;
 use Piwik\Tests\Framework\Fixture;
 
 class OAuth2ConsentFixture extends OAuth2Fixture
@@ -25,8 +25,7 @@ class OAuth2ConsentFixture extends OAuth2Fixture
     {
         parent::setUp();
 
-        OAuth2::setupRSAKeys(true);
-        OAuth2::setEncryptionKey(true);
+        OAuth2TestKeys::install();
 
         // a client is configured with a single scope, as that is all the API accepts, and the
         // consent screen then offers every scope up to that maximum

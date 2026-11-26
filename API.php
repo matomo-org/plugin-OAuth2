@@ -10,6 +10,8 @@
 namespace Piwik\Plugins\OAuth2;
 
 use Matomo\Dependencies\OAuth2\League\OAuth2\Server\RedirectUriValidators\RedirectUriValidator;
+use Piwik\Exception\ThingNotFoundException;
+use Piwik\Http\BadRequestException;
 use Piwik\Piwik;
 use Piwik\Plugins\OAuth2\Repositories\ScopeRepository;
 use Piwik\Plugins\OAuth2\Service\ClientManager;
@@ -59,7 +61,7 @@ class API extends \Piwik\Plugin\API
         $client = $this->clientModel->find($clientId);
 
         if (empty($client)) {
-            throw new \InvalidArgumentException(Piwik::translate('OAuth2_ClientNotFound'));
+            throw new ThingNotFoundException(Piwik::translate('OAuth2_ClientNotFound'));
         }
 
         return $this->sanitizeClient($client);
@@ -171,7 +173,7 @@ class API extends \Piwik\Plugin\API
         $clientId = $this->assertValidClientId($clientId);
 
         if (empty($this->clientModel->find($clientId))) {
-            throw new \InvalidArgumentException(Piwik::translate('OAuth2_ClientNotFound'));
+            throw new ThingNotFoundException(Piwik::translate('OAuth2_ClientNotFound'));
         }
 
         $data = $this->buildValidatedClientData(
@@ -219,7 +221,7 @@ class API extends \Piwik\Plugin\API
         $clientId = $this->assertValidClientId($clientId);
         $client = $this->getClient($clientId);
         if (empty($clientId) || empty($client['type']) || $client['type'] != 'confidential') {
-            throw new \InvalidArgumentException(Piwik::translate('OAuth2_InvalidClientToRotateSecretExceptionMessage'));
+            throw new BadRequestException(Piwik::translate('OAuth2_InvalidClientToRotateSecretExceptionMessage'));
         }
 
         $secret = $this->clientManager->rotateSecret($clientId);
@@ -266,6 +268,10 @@ class API extends \Piwik\Plugin\API
 
         $clientId = $this->assertValidClientId($clientId);
 
+        if (empty($this->clientModel->find($clientId))) {
+            throw new ThingNotFoundException(Piwik::translate('OAuth2_ClientNotFound'));
+        }
+
         $this->clientManager->delete($clientId);
 
         return ['deleted' => true];
@@ -276,7 +282,7 @@ class API extends \Piwik\Plugin\API
         $clientId = trim($clientId);
 
         if ($clientId === '' || strlen($clientId) !== 32 || !ctype_xdigit($clientId)) {
-            throw new \InvalidArgumentException(Piwik::translate('OAuth2_ClientIdException'));
+            throw new BadRequestException(Piwik::translate('OAuth2_ClientIdException'));
         }
 
         return $clientId;
@@ -303,13 +309,13 @@ class API extends \Piwik\Plugin\API
         $this->validateRedirectUris($redirects, $grantTypes);
 
         if ($type === 'public' && in_array('client_credentials', $grantTypes, true)) {
-            throw new \InvalidArgumentException(Piwik::translate('OAuth2_ClientCredentialsExceptionPublicClient'));
+            throw new BadRequestException(Piwik::translate('OAuth2_ClientCredentialsExceptionPublicClient'));
         }
 
         $scope = array_values(array_intersect([$scope], $this->scopeRepository->getAllowedScopeIds()));
 
         if (empty($scope)) {
-            throw new \InvalidArgumentException(Piwik::translate('OAuth2_InvalidScopeValue'));
+            throw new BadRequestException(Piwik::translate('OAuth2_InvalidScopeValue'));
         }
 
         return [
@@ -353,7 +359,7 @@ class API extends \Piwik\Plugin\API
                 || preg_match('~https?://~i', (string) ($parsedRedirectUri['path'] ?? '')) === 1
                 || preg_match('~https?://~i', (string) ($parsedRedirectUri['fragment'] ?? '')) === 1
             ) {
-                throw new \InvalidArgumentException(Piwik::translate('OAuth2_InvalidRedirectUri') . ': ' . $rawRedirectUri);
+                throw new BadRequestException(Piwik::translate('OAuth2_InvalidRedirectUri') . ': ' . $rawRedirectUri);
             }
 
             $redirects[] = $rawRedirectUri;
@@ -369,14 +375,14 @@ class API extends \Piwik\Plugin\API
         }
 
         if (empty($redirectUris)) {
-            throw new \InvalidArgumentException(Piwik::translate('OAuth2_InvalidRedirectUri'));
+            throw new BadRequestException(Piwik::translate('OAuth2_InvalidRedirectUri'));
         }
 
         $validator = new RedirectUriValidator($redirectUris);
 
         foreach ($redirectUris as $redirectUri) {
             if (!$validator->validateRedirectUri($redirectUri) || !UrlHelper::isLookLikeUrl($redirectUri)) {
-                throw new \InvalidArgumentException(Piwik::translate('OAuth2_InvalidRedirectUri') . ': ' . $redirectUri);
+                throw new BadRequestException(Piwik::translate('OAuth2_InvalidRedirectUri') . ': ' . $redirectUri);
             }
         }
     }
@@ -384,7 +390,7 @@ class API extends \Piwik\Plugin\API
     private function validateGrantTypes(array $grantTypes): array
     {
         if (empty($grantTypes)) {
-            throw new \InvalidArgumentException(Piwik::translate('OAuth2_GrantTypeRequired'));
+            throw new BadRequestException(Piwik::translate('OAuth2_GrantTypeRequired'));
         }
 
         $allowedGrantTypes = [
@@ -395,7 +401,7 @@ class API extends \Piwik\Plugin\API
 
         $invalid = array_diff($grantTypes, $allowedGrantTypes);
         if (!empty($invalid)) {
-            throw new \InvalidArgumentException(Piwik::translate('OAuth2_InvalidGrantTypes') . ': ' . implode(', ', $invalid));
+            throw new BadRequestException(Piwik::translate('OAuth2_InvalidGrantTypes') . ': ' . implode(', ', $invalid));
         }
 
         return array_values(array_unique($grantTypes));

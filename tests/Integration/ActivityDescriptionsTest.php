@@ -14,6 +14,7 @@ use Piwik\Plugins\OAuth2\Activity\AuthorizeClient;
 use Piwik\Plugins\OAuth2\Activity\CreateClient;
 use Piwik\Plugins\OAuth2\Activity\DeleteClient;
 use Piwik\Plugins\OAuth2\Activity\DeleteClientWithOwner;
+use Piwik\Plugins\OAuth2\Activity\PauseClientOfDeletedOwner;
 use Piwik\Plugins\OAuth2\Activity\RotateSecret;
 use Piwik\Plugins\OAuth2\Activity\SetClientActive;
 use Piwik\Plugins\OAuth2\Activity\UpdateClient;
@@ -54,6 +55,23 @@ class ActivityDescriptionsTest extends \Piwik\Tests\Framework\TestCase\Integrati
         $this->assertSame(
             'deleted OAuth 2.0 client "Claude Code Demo (c0dec0dec0dec0dec0dec0dec0dec0de)"'
                 . ' while deleting its owner "departedUser"',
+            $description
+        );
+    }
+
+    public function test_getTranslatedDescription_namesTheClientAndTheOwnerAUserDeletionPaused()
+    {
+        $activity = new PauseClientOfDeletedOwner();
+
+        $description = $activity->getTranslatedDescription([
+            'version' => 'v1',
+            'client' => ['id' => 'c0dec0dec0dec0dec0dec0dec0dec0de', 'name' => 'Claude Code Demo'],
+            'ownerLogin' => 'departedUser',
+        ], 'superUserLogin');
+
+        $this->assertSame(
+            'paused OAuth 2.0 client "Claude Code Demo (c0dec0dec0dec0dec0dec0dec0dec0de)"'
+                . ' because its owner "departedUser" was deleted',
             $description
         );
     }
