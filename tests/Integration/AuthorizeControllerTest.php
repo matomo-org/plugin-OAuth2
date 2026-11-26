@@ -435,14 +435,14 @@ class AuthorizeControllerTest extends \Piwik\Tests\Framework\TestCase\Integratio
     {
         $client = $this->createClient(['matomo:read']);
         $capturedEvents = $this->captureAuthorizeDecisionEvents();
-        $nonce = $this->getConsentNonceAs('otherUser', $client);
 
         // the request is authenticated as the current user, e.g. by a token, while the session
-        // cookie sent along with it belongs to another user
+        // cookie sent along with it belongs to another user. It is refused before the POST body
+        // is read, so the nonce doesn't matter here.
         $this->signInThroughSession('otherUser');
         $response = $this->requestAuthorize(
             $this->authorizeQuery($client, 'matomo:read'),
-            ['decision' => 'allow', 'selected_scope' => 'matomo:read', 'nonce' => $nonce]
+            ['decision' => 'allow', 'selected_scope' => 'matomo:read', 'nonce' => 'unused']
         );
 
         $this->assertSame(Piwik::translate('OAuth2_AuthorizeRequiresSignIn'), $response);
