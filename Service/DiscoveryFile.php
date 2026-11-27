@@ -20,8 +20,9 @@ use Piwik\SettingsPiwik;
  *
  * Web servers serve an existing file, so on root installs clients can discover the authorization
  * server without a rewrite rule forwarding the path to the metadata controller action. Apache and
- * IIS need the helper files written next to it, and nginx a content type, see writeHelperFiles(). Subdirectory installs are skipped, as RFC 8414 places their
- * discovery URL at the domain root, outside the Matomo directory.
+ * IIS need the helper files written next to it, and nginx a content type, see writeHelperFiles().
+ * Subdirectory installs are skipped, as RFC 8414 places their discovery URL at the domain root,
+ * outside the Matomo directory.
  *
  * The file is a snapshot, so it is written again whenever its content may change. Files that
  * were not written by this class are never removed, and only overwritten when forced.
